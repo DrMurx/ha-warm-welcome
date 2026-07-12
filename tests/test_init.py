@@ -18,7 +18,7 @@ from custom_components.vacation_heating.const import (
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
-    CONF_HVAC_MODE,
+    CONF_PRESET_MODE,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DOMAIN,
@@ -37,7 +37,7 @@ OPTIONS = {
     # 0.5°C/h at 0°C outdoors; 6°C deficit -> 12 h pre-heat.
     CONF_HEAT_RATES: ["0: 0.5"],
     CONF_ACTION: "both",
-    CONF_HVAC_MODE: "heat",
+    CONF_PRESET_MODE: "comfort",
 }
 
 EXPECTED_START = ARRIVAL - timedelta(hours=12)
@@ -75,7 +75,11 @@ async def forecast_calls(hass: HomeAssistant) -> list[ServiceCall]:
 
 async def setup_entry(hass: HomeAssistant) -> MockConfigEntry:
     await hass.config.async_set_time_zone("UTC")
-    hass.states.async_set("climate.living_room", "off", {"current_temperature": 15.0})
+    hass.states.async_set(
+        "climate.living_room",
+        "off",
+        {"current_temperature": 15.0, "preset_modes": ["eco", "comfort"]},
+    )
     hass.states.async_set("weather.home", "sunny")
     hass.states.async_set("input_datetime.vacation_end", "2026-07-20")
     entry = MockConfigEntry(
@@ -109,14 +113,14 @@ async def test_trigger_fires_configured_action_once(hass, freezer, forecast_call
     """At the computed start the climate services are called exactly once."""
     freezer.move_to(NOW)
     await setup_entry(hass)
-    mode_calls = async_mock_service(hass, "climate", "set_hvac_mode")
+    preset_calls = async_mock_service(hass, "climate", "set_preset_mode")
     temp_calls = async_mock_service(hass, "climate", "set_temperature")
 
     # Just before the computed start: nothing happens.
     freezer.move_to(EXPECTED_START - timedelta(minutes=5))
     async_fire_time_changed(hass)
     await hass.async_block_till_done()
-    assert len(mode_calls) == 0
+    assert len(preset_calls) == 0
     assert len(temp_calls) == 0
 
     # Past the computed start: both services fire.
@@ -128,10 +132,10 @@ async def test_trigger_fires_configured_action_once(hass, freezer, forecast_call
     async_fire_time_changed(hass)
     await hass.async_block_till_done()
 
-    assert len(mode_calls) == 1
-    assert mode_calls[0].data == {
+    assert len(preset_calls) == 1
+    assert preset_calls[0].data == {
         "entity_id": "climate.living_room",
-        "hvac_mode": "heat",
+        "preset_mode": "comfort",
     }
     assert len(temp_calls) == 1
     assert temp_calls[0].data == {
@@ -143,7 +147,7 @@ async def test_trigger_fires_configured_action_once(hass, freezer, forecast_call
     freezer.move_to(EXPECTED_START + timedelta(hours=2))
     async_fire_time_changed(hass)
     await hass.async_block_till_done()
-    assert len(mode_calls) == 1
+    assert len(preset_calls) == 1
     assert len(temp_calls) == 1
 
 
@@ -151,13 +155,13 @@ async def test_trigger_guard_survives_reload(hass, freezer, forecast_calls) -> N
     """After a reload (simulating a restart) the action is not fired again."""
     freezer.move_to(NOW)
     entry = await setup_entry(hass)
-    mode_calls = async_mock_service(hass, "climate", "set_hvac_mode")
+    preset_calls = async_mock_service(hass, "climate", "set_preset_mode")
     temp_calls = async_mock_service(hass, "climate", "set_temperature")
 
     freezer.move_to(EXPECTED_START + timedelta(minutes=1))
     async_fire_time_changed(hass)
     await hass.async_block_till_done()
-    assert len(mode_calls) == 1
+    assert len(preset_calls) == 1
 
     await hass.config_entries.async_reload(entry.entry_id)
     await hass.async_block_till_done()
@@ -165,7 +169,7 @@ async def test_trigger_guard_survives_reload(hass, freezer, forecast_calls) -> N
     freezer.move_to(EXPECTED_START + timedelta(minutes=30))
     async_fire_time_changed(hass)
     await hass.async_block_till_done()
-    assert len(mode_calls) == 1
+    assert len(preset_calls) == 1
     assert len(temp_calls) == 1
 
 

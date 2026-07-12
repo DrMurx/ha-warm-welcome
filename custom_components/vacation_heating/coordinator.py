@@ -15,14 +15,14 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from homeassistant.util import dt as dt_util
 
 from .const import (
-    ACTION_SET_MODE,
+    ACTION_SET_PRESET,
     ACTION_SET_TEMPERATURE,
     CONF_ACTION,
     CONF_ARRIVAL_TIME,
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
-    CONF_HVAC_MODE,
+    CONF_PRESET_MODE,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DEFAULT_ARRIVAL_TIME,
@@ -219,11 +219,11 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
             if action != ACTION_SET_TEMPERATURE:
                 await self.hass.services.async_call(
                     "climate",
-                    "set_hvac_mode",
-                    {"entity_id": entity_id, "hvac_mode": options[CONF_HVAC_MODE]},
+                    "set_preset_mode",
+                    {"entity_id": entity_id, "preset_mode": options[CONF_PRESET_MODE]},
                     blocking=True,
                 )
-            if action != ACTION_SET_MODE:
+            if action != ACTION_SET_PRESET:
                 await self.hass.services.async_call(
                     "climate",
                     "set_temperature",

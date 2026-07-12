@@ -8,22 +8,12 @@
           "name": "Name",
           "climate_entity": "Climate entity",
           "weather_entity": "Weather entity",
-          "end_date_entity": "Vacation end date entity",
-          "arrival_time": "Arrival time",
-          "target_temperature": "Target temperature",
-          "heat_rates": "Heat rates",
-          "action": "Action at heating start",
-          "hvac_mode": "HVAC mode to set"
+          "end_date_entity": "Vacation end date entity"
         },
         "data_description": {
           "climate_entity": "The thermostat of the room to pre-heat.",
           "weather_entity": "Provides the outdoor temperature forecast.",
-          "end_date_entity": "Entity holding the date your vacation ends.",
-          "arrival_time": "Time of day you arrive home on the end date. Ignored if the end date entity already includes a time.",
-          "target_temperature": "Room temperature to reach by the time you arrive.",
-          "heat_rates": "One entry per point, formatted 'outdoor temperature: heating rate in °C per hour', e.g. '-10: 0.2'. Entries are sorted automatically; values in between are interpolated linearly.",
-          "action": "What to do on the climate entity when the calculated start time is reached.",
-          "hvac_mode": "Only used when the action includes setting a mode."
+          "end_date_entity": "Entity holding the date your vacation ends."
         }
       },
       "reconfigure": {
@@ -32,21 +22,30 @@
           "name": "Name",
           "climate_entity": "Climate entity",
           "weather_entity": "Weather entity",
-          "end_date_entity": "Vacation end date entity",
+          "end_date_entity": "Vacation end date entity"
+        }
+      },
+      "settings": {
+        "title": "Heating settings",
+        "data": {
           "arrival_time": "Arrival time",
           "target_temperature": "Target temperature",
           "heat_rates": "Heat rates",
           "action": "Action at heating start",
-          "hvac_mode": "HVAC mode to set"
+          "preset_mode": "Preset to set"
         },
         "data_description": {
-          "heat_rates": "One entry per point, formatted 'outdoor temperature: heating rate in °C per hour', e.g. '-10: 0.2'."
+          "arrival_time": "Time of day you arrive home on the end date. Ignored if the end date entity already includes a time.",
+          "target_temperature": "Room temperature to reach by the time you arrive.",
+          "heat_rates": "One entry per point, formatted 'outdoor temperature: heating rate in °C per hour', e.g. '-10: 0.2'. Entries are sorted automatically; values in between are interpolated linearly.",
+          "action": "What to do on the climate entity when the calculated start time is reached.",
+          "preset_mode": "The climate entity's presets are listed; only used when the action includes setting a preset."
         }
       }
     },
     "error": {
       "invalid_heat_rates": "Heat rates must be entered as 'outdoor temperature: rate' pairs with positive rates and no duplicate temperatures, e.g. '-10: 0.2'.",
-      "hvac_mode_required": "Select an HVAC mode when the action includes setting a mode."
+      "preset_mode_required": "Select a preset when the action includes setting a preset."
     },
     "abort": {
       "reconfigure_successful": "Reconfiguration was successful."
@@ -59,36 +58,35 @@
         "data": {
           "climate_entity": "Climate entity",
           "weather_entity": "Weather entity",
-          "end_date_entity": "Vacation end date entity",
+          "end_date_entity": "Vacation end date entity"
+        }
+      },
+      "settings": {
+        "title": "Heating settings",
+        "data": {
           "arrival_time": "Arrival time",
           "target_temperature": "Target temperature",
           "heat_rates": "Heat rates",
           "action": "Action at heating start",
-          "hvac_mode": "HVAC mode to set"
+          "preset_mode": "Preset to set"
         },
         "data_description": {
-          "heat_rates": "One entry per point, formatted 'outdoor temperature: heating rate in °C per hour', e.g. '-10: 0.2'."
+          "heat_rates": "One entry per point, formatted 'outdoor temperature: heating rate in °C per hour', e.g. '-10: 0.2'.",
+          "preset_mode": "The climate entity's presets are listed; only used when the action includes setting a preset."
         }
       }
     },
     "error": {
       "invalid_heat_rates": "Heat rates must be entered as 'outdoor temperature: rate' pairs with positive rates and no duplicate temperatures, e.g. '-10: 0.2'.",
-      "hvac_mode_required": "Select an HVAC mode when the action includes setting a mode."
+      "preset_mode_required": "Select a preset when the action includes setting a preset."
     }
   },
   "selector": {
     "action": {
       "options": {
-        "set_mode": "Set HVAC mode",
+        "set_preset": "Set preset",
         "set_temperature": "Set temperature",
-        "both": "Set HVAC mode and temperature"
-      }
-    },
-    "hvac_mode": {
-      "options": {
-        "heat": "Heat",
-        "auto": "Auto",
-        "heat_cool": "Heat/Cool"
+        "both": "Set preset and temperature"
       }
     }
   },

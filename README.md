@@ -24,8 +24,10 @@ For each room you configure:
 - a **heat rate map** — how fast the room heats up (°C/hour) at specific
   outdoor temperatures, e.g. `-10: 0.2`, `0: 0.4`, `10: 0.7`. Rates between
   the mapped points are interpolated linearly and clamped outside the range,
-- an **action** — whether to set an HVAC mode, a temperature, or both when
-  the calculated start time is reached.
+- an **action** — whether to set a preset, a temperature, or both when the
+  calculated start time is reached. The preset dropdown offers the presets
+  advertised by the selected climate entity (e.g. `comfort`, `eco`,
+  `boost`).
 
 Every 30 minutes (and whenever one of the source entities changes) the
 integration walks backward from your arrival time through the forecast,
@@ -63,7 +65,10 @@ folder of your Home Assistant configuration directory and restart.
 ## Configuration
 
 Everything is configured in the UI: **Settings → Devices & services →
-Add integration → Vacation Heating**. Create one entry per room.
+Add integration → Vacation Heating**. Create one entry per room. Setup has
+two steps: first pick the entities, then the schedule, heat rates, and the
+action — the preset choices in the second step come from the climate
+entity you picked in the first.
 
 Heat rate entries are typed as `outdoor temperature: rate` chips (e.g.
 `-10: 0.2` means: at -10 °C outside, the room gains 0.2 °C per hour). They

@@ -5,13 +5,14 @@ from __future__ import annotations
 from typing import Any
 
 from homeassistant.config_entries import (
+    SOURCE_RECONFIGURE,
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
     OptionsFlowWithReload,
 )
 from homeassistant.const import CONF_NAME
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.selector import (
     EntitySelector,
     EntitySelectorConfig,
@@ -35,19 +36,16 @@ from .const import (
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
-    CONF_HVAC_MODE,
+    CONF_PRESET_MODE,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DEFAULT_ARRIVAL_TIME,
-    DEFAULT_HVAC_MODE,
     DEFAULT_TARGET_TEMPERATURE,
     DOMAIN,
 )
 from .heating_model import format_heat_rates, parse_heat_rates
 
-HVAC_MODES = ["heat", "auto", "heat_cool"]
-
-OPTIONS_SCHEMA = vol.Schema(
+ENTITY_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_CLIMATE_ENTITY): EntitySelector(
             EntitySelectorConfig(domain="climate")
@@ -58,45 +56,62 @@ OPTIONS_SCHEMA = vol.Schema(
         vol.Required(CONF_END_DATE_ENTITY): EntitySelector(
             EntitySelectorConfig(domain=["input_datetime", "date", "datetime"])
         ),
-        vol.Required(CONF_ARRIVAL_TIME, default=DEFAULT_ARRIVAL_TIME): TimeSelector(),
-        vol.Required(
-            CONF_TARGET_TEMPERATURE, default=DEFAULT_TARGET_TEMPERATURE
-        ): NumberSelector(
-            NumberSelectorConfig(
-                min=5,
-                max=35,
-                step=0.5,
-                unit_of_measurement="°C",
-                mode=NumberSelectorMode.BOX,
-            )
-        ),
-        vol.Required(CONF_HEAT_RATES): SelectSelector(
-            SelectSelectorConfig(options=[], multiple=True, custom_value=True)
-        ),
-        vol.Required(CONF_ACTION, default=ACTION_BOTH): SelectSelector(
-            SelectSelectorConfig(
-                options=ACTIONS,
-                translation_key="action",
-                mode=SelectSelectorMode.DROPDOWN,
-            )
-        ),
-        vol.Optional(CONF_HVAC_MODE, default=DEFAULT_HVAC_MODE): SelectSelector(
-            SelectSelectorConfig(
-                options=HVAC_MODES,
-                translation_key="hvac_mode",
-                mode=SelectSelectorMode.DROPDOWN,
-            )
-        ),
     }
 )
 
-CONFIG_SCHEMA = vol.Schema(
+NAMED_ENTITY_SCHEMA = vol.Schema(
     {vol.Required(CONF_NAME): TextSelector()}
-).extend(OPTIONS_SCHEMA.schema)
+).extend(ENTITY_SCHEMA.schema)
+
+
+def settings_schema(hass: HomeAssistant, climate_entity_id: str) -> vol.Schema:
+    """Build the settings form, with presets read from the climate entity.
+
+    The preset dropdown offers the entity's currently advertised presets;
+    custom values stay allowed so the flow also works while the entity is
+    unavailable.
+    """
+    presets: list[str] = []
+    if (state := hass.states.get(climate_entity_id)) is not None:
+        presets = [str(preset) for preset in state.attributes.get("preset_modes") or []]
+
+    return vol.Schema(
+        {
+            vol.Required(CONF_ARRIVAL_TIME, default=DEFAULT_ARRIVAL_TIME): TimeSelector(),
+            vol.Required(
+                CONF_TARGET_TEMPERATURE, default=DEFAULT_TARGET_TEMPERATURE
+            ): NumberSelector(
+                NumberSelectorConfig(
+                    min=5,
+                    max=35,
+                    step=0.5,
+                    unit_of_measurement="°C",
+                    mode=NumberSelectorMode.BOX,
+                )
+            ),
+            vol.Required(CONF_HEAT_RATES): SelectSelector(
+                SelectSelectorConfig(options=[], multiple=True, custom_value=True)
+            ),
+            vol.Required(CONF_ACTION, default=ACTION_BOTH): SelectSelector(
+                SelectSelectorConfig(
+                    options=ACTIONS,
+                    translation_key="action",
+                    mode=SelectSelectorMode.DROPDOWN,
+                )
+            ),
+            vol.Optional(CONF_PRESET_MODE): SelectSelector(
+                SelectSelectorConfig(
+                    options=presets,
+                    custom_value=True,
+                    mode=SelectSelectorMode.DROPDOWN,
+                )
+            ),
+        }
+    )
 
 
 def _validate_and_normalize(user_input: dict[str, Any]) -> dict[str, str]:
-    """Validate user input in place; return form errors.
+    """Validate settings input in place; return form errors.
 
     On success the heat rate list is replaced with its canonical sorted
     form so re-opened forms show the pairs in order.
@@ -109,9 +124,9 @@ def _validate_and_normalize(user_input: dict[str, Any]) -> dict[str, str]:
     else:
         user_input[CONF_HEAT_RATES] = format_heat_rates(rates)
     if user_input.get(CONF_ACTION) != ACTION_SET_TEMPERATURE and not user_input.get(
-        CONF_HVAC_MODE
+        CONF_PRESET_MODE
     ):
-        errors[CONF_HVAC_MODE] = "hvac_mode_required"
+        errors[CONF_PRESET_MODE] = "preset_mode_required"
     return errors
 
 
@@ -120,41 +135,66 @@ class VacationHeatingConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
+    def __init__(self) -> None:
+        """Initialize the flow."""
+        self._entity_input: dict[str, Any] = {}
+
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Create a new vacation heating entry."""
-        errors: dict[str, str] = {}
+        """First step: name and source entities."""
         if user_input is not None:
-            errors = _validate_and_normalize(user_input)
-            if not errors:
-                name = user_input.pop(CONF_NAME)
-                return self.async_create_entry(title=name, data={}, options=user_input)
+            self._entity_input = user_input
+            return await self.async_step_settings()
 
         return self.async_show_form(
             step_id="user",
-            data_schema=self.add_suggested_values_to_schema(CONFIG_SCHEMA, user_input),
-            errors=errors,
+            data_schema=self.add_suggested_values_to_schema(
+                NAMED_ENTITY_SCHEMA, user_input
+            ),
         )
 
     async def async_step_reconfigure(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Reconfigure an existing entry, including its name."""
+        """First reconfigure step: name and source entities, prefilled."""
         entry = self._get_reconfigure_entry()
+        if user_input is not None:
+            self._entity_input = user_input
+            return await self.async_step_settings()
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=self.add_suggested_values_to_schema(
+                NAMED_ENTITY_SCHEMA, {CONF_NAME: entry.title, **entry.options}
+            ),
+        )
+
+    async def async_step_settings(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Second step: schedule, heat rates, and the action to perform."""
         errors: dict[str, str] = {}
         if user_input is not None:
             errors = _validate_and_normalize(user_input)
             if not errors:
-                name = user_input.pop(CONF_NAME)
-                return self.async_update_reload_and_abort(
-                    entry, title=name, options=user_input
-                )
+                options = {**self._entity_input, **user_input}
+                name = options.pop(CONF_NAME)
+                if self.source == SOURCE_RECONFIGURE:
+                    return self.async_update_reload_and_abort(
+                        self._get_reconfigure_entry(), title=name, options=options
+                    )
+                return self.async_create_entry(title=name, data={}, options=options)
 
-        suggested = user_input or {CONF_NAME: entry.title, **entry.options}
+        suggested = user_input
+        if suggested is None and self.source == SOURCE_RECONFIGURE:
+            suggested = dict(self._get_reconfigure_entry().options)
         return self.async_show_form(
-            step_id="reconfigure",
-            data_schema=self.add_suggested_values_to_schema(CONFIG_SCHEMA, suggested),
+            step_id="settings",
+            data_schema=self.add_suggested_values_to_schema(
+                settings_schema(self.hass, self._entity_input[CONF_CLIMATE_ENTITY]),
+                suggested,
+            ),
             errors=errors,
         )
 
@@ -168,20 +208,42 @@ class VacationHeatingConfigFlow(ConfigFlow, domain=DOMAIN):
 class VacationHeatingOptionsFlow(OptionsFlowWithReload):
     """Allow changing every setting after setup."""
 
+    def __init__(self) -> None:
+        """Initialize the options flow."""
+        self._entity_input: dict[str, Any] = {}
+
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Manage the options."""
-        errors: dict[str, str] = {}
+        """First step: source entities."""
         if user_input is not None:
-            errors = _validate_and_normalize(user_input)
-            if not errors:
-                return self.async_create_entry(data=user_input)
+            self._entity_input = user_input
+            return await self.async_step_settings()
 
         return self.async_show_form(
             step_id="init",
             data_schema=self.add_suggested_values_to_schema(
-                OPTIONS_SCHEMA, user_input or self.config_entry.options
+                ENTITY_SCHEMA, self.config_entry.options
+            ),
+        )
+
+    async def async_step_settings(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Second step: schedule, heat rates, and the action to perform."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            errors = _validate_and_normalize(user_input)
+            if not errors:
+                return self.async_create_entry(
+                    data={**self._entity_input, **user_input}
+                )
+
+        return self.async_show_form(
+            step_id="settings",
+            data_schema=self.add_suggested_values_to_schema(
+                settings_schema(self.hass, self._entity_input[CONF_CLIMATE_ENTITY]),
+                user_input or self.config_entry.options,
             ),
             errors=errors,
         )

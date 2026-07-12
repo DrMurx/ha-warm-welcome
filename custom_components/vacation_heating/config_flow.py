@@ -74,17 +74,6 @@ def settings_schema(hass: HomeAssistant, climate_entity_id: str) -> vol.Schema:
 
     return vol.Schema(
         {
-            vol.Required(
-                CONF_TARGET_TEMPERATURE, default=DEFAULT_TARGET_TEMPERATURE
-            ): NumberSelector(
-                NumberSelectorConfig(
-                    min=5,
-                    max=35,
-                    step=0.5,
-                    unit_of_measurement="°C",
-                    mode=NumberSelectorMode.BOX,
-                )
-            ),
             vol.Required(CONF_HEAT_RATES): SelectSelector(
                 SelectSelectorConfig(options=[], multiple=True, custom_value=True)
             ),
@@ -100,6 +89,17 @@ def settings_schema(hass: HomeAssistant, climate_entity_id: str) -> vol.Schema:
                     options=presets,
                     custom_value=True,
                     mode=SelectSelectorMode.DROPDOWN,
+                )
+            ),
+            vol.Required(
+                CONF_TARGET_TEMPERATURE, default=DEFAULT_TARGET_TEMPERATURE
+            ): NumberSelector(
+                NumberSelectorConfig(
+                    min=5,
+                    max=35,
+                    step=0.5,
+                    unit_of_measurement="°C",
+                    mode=NumberSelectorMode.BOX,
                 )
             ),
         }

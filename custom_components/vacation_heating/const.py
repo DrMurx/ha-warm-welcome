@@ -1,0 +1,38 @@
+"""Constants for the Vacation Heating integration."""
+
+from datetime import timedelta
+
+DOMAIN = "vacation_heating"
+
+CONF_CLIMATE_ENTITY = "climate_entity"
+CONF_WEATHER_ENTITY = "weather_entity"
+CONF_END_DATE_ENTITY = "end_date_entity"
+CONF_ARRIVAL_TIME = "arrival_time"
+CONF_TARGET_TEMPERATURE = "target_temperature"
+CONF_HEAT_RATES = "heat_rates"
+CONF_ACTION = "action"
+CONF_HVAC_MODE = "hvac_mode"
+
+ACTION_SET_MODE = "set_mode"
+ACTION_SET_TEMPERATURE = "set_temperature"
+ACTION_BOTH = "both"
+ACTIONS = [ACTION_SET_MODE, ACTION_SET_TEMPERATURE, ACTION_BOTH]
+
+DEFAULT_ARRIVAL_TIME = "12:00:00"
+DEFAULT_TARGET_TEMPERATURE = 21.0
+DEFAULT_HVAC_MODE = "heat"
+
+UPDATE_INTERVAL = timedelta(minutes=30)
+
+# How far back from the arrival time we are willing to extrapolate before
+# giving up and starting the heating immediately.
+MAX_LOOKBACK = timedelta(days=14)
+
+STORAGE_VERSION = 1
+
+ATTR_PREHEAT_HOURS = "required_preheat_hours"
+ATTR_DEFICIT = "temperature_deficit"
+ATTR_BEYOND_FORECAST = "beyond_forecast"
+ATTR_FORECAST_TYPE = "forecast_type"
+ATTR_ARRIVAL = "arrival"
+ATTR_TRIGGERED_FOR = "triggered_for"

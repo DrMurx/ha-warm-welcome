@@ -11,7 +11,6 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.vacation_heating.config_flow import settings_schema
 from custom_components.vacation_heating.const import (
     CONF_ACTION,
-    CONF_ARRIVAL_TIME,
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
@@ -28,7 +27,6 @@ ENTITY_INPUT = {
 }
 
 SETTINGS_INPUT = {
-    CONF_ARRIVAL_TIME: "12:00:00",
     CONF_TARGET_TEMPERATURE: 21.0,
     CONF_HEAT_RATES: ["10: 0.7", "-10: 0.2"],
     CONF_ACTION: "both",

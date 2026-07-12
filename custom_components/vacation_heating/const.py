@@ -7,7 +7,6 @@ DOMAIN = "vacation_heating"
 CONF_CLIMATE_ENTITY = "climate_entity"
 CONF_WEATHER_ENTITY = "weather_entity"
 CONF_END_DATE_ENTITY = "end_date_entity"
-CONF_ARRIVAL_TIME = "arrival_time"
 CONF_TARGET_TEMPERATURE = "target_temperature"
 CONF_HEAT_RATES = "heat_rates"
 CONF_ACTION = "action"
@@ -18,7 +17,6 @@ ACTION_SET_TEMPERATURE = "set_temperature"
 ACTION_BOTH = "both"
 ACTIONS = [ACTION_SET_PRESET, ACTION_SET_TEMPERATURE, ACTION_BOTH]
 
-DEFAULT_ARRIVAL_TIME = "12:00:00"
 DEFAULT_TARGET_TEMPERATURE = 21.0
 
 UPDATE_INTERVAL = timedelta(minutes=30)

@@ -23,7 +23,6 @@ from homeassistant.helpers.selector import (
     SelectSelectorConfig,
     SelectSelectorMode,
     TextSelector,
-    TimeSelector,
 )
 import voluptuous as vol
 
@@ -32,14 +31,12 @@ from .const import (
     ACTION_SET_TEMPERATURE,
     ACTIONS,
     CONF_ACTION,
-    CONF_ARRIVAL_TIME,
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
     CONF_PRESET_MODE,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
-    DEFAULT_ARRIVAL_TIME,
     DEFAULT_TARGET_TEMPERATURE,
     DOMAIN,
 )
@@ -54,7 +51,7 @@ ENTITY_SCHEMA = vol.Schema(
             EntitySelectorConfig(domain="weather")
         ),
         vol.Required(CONF_END_DATE_ENTITY): EntitySelector(
-            EntitySelectorConfig(domain=["input_datetime", "date", "datetime"])
+            EntitySelectorConfig(domain=["input_datetime", "datetime"])
         ),
     }
 )
@@ -77,7 +74,6 @@ def settings_schema(hass: HomeAssistant, climate_entity_id: str) -> vol.Schema:
 
     return vol.Schema(
         {
-            vol.Required(CONF_ARRIVAL_TIME, default=DEFAULT_ARRIVAL_TIME): TimeSelector(),
             vol.Required(
                 CONF_TARGET_TEMPERATURE, default=DEFAULT_TARGET_TEMPERATURE
             ): NumberSelector(

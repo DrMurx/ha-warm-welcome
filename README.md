@@ -17,9 +17,8 @@ For each room you configure:
   temperature and receives the re-heat command),
 - a **weather entity** — provides the outdoor temperature forecast (hourly
   preferred, falls back to twice-daily/daily),
-- a **vacation end date entity** — an `input_datetime` (date-only or with
-  time), `date`, or `datetime` entity holding when you return,
-- an **arrival time** — used when the end date entity carries no time,
+- a **vacation end entity** — an `input_datetime` (with time enabled) or
+  `datetime` entity holding the date and time you return,
 - a **target temperature** — what the room should be when you arrive,
 - a **heat rate map** — how fast the room heats up (°C/hour) at specific
   outdoor temperatures, e.g. `-10: 0.2`, `0: 0.4`, `10: 0.7`. Rates between

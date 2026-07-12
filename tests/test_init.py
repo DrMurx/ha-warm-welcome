@@ -14,7 +14,6 @@ from pytest_homeassistant_custom_component.common import (
 
 from custom_components.vacation_heating.const import (
     CONF_ACTION,
-    CONF_ARRIVAL_TIME,
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
@@ -25,14 +24,13 @@ from custom_components.vacation_heating.const import (
 )
 
 NOW = datetime(2026, 7, 18, 10, 0, tzinfo=UTC)
-# Vacation ends 2026-07-20, arrival at 12:00 UTC (tests run in UTC).
+# Vacation ends 2026-07-20 at 12:00 UTC (tests run in UTC).
 ARRIVAL = datetime(2026, 7, 20, 12, 0, tzinfo=UTC)
 
 OPTIONS = {
     CONF_CLIMATE_ENTITY: "climate.living_room",
     CONF_WEATHER_ENTITY: "weather.home",
     CONF_END_DATE_ENTITY: "input_datetime.vacation_end",
-    CONF_ARRIVAL_TIME: "12:00:00",
     CONF_TARGET_TEMPERATURE: 21.0,
     # 0.5°C/h at 0°C outdoors; 6°C deficit -> 12 h pre-heat.
     CONF_HEAT_RATES: ["0: 0.5"],
@@ -81,7 +79,7 @@ async def setup_entry(hass: HomeAssistant) -> MockConfigEntry:
         {"current_temperature": 15.0, "preset_modes": ["eco", "comfort"]},
     )
     hass.states.async_set("weather.home", "sunny")
-    hass.states.async_set("input_datetime.vacation_end", "2026-07-20")
+    hass.states.async_set("input_datetime.vacation_end", "2026-07-20 12:00:00")
     entry = MockConfigEntry(
         domain=DOMAIN, title="Living Room", data={}, options=OPTIONS
     )
@@ -179,7 +177,7 @@ async def test_idle_when_end_date_in_past(hass, freezer, forecast_calls) -> None
     await hass.config.async_set_time_zone("UTC")
     hass.states.async_set("climate.living_room", "off", {"current_temperature": 15.0})
     hass.states.async_set("weather.home", "sunny")
-    hass.states.async_set("input_datetime.vacation_end", "2026-07-01")
+    hass.states.async_set("input_datetime.vacation_end", "2026-07-01 12:00:00")
     entry = MockConfigEntry(
         domain=DOMAIN, title="Living Room", data={}, options=OPTIONS
     )
@@ -196,7 +194,7 @@ async def test_refreshes_on_end_date_change(hass, freezer, forecast_calls) -> No
     freezer.move_to(NOW)
     await setup_entry(hass)
 
-    hass.states.async_set("input_datetime.vacation_end", "2026-07-21")
+    hass.states.async_set("input_datetime.vacation_end", "2026-07-21 12:00:00")
     # The coordinator debounces refresh requests; advance past the cooldown.
     freezer.tick(timedelta(seconds=15))
     async_fire_time_changed(hass)

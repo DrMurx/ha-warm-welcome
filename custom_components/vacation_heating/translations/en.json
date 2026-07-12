@@ -13,7 +13,7 @@
         "data_description": {
           "climate_entity": "The thermostat of the room to pre-heat.",
           "weather_entity": "Provides the outdoor temperature forecast.",
-          "end_date_entity": "Entity holding the date your vacation ends."
+          "end_date_entity": "Entity holding the date and time your vacation ends (your arrival). Must be an input_datetime with time enabled or a datetime entity."
         }
       },
       "reconfigure": {
@@ -23,19 +23,20 @@
           "climate_entity": "Climate entity",
           "weather_entity": "Weather entity",
           "end_date_entity": "Vacation end date entity"
+        },
+        "data_description": {
+          "end_date_entity": "Entity holding the date and time your vacation ends (your arrival). Must be an input_datetime with time enabled or a datetime entity."
         }
       },
       "settings": {
         "title": "Heating settings",
         "data": {
-          "arrival_time": "Arrival time",
           "target_temperature": "Target temperature",
           "heat_rates": "Heat rates",
           "action": "Action at heating start",
           "preset_mode": "Preset to set"
         },
         "data_description": {
-          "arrival_time": "Time of day you arrive home on the end date. Ignored if the end date entity already includes a time.",
           "target_temperature": "Room temperature to reach by the time you arrive.",
           "heat_rates": "One entry per point, formatted 'outdoor temperature: heating rate in °C per hour', e.g. '-10: 0.2'. Entries are sorted automatically; values in between are interpolated linearly.",
           "action": "What to do on the climate entity when the calculated start time is reached.",
@@ -59,12 +60,14 @@
           "climate_entity": "Climate entity",
           "weather_entity": "Weather entity",
           "end_date_entity": "Vacation end date entity"
+        },
+        "data_description": {
+          "end_date_entity": "Entity holding the date and time your vacation ends (your arrival). Must be an input_datetime with time enabled or a datetime entity."
         }
       },
       "settings": {
         "title": "Heating settings",
         "data": {
-          "arrival_time": "Arrival time",
           "target_temperature": "Target temperature",
           "heat_rates": "Heat rates",
           "action": "Action at heating start",

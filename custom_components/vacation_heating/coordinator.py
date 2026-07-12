@@ -18,14 +18,12 @@ from .const import (
     ACTION_SET_PRESET,
     ACTION_SET_TEMPERATURE,
     CONF_ACTION,
-    CONF_ARRIVAL_TIME,
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
     CONF_PRESET_MODE,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
-    DEFAULT_ARRIVAL_TIME,
     DOMAIN,
     MAX_LOOKBACK,
     STORAGE_VERSION,
@@ -110,28 +108,22 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
         return result
 
     def _compute_arrival(self) -> datetime | None:
-        """Arrival datetime from the end date entity plus the arrival time option."""
+        """Arrival datetime from the end date entity.
+
+        Naive values are interpreted in Home Assistant's local time zone;
+        date-only values (an input_datetime without time) fall back to
+        midnight.
+        """
         options = self.config_entry.options
         state = self.hass.states.get(options[CONF_END_DATE_ENTITY])
         if state is None or state.state in ("unknown", "unavailable"):
             return None
 
-        # Date-only states (input_datetime without time, date entities) are
-        # combined with the configured arrival time; states that already
-        # carry a time are used as-is.
-        if (end_date := dt_util.parse_date(state.state)) is not None:
-            arrival_time = dt_util.parse_time(
-                options.get(CONF_ARRIVAL_TIME, DEFAULT_ARRIVAL_TIME)
-            )
-            if arrival_time is None:
-                return None
-            return dt_util.as_utc(datetime.combine(end_date, arrival_time))
-
-        if (end_datetime := dt_util.parse_datetime(state.state)) is not None:
-            return dt_util.as_utc(end_datetime)
+        if (arrival := dt_util.parse_datetime(state.state)) is not None:
+            return dt_util.as_utc(arrival)
 
         _LOGGER.warning(
-            "Cannot parse state %r of %s as a date or datetime",
+            "Cannot parse state %r of %s as a datetime",
             state.state,
             options[CONF_END_DATE_ENTITY],
         )

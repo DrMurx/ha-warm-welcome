@@ -22,6 +22,7 @@ from .const import (
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
     CONF_PRESET_MODE,
+    CONF_PRESET_TEMPERATURES,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DOMAIN,
@@ -34,6 +35,7 @@ from .heating_model import (
     PredictionResult,
     compute_start,
     parse_heat_rates,
+    parse_preset_temperatures,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -60,6 +62,7 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
         )
         self.arrival: datetime | None = None
         self.forecast_type: str | None = None
+        self.forecast: list[ForecastPoint] = []
         self.triggered_for: str | None = None
         self._unsub_trigger: CALLBACK_TYPE | None = None
 
@@ -86,6 +89,7 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
         if arrival is None or arrival <= dt_util.utcnow():
             # No (future) vacation end configured: idle.
             self.cancel_trigger()
+            self.forecast = []
             return None
 
         current_temp = self._current_temperature()
@@ -99,13 +103,32 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
         result = compute_start(
             arrival,
             current_temp,
-            float(options[CONF_TARGET_TEMPERATURE]),
+            self._prediction_target(),
             forecast,
             rates,
             max_lookback=MAX_LOOKBACK,
         )
+        # Kept for charting; clipped to the prediction window.
+        self.forecast = [point for point in forecast if point.time <= arrival]
         self._schedule_trigger(result.start, arrival)
         return result
+
+    def _prediction_target(self) -> float:
+        """Temperature the room is expected to reach.
+
+        A preset-only action heats to the preset's own setpoint, which
+        cannot be read from the climate entity; use the configured preset
+        temperature map and fall back to the target temperature.
+        """
+        options = self.config_entry.options
+        if options[CONF_ACTION] == ACTION_SET_PRESET:
+            presets = parse_preset_temperatures(
+                options.get(CONF_PRESET_TEMPERATURES) or []
+            )
+            target = presets.get(options.get(CONF_PRESET_MODE, ""))
+            if target is not None:
+                return target
+        return float(options[CONF_TARGET_TEMPERATURE])
 
     def _compute_arrival(self) -> datetime | None:
         """Arrival datetime from the end date entity.

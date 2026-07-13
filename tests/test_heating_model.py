@@ -9,7 +9,9 @@ from custom_components.vacation_heating.heating_model import (
     ForecastPoint,
     compute_start,
     format_heat_rates,
+    format_preset_temperatures,
     parse_heat_rates,
+    parse_preset_temperatures,
     rate_at,
 )
 
@@ -55,6 +57,35 @@ class TestParseHeatRates:
         assert format_heat_rates(rates) == ["-10: 0.2", "10: 0.7"]
 
 
+class TestParsePresetTemperatures:
+    def test_parses(self):
+        presets = parse_preset_temperatures(["comfort: 21", " eco :17,5 "])
+        assert presets == {"comfort": 21.0, "eco": 17.5}
+
+    def test_empty_list_is_allowed(self):
+        assert parse_preset_temperatures([]) == {}
+
+    def test_rejects_missing_separator(self):
+        with pytest.raises(ValueError, match="missing"):
+            parse_preset_temperatures(["comfort 21"])
+
+    def test_rejects_empty_preset(self):
+        with pytest.raises(ValueError, match="missing"):
+            parse_preset_temperatures([": 21"])
+
+    def test_rejects_non_numeric_temperature(self):
+        with pytest.raises(ValueError, match="invalid number"):
+            parse_preset_temperatures(["comfort: warm"])
+
+    def test_rejects_duplicates(self):
+        with pytest.raises(ValueError, match="duplicate"):
+            parse_preset_temperatures(["eco: 17", "eco: 18"])
+
+    def test_format_round_trip(self):
+        presets = parse_preset_temperatures(["comfort:21,0", "eco: 17.5"])
+        assert format_preset_temperatures(presets) == ["comfort: 21", "eco: 17.5"]
+
+
 class TestRateAt:
     RATES: ClassVar = [(-10.0, 0.2), (0.0, 0.4), (10.0, 0.8)]
 
@@ -81,6 +112,7 @@ class TestComputeStart:
         assert result.start == ARRIVAL
         assert result.preheat_hours == 0.0
         assert not result.beyond_forecast
+        assert result.curve == [(ARRIVAL, 21.0)]
 
     def test_constant_temperature(self):
         # 2°C deficit at 0.4°C/h -> 5 hours of pre-heating.
@@ -90,6 +122,19 @@ class TestComputeStart:
         assert result.preheat_hours == pytest.approx(5.0)
         assert result.deficit == pytest.approx(2.0)
         assert not result.beyond_forecast
+
+    def test_curve_rises_from_start_to_arrival(self):
+        forecast = hourly_forecast(ARRIVAL - timedelta(hours=48), 120, 0.0)
+        result = compute_start(ARRIVAL, 19.0, 21.0, forecast, self.RATES)
+        assert result.curve[0] == (result.start, 19.0)
+        assert result.curve[-1] == (ARRIVAL, 21.0)
+        times = [when for when, _ in result.curve]
+        temps = [temperature for _, temperature in result.curve]
+        assert times == sorted(times)
+        assert temps == sorted(temps)
+        # One point per hourly forecast boundary within the 5-hour pre-heat.
+        assert ARRIVAL - timedelta(hours=2) in times
+        assert temps[times.index(ARRIVAL - timedelta(hours=2))] == pytest.approx(20.2)
 
     def test_varying_temperature(self):
         # Rates: 0.2 at -10°C, 0.4 at 0°C. Forecast: -10°C for the 2 hours

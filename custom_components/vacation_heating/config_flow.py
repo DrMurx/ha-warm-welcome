@@ -35,12 +35,18 @@ from .const import (
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
     CONF_PRESET_MODE,
+    CONF_PRESET_TEMPERATURES,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DEFAULT_TARGET_TEMPERATURE,
     DOMAIN,
 )
-from .heating_model import format_heat_rates, parse_heat_rates
+from .heating_model import (
+    format_heat_rates,
+    format_preset_temperatures,
+    parse_heat_rates,
+    parse_preset_temperatures,
+)
 
 ENTITY_SCHEMA = vol.Schema(
     {
@@ -91,6 +97,9 @@ def settings_schema(hass: HomeAssistant, climate_entity_id: str) -> vol.Schema:
                     mode=SelectSelectorMode.DROPDOWN,
                 )
             ),
+            vol.Optional(CONF_PRESET_TEMPERATURES): SelectSelector(
+                SelectSelectorConfig(options=[], multiple=True, custom_value=True)
+            ),
             vol.Required(
                 CONF_TARGET_TEMPERATURE, default=DEFAULT_TARGET_TEMPERATURE
             ): NumberSelector(
@@ -119,6 +128,14 @@ def _validate_and_normalize(user_input: dict[str, Any]) -> dict[str, str]:
         errors[CONF_HEAT_RATES] = "invalid_heat_rates"
     else:
         user_input[CONF_HEAT_RATES] = format_heat_rates(rates)
+    try:
+        presets = parse_preset_temperatures(
+            user_input.get(CONF_PRESET_TEMPERATURES) or []
+        )
+    except ValueError:
+        errors[CONF_PRESET_TEMPERATURES] = "invalid_preset_temperatures"
+    else:
+        user_input[CONF_PRESET_TEMPERATURES] = format_preset_temperatures(presets)
     if user_input.get(CONF_ACTION) != ACTION_SET_TEMPERATURE and not user_input.get(
         CONF_PRESET_MODE
     ):

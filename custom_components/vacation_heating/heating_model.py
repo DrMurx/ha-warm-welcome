@@ -27,12 +27,18 @@ class ForecastPoint:
 
 @dataclass(frozen=True)
 class PredictionResult:
-    """Outcome of a pre-heat prediction."""
+    """Outcome of a pre-heat prediction.
+
+    ``curve`` is the predicted indoor temperature trajectory as
+    (time, temperature) points from the heating start to the arrival,
+    with a point at every heat-rate change.
+    """
 
     start: datetime
     preheat_hours: float
     deficit: float
     beyond_forecast: bool
+    curve: list[tuple[datetime, float]]
 
 
 def parse_heat_rate(entry: str) -> tuple[float, float]:
@@ -72,6 +78,43 @@ def parse_heat_rates(entries: list[str]) -> list[tuple[float, float]]:
 def format_heat_rates(pairs: list[tuple[float, float]]) -> list[str]:
     """Format sorted pairs back into canonical 'temp: rate' strings."""
     return [f"{temp:g}: {rate:g}" for temp, rate in pairs]
+
+
+def parse_preset_temperature(entry: str) -> tuple[str, float]:
+    """Parse a single 'preset: temperature' pair.
+
+    Raises ValueError if the entry is malformed.
+    """
+    preset, sep, temp_str = entry.partition(":")
+    preset = preset.strip()
+    if not sep or not preset:
+        raise ValueError(f"missing 'preset:' in preset temperature entry {entry!r}")
+    try:
+        temperature = float(temp_str.strip().replace(",", "."))
+    except ValueError as err:
+        raise ValueError(
+            f"invalid number in preset temperature entry {entry!r}"
+        ) from err
+    return preset, temperature
+
+
+def parse_preset_temperatures(entries: list[str]) -> dict[str, float]:
+    """Parse a list of 'preset: temperature' pairs; an empty list is allowed.
+
+    Raises ValueError on malformed entries or duplicate presets.
+    """
+    presets: dict[str, float] = {}
+    for entry in entries:
+        preset, temperature = parse_preset_temperature(entry)
+        if preset in presets:
+            raise ValueError(f"duplicate preset in entry {entry!r}")
+        presets[preset] = temperature
+    return presets
+
+
+def format_preset_temperatures(presets: dict[str, float]) -> list[str]:
+    """Format a preset map back into canonical 'preset: temperature' strings."""
+    return [f"{preset}: {temperature:g}" for preset, temperature in presets.items()]
 
 
 def rate_at(rates: list[tuple[float, float]], outdoor_temp: float) -> float:
@@ -141,12 +184,22 @@ def compute_start(
     """
     deficit = target_temp - current_temp
     if deficit <= 0 or not forecast:
-        return PredictionResult(arrival, 0.0, max(deficit, 0.0), not forecast and deficit > 0)
+        temperature = target_temp if deficit > 0 else current_temp
+        return PredictionResult(
+            arrival,
+            0.0,
+            max(deficit, 0.0),
+            not forecast and deficit > 0,
+            [(arrival, temperature)],
+        )
 
     points = sorted(forecast, key=lambda p: p.time)
     moment = arrival
     remaining = deficit
     beyond = False
+    # Built backward from the arrival; the room is current_temp + remaining
+    # at each interval boundary.
+    curve = [(arrival, target_temp)]
 
     while remaining > 0:
         if arrival - moment >= max_lookback:
@@ -163,6 +216,8 @@ def compute_start(
         else:
             remaining -= gain
             moment = interval_start
+        curve.append((moment, current_temp + remaining))
 
+    curve.reverse()
     preheat_hours = (arrival - moment).total_seconds() / 3600
-    return PredictionResult(moment, preheat_hours, deficit, beyond)
+    return PredictionResult(moment, preheat_hours, deficit, beyond, curve)

@@ -15,6 +15,7 @@ from custom_components.vacation_heating.const import (
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
     CONF_PRESET_MODE,
+    CONF_PRESET_TEMPERATURES,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DOMAIN,
@@ -31,6 +32,7 @@ SETTINGS_INPUT = {
     CONF_HEAT_RATES: ["10: 0.7", "-10: 0.2"],
     CONF_ACTION: "both",
     CONF_PRESET_MODE: "comfort",
+    CONF_PRESET_TEMPERATURES: ["comfort:21,0", "eco: 17.5"],
 }
 
 VALID_OPTIONS = {**ENTITY_INPUT, **SETTINGS_INPUT}
@@ -73,6 +75,7 @@ async def test_user_flow_creates_entry(hass: HomeAssistant) -> None:
     assert result["data"] == {}
     assert result["options"][CONF_HEAT_RATES] == ["-10: 0.2", "10: 0.7"]
     assert result["options"][CONF_PRESET_MODE] == "comfort"
+    assert result["options"][CONF_PRESET_TEMPERATURES] == ["comfort: 21", "eco: 17.5"]
     assert CONF_NAME not in result["options"]
 
 
@@ -105,6 +108,22 @@ async def test_user_flow_rejects_invalid_heat_rates(hass: HomeAssistant) -> None
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "settings"
     assert result["errors"] == {CONF_HEAT_RATES: "invalid_heat_rates"}
+
+
+async def test_user_flow_rejects_invalid_preset_temperatures(hass: HomeAssistant) -> None:
+    """Malformed preset temperature pairs keep the settings form open."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": SOURCE_USER}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_NAME: "Living Room", **ENTITY_INPUT}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {**SETTINGS_INPUT, CONF_PRESET_TEMPERATURES: ["comfort"]}
+    )
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "settings"
+    assert result["errors"] == {CONF_PRESET_TEMPERATURES: "invalid_preset_temperatures"}
 
 
 async def test_user_flow_requires_preset_for_preset_actions(hass: HomeAssistant) -> None:

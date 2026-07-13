@@ -15,6 +15,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import dt as dt_util
 
 from . import VacationHeatingConfigEntry
 from .const import (
@@ -22,11 +23,31 @@ from .const import (
     ATTR_BEYOND_FORECAST,
     ATTR_DEFICIT,
     ATTR_FORECAST_TYPE,
+    ATTR_OUTDOOR_FORECAST,
+    ATTR_PREDICTED_TEMPERATURES,
     ATTR_PREHEAT_HOURS,
     ATTR_TRIGGERED_FOR,
     DOMAIN,
 )
 from .coordinator import VacationHeatingCoordinator
+
+
+def _predicted_temperatures(
+    curve: list[tuple[datetime, float]],
+) -> list[dict[str, Any]]:
+    """Serialize the indoor trajectory, extended flat back to now.
+
+    The room holds its current temperature until the heating starts; the
+    extra leading point lets charts draw that plateau.
+    """
+    points = list(curve)
+    now = dt_util.utcnow()
+    if points and now < points[0][0]:
+        points.insert(0, (now, points[0][1]))
+    return [
+        {"datetime": when.isoformat(), "temperature": round(temperature, 2)}
+        for when, temperature in points
+    ]
 
 
 async def async_setup_entry(
@@ -68,6 +89,12 @@ class VacationHeatingSensor(
 class HeatingStartSensor(VacationHeatingSensor):
     """When the heating must be turned on."""
 
+    # The chart series would bloat the recorder database; cards read the
+    # live state, so history is not needed.
+    _unrecorded_attributes = frozenset(
+        {ATTR_PREDICTED_TEMPERATURES, ATTR_OUTDOOR_FORECAST}
+    )
+
     def __init__(
         self,
         coordinator: VacationHeatingCoordinator,
@@ -104,6 +131,14 @@ class HeatingStartSensor(VacationHeatingSensor):
                     ATTR_BEYOND_FORECAST: data.beyond_forecast,
                     ATTR_FORECAST_TYPE: coordinator.forecast_type,
                     ATTR_ARRIVAL: coordinator.arrival,
+                    ATTR_PREDICTED_TEMPERATURES: _predicted_temperatures(data.curve),
+                    ATTR_OUTDOOR_FORECAST: [
+                        {
+                            "datetime": point.time.isoformat(),
+                            "temperature": round(point.temperature, 2),
+                        }
+                        for point in coordinator.forecast
+                    ],
                 }
             )
         return attrs

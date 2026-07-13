@@ -26,7 +26,13 @@ For each room you configure:
 - an **action** — whether to set a preset, a temperature, or both when the
   calculated start time is reached. The preset dropdown offers the presets
   advertised by the selected climate entity (e.g. `comfort`, `eco`,
-  `boost`).
+  `boost`),
+- optional **preset temperatures** — the temperature each preset heats to,
+  e.g. `comfort: 21`, `eco: 17`. Presets switch the thermostat to a setpoint
+  configured inside the climate device, which this integration cannot read;
+  with a preset-only action the prediction targets the mapped temperature
+  of the selected preset (falling back to the target temperature if the
+  preset is not mapped).
 
 Every 30 minutes (and whenever one of the source entities changes) the
 integration walks backward from your arrival time through the forecast,
@@ -37,7 +43,7 @@ temperature is covered. That point in time is the heating start:
 - `sensor.<name>_heating_start` — timestamp of the computed start (with
   diagnostic attributes: required pre-heat hours, temperature deficit,
   forecast type used, whether the prediction had to extrapolate beyond the
-  forecast),
+  forecast, plus the chart series described below),
 - `sensor.<name>_required_preheat` — required pre-heat duration in hours.
 
 When the start moment arrives (and the end date is still in the future),
@@ -75,6 +81,57 @@ are validated and sorted automatically.
 
 All settings can be changed later via the entry's **Configure** (options)
 or **Reconfigure** menu — including the room name.
+
+## Charting the prediction
+
+The `heating_start` sensor exposes two attributes made for charting:
+
+- `predicted_temperatures` — the predicted room temperature as
+  `{datetime, temperature}` points: flat at the current temperature from
+  now until the heating start, then rising to the target at arrival (with
+  a point at every heat-rate change),
+- `outdoor_forecast` — the outdoor forecast used for the prediction,
+  clipped to the arrival time.
+
+Both attributes are excluded from the recorder (no database growth); they
+always reflect the latest prediction, which is recomputed every 30 minutes
+and immediately after any source entity or option changes.
+
+With the [ApexCharts card](https://github.com/RomRider/apexcharts-card)
+(available via HACS) you can plot the timeline of several rooms in one
+chart — the point where a room's line starts rising is its heating start:
+
+```yaml
+type: custom:apexcharts-card
+header:
+  show: true
+  title: Vacation re-heat
+graph_span: 8d
+span:
+  start: hour
+series:
+  - entity: sensor.living_room_heating_start
+    name: Living room
+    data_generator: |
+      return (entity.attributes.predicted_temperatures || [])
+        .map((p) => [new Date(p.datetime), p.temperature]);
+  - entity: sensor.bedroom_heating_start
+    name: Bedroom
+    data_generator: |
+      return (entity.attributes.predicted_temperatures || [])
+        .map((p) => [new Date(p.datetime), p.temperature]);
+  - entity: sensor.living_room_heating_start
+    name: Outside
+    type: area
+    opacity: 0.2
+    data_generator: |
+      return (entity.attributes.outdoor_forecast || [])
+        .map((p) => [new Date(p.datetime), p.temperature]);
+```
+
+Adjust `graph_span` to cover your longest expected pre-heat plus the time
+until arrival. While no vacation end is set, the sensors are `unknown` and
+the series are empty.
 
 ### Determining your heat rates
 

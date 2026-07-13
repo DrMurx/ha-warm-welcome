@@ -18,6 +18,7 @@ from custom_components.vacation_heating.const import (
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
     CONF_PRESET_MODE,
+    CONF_PRESET_TEMPERATURES,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DOMAIN,
@@ -71,7 +72,7 @@ async def forecast_calls(hass: HomeAssistant) -> list[ServiceCall]:
     return calls
 
 
-async def setup_entry(hass: HomeAssistant) -> MockConfigEntry:
+async def setup_entry(hass: HomeAssistant, options: dict | None = None) -> MockConfigEntry:
     await hass.config.async_set_time_zone("UTC")
     hass.states.async_set(
         "climate.living_room",
@@ -81,7 +82,7 @@ async def setup_entry(hass: HomeAssistant) -> MockConfigEntry:
     hass.states.async_set("weather.home", "sunny")
     hass.states.async_set("input_datetime.vacation_end", "2026-07-20 12:00:00")
     entry = MockConfigEntry(
-        domain=DOMAIN, title="Living Room", data={}, options=OPTIONS
+        domain=DOMAIN, title="Living Room", data={}, options=options or OPTIONS
     )
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
@@ -105,6 +106,46 @@ async def test_sensors_expose_prediction(hass, freezer, forecast_calls) -> None:
     preheat = hass.states.get("sensor.living_room_required_pre_heat_time")
     assert preheat is not None
     assert float(preheat.state) == 12.0
+
+
+async def test_chart_attributes(hass, freezer, forecast_calls) -> None:
+    """The start sensor carries the indoor trajectory and the clipped forecast."""
+    freezer.move_to(NOW)
+    await setup_entry(hass)
+
+    state = hass.states.get("sensor.living_room_heating_start")
+    curve = state.attributes["predicted_temperatures"]
+    # Flat from now at the current temperature, target reached at arrival.
+    assert curve[0] == {"datetime": NOW.isoformat(), "temperature": 15.0}
+    assert curve[1] == {"datetime": EXPECTED_START.isoformat(), "temperature": 15.0}
+    assert curve[-1] == {"datetime": ARRIVAL.isoformat(), "temperature": 21.0}
+    temperatures = [point["temperature"] for point in curve]
+    assert temperatures == sorted(temperatures)
+
+    outdoor = state.attributes["outdoor_forecast"]
+    assert outdoor[0] == {"datetime": NOW.isoformat(), "temperature": 0.0}
+    # Clipped to the arrival; the mock forecast extends days beyond it.
+    assert outdoor[-1]["datetime"] == ARRIVAL.isoformat()
+
+
+async def test_preset_only_action_targets_preset_temperature(
+    hass, freezer, forecast_calls
+) -> None:
+    """With a preset-only action the mapped preset temperature drives the prediction."""
+    freezer.move_to(NOW)
+    await setup_entry(
+        hass,
+        {
+            **OPTIONS,
+            CONF_ACTION: "set_preset",
+            CONF_PRESET_TEMPERATURES: ["comfort: 18", "eco: 16"],
+        },
+    )
+
+    # Deficit 18 - 15 = 3°C at 0.5°C/h -> 6 h instead of 12 h.
+    state = hass.states.get("sensor.living_room_heating_start")
+    assert dt_util.parse_datetime(state.state) == ARRIVAL - timedelta(hours=6)
+    assert state.attributes["temperature_deficit"] == 3.0
 
 
 async def test_trigger_fires_configured_action_once(hass, freezer, forecast_calls) -> None:

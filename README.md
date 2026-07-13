@@ -11,14 +11,17 @@ automation); this integration handles the predictive re-heat.
 
 ## How it works
 
-For each room you configure:
+The integration is set up once with the entities shared by all rooms:
 
-- a **climate entity** — the room's thermostat (provides the current room
-  temperature and receives the re-heat command),
 - a **weather entity** — provides the outdoor temperature forecast (hourly
   preferred, falls back to twice-daily/daily),
 - a **vacation end entity** — an `input_datetime` (with time enabled) or
-  `datetime` entity holding the date and time you return,
+  `datetime` entity holding the date and time you return.
+
+Then you add each **room** to it, configuring:
+
+- a **climate entity** — the room's thermostat (provides the current room
+  temperature and receives the re-heat command),
 - a **target temperature** — what the room should be when you arrive,
 - a **heat rate map** — how fast the room heats up (°C/hour) at specific
   outdoor temperatures, e.g. `-10: 0.2`, `0: 0.4`, `10: 0.7`. Rates between
@@ -35,7 +38,7 @@ For each room you configure:
   preset is not mapped).
 
 Every 30 minutes (and whenever one of the source entities changes) the
-integration walks backward from your arrival time through the forecast,
+integration walks backward per room from your arrival time through the forecast,
 accumulating the degrees the room gains per hour at the forecasted outdoor
 temperature, until the gap between the current and the target room
 temperature is covered. That point in time is the heating start:
@@ -56,6 +59,8 @@ the sensors show `unknown`.
 
 ## Installation
 
+Requires Home Assistant 2025.7 or newer.
+
 ### HACS (recommended)
 
 1. In HACS, add this repository as a **custom repository** of type
@@ -70,8 +75,10 @@ folder of your Home Assistant configuration directory and restart.
 ## Configuration
 
 Everything is configured in the UI: **Settings → Devices & services →
-Add integration → Vacation Heating**. Create one entry per room. Setup has
-two steps: first pick the entities, then the schedule, heat rates, and the
+Add integration → Vacation Heating**. The integration is added once,
+asking for the shared weather and vacation end entities. Then add each
+room via **Add room** on the integration's page. Adding a room has two
+steps: first the name and climate entity, then the heat rates and the
 action — the preset choices in the second step come from the climate
 entity you picked in the first.
 
@@ -79,8 +86,9 @@ Heat rate entries are typed as `outdoor temperature: rate` chips (e.g.
 `-10: 0.2` means: at -10 °C outside, the room gains 0.2 °C per hour). They
 are validated and sorted automatically.
 
-All settings can be changed later via the entry's **Configure** (options)
-or **Reconfigure** menu — including the room name.
+Everything can be changed later: the shared entities via the entry's
+**Configure** menu, each room (including its name) via the room's
+**Reconfigure** menu.
 
 ## Charting the prediction
 

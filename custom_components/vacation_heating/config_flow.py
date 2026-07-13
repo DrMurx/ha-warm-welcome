@@ -9,7 +9,9 @@ from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
     ConfigFlowResult,
-    OptionsFlowWithReload,
+    ConfigSubentryFlow,
+    OptionsFlow,
+    SubentryFlowResult,
 )
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant, callback
@@ -40,6 +42,7 @@ from .const import (
     CONF_WEATHER_ENTITY,
     DEFAULT_TARGET_TEMPERATURE,
     DOMAIN,
+    SUBENTRY_TYPE_ROOM,
 )
 from .heating_model import (
     format_heat_rates,
@@ -48,11 +51,8 @@ from .heating_model import (
     parse_preset_temperatures,
 )
 
-ENTITY_SCHEMA = vol.Schema(
+SHARED_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_CLIMATE_ENTITY): EntitySelector(
-            EntitySelectorConfig(domain="climate")
-        ),
         vol.Required(CONF_WEATHER_ENTITY): EntitySelector(
             EntitySelectorConfig(domain="weather")
         ),
@@ -62,9 +62,14 @@ ENTITY_SCHEMA = vol.Schema(
     }
 )
 
-NAMED_ENTITY_SCHEMA = vol.Schema(
-    {vol.Required(CONF_NAME): TextSelector()}
-).extend(ENTITY_SCHEMA.schema)
+ROOM_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_NAME): TextSelector(),
+        vol.Required(CONF_CLIMATE_ENTITY): EntitySelector(
+            EntitySelectorConfig(domain="climate")
+        ),
+    }
+)
 
 
 def settings_schema(hass: HomeAssistant, climate_entity_id: str) -> vol.Schema:
@@ -144,72 +149,20 @@ def _validate_and_normalize(user_input: dict[str, Any]) -> dict[str, str]:
 
 
 class VacationHeatingConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Handle the initial and reconfigure flows."""
+    """Handle the initial setup: the entities shared by all rooms."""
 
     VERSION = 1
-
-    def __init__(self) -> None:
-        """Initialize the flow."""
-        self._entity_input: dict[str, Any] = {}
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """First step: name and source entities."""
+        """Pick the shared weather and vacation end entities."""
         if user_input is not None:
-            self._entity_input = user_input
-            return await self.async_step_settings()
+            return self.async_create_entry(
+                title="Vacation Heating", data={}, options=user_input
+            )
 
-        return self.async_show_form(
-            step_id="user",
-            data_schema=self.add_suggested_values_to_schema(
-                NAMED_ENTITY_SCHEMA, user_input
-            ),
-        )
-
-    async def async_step_reconfigure(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """First reconfigure step: name and source entities, prefilled."""
-        entry = self._get_reconfigure_entry()
-        if user_input is not None:
-            self._entity_input = user_input
-            return await self.async_step_settings()
-
-        return self.async_show_form(
-            step_id="reconfigure",
-            data_schema=self.add_suggested_values_to_schema(
-                NAMED_ENTITY_SCHEMA, {CONF_NAME: entry.title, **entry.options}
-            ),
-        )
-
-    async def async_step_settings(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Second step: schedule, heat rates, and the action to perform."""
-        errors: dict[str, str] = {}
-        if user_input is not None:
-            errors = _validate_and_normalize(user_input)
-            if not errors:
-                options = {**self._entity_input, **user_input}
-                name = options.pop(CONF_NAME)
-                if self.source == SOURCE_RECONFIGURE:
-                    return self.async_update_reload_and_abort(
-                        self._get_reconfigure_entry(), title=name, options=options
-                    )
-                return self.async_create_entry(title=name, data={}, options=options)
-
-        suggested = user_input
-        if suggested is None and self.source == SOURCE_RECONFIGURE:
-            suggested = dict(self._get_reconfigure_entry().options)
-        return self.async_show_form(
-            step_id="settings",
-            data_schema=self.add_suggested_values_to_schema(
-                settings_schema(self.hass, self._entity_input[CONF_CLIMATE_ENTITY]),
-                suggested,
-            ),
-            errors=errors,
-        )
+        return self.async_show_form(step_id="user", data_schema=SHARED_SCHEMA)
 
     @staticmethod
     @callback
@@ -217,46 +170,97 @@ class VacationHeatingConfigFlow(ConfigFlow, domain=DOMAIN):
         """Return the options flow handler."""
         return VacationHeatingOptionsFlow()
 
+    @classmethod
+    @callback
+    def async_get_supported_subentry_types(
+        cls, config_entry: ConfigEntry
+    ) -> dict[str, type[ConfigSubentryFlow]]:
+        """Rooms are managed as subentries."""
+        return {SUBENTRY_TYPE_ROOM: RoomSubentryFlow}
 
-class VacationHeatingOptionsFlow(OptionsFlowWithReload):
-    """Allow changing every setting after setup."""
 
-    def __init__(self) -> None:
-        """Initialize the options flow."""
-        self._entity_input: dict[str, Any] = {}
+class VacationHeatingOptionsFlow(OptionsFlow):
+    """Allow changing the shared entities after setup.
+
+    A plain options flow: the entry's update listener performs the reload
+    (it must exist anyway to apply subentry changes).
+    """
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """First step: source entities."""
+        """Edit the shared entities."""
         if user_input is not None:
-            self._entity_input = user_input
-            return await self.async_step_settings()
+            return self.async_create_entry(data=user_input)
 
         return self.async_show_form(
             step_id="init",
             data_schema=self.add_suggested_values_to_schema(
-                ENTITY_SCHEMA, self.config_entry.options
+                SHARED_SCHEMA, self.config_entry.options
+            ),
+        )
+
+
+class RoomSubentryFlow(ConfigSubentryFlow):
+    """Add or reconfigure a room."""
+
+    def __init__(self) -> None:
+        """Initialize the flow."""
+        self._room_input: dict[str, Any] = {}
+
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """First step: room name and climate entity."""
+        if user_input is not None:
+            self._room_input = user_input
+            return await self.async_step_settings()
+
+        return self.async_show_form(step_id="user", data_schema=ROOM_SCHEMA)
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> SubentryFlowResult:
+        """First reconfigure step: room name and climate entity, prefilled."""
+        subentry = self._get_reconfigure_subentry()
+        if user_input is not None:
+            self._room_input = user_input
+            return await self.async_step_settings()
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=self.add_suggested_values_to_schema(
+                ROOM_SCHEMA, {CONF_NAME: subentry.title, **subentry.data}
             ),
         )
 
     async def async_step_settings(
         self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Second step: schedule, heat rates, and the action to perform."""
+    ) -> SubentryFlowResult:
+        """Second step: heat rates and the action to perform."""
         errors: dict[str, str] = {}
         if user_input is not None:
             errors = _validate_and_normalize(user_input)
             if not errors:
-                return self.async_create_entry(
-                    data={**self._entity_input, **user_input}
-                )
+                data = {**self._room_input, **user_input}
+                name = data.pop(CONF_NAME)
+                if self.source == SOURCE_RECONFIGURE:
+                    return self.async_update_and_abort(
+                        self._get_entry(),
+                        self._get_reconfigure_subentry(),
+                        title=name,
+                        data=data,
+                    )
+                return self.async_create_entry(title=name, data=data)
 
+        suggested = user_input
+        if suggested is None and self.source == SOURCE_RECONFIGURE:
+            suggested = dict(self._get_reconfigure_subentry().data)
         return self.async_show_form(
             step_id="settings",
             data_schema=self.add_suggested_values_to_schema(
-                settings_schema(self.hass, self._entity_input[CONF_CLIMATE_ENTITY]),
-                user_input or self.config_entry.options,
+                settings_schema(self.hass, self._room_input[CONF_CLIMATE_ENTITY]),
+                suggested,
             ),
             errors=errors,
         )

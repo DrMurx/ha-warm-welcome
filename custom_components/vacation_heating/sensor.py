@@ -13,7 +13,7 @@ from homeassistant.components.sensor import (
 from homeassistant.const import EntityCategory, UnitOfTime
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
@@ -53,13 +53,14 @@ def _predicted_temperatures(
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: VacationHeatingConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Set up the sensors for a config entry."""
-    coordinator = entry.runtime_data
-    async_add_entities(
-        [HeatingStartSensor(coordinator, entry), RequiredPreheatSensor(coordinator, entry)]
-    )
+    """Set up the sensors of every room subentry."""
+    for subentry_id, coordinator in entry.runtime_data.items():
+        async_add_entities(
+            [HeatingStartSensor(coordinator), RequiredPreheatSensor(coordinator)],
+            config_subentry_id=subentry_id,
+        )
 
 
 class VacationHeatingSensor(
@@ -72,16 +73,16 @@ class VacationHeatingSensor(
     def __init__(
         self,
         coordinator: VacationHeatingCoordinator,
-        entry: VacationHeatingConfigEntry,
         description: SensorEntityDescription,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
+        subentry = coordinator.subentry
         self.entity_description = description
-        self._attr_unique_id = f"{entry.entry_id}_{description.key}"
+        self._attr_unique_id = f"{subentry.subentry_id}_{description.key}"
         self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, entry.entry_id)},
-            name=entry.title,
+            identifiers={(DOMAIN, subentry.subentry_id)},
+            name=subentry.title,
             entry_type=DeviceEntryType.SERVICE,
         )
 
@@ -95,15 +96,10 @@ class HeatingStartSensor(VacationHeatingSensor):
         {ATTR_PREDICTED_TEMPERATURES, ATTR_OUTDOOR_FORECAST}
     )
 
-    def __init__(
-        self,
-        coordinator: VacationHeatingCoordinator,
-        entry: VacationHeatingConfigEntry,
-    ) -> None:
+    def __init__(self, coordinator: VacationHeatingCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(
             coordinator,
-            entry,
             SensorEntityDescription(
                 key="heating_start",
                 translation_key="heating_start",
@@ -147,15 +143,10 @@ class HeatingStartSensor(VacationHeatingSensor):
 class RequiredPreheatSensor(VacationHeatingSensor):
     """How long the room needs to reach the target temperature."""
 
-    def __init__(
-        self,
-        coordinator: VacationHeatingCoordinator,
-        entry: VacationHeatingConfigEntry,
-    ) -> None:
+    def __init__(self, coordinator: VacationHeatingCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(
             coordinator,
-            entry,
             SensorEntityDescription(
                 key="required_preheat",
                 translation_key="required_preheat",

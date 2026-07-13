@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import logging
 from typing import Any
 
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import ConfigEntry, ConfigSubentry
 from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.event import async_track_point_in_time
@@ -43,38 +43,46 @@ _LOGGER = logging.getLogger(__name__)
 FORECAST_TYPES = ("hourly", "twice_daily", "daily")
 
 
+def make_store(hass: HomeAssistant, entry: ConfigEntry) -> Store[dict[str, Any]]:
+    """The entry's store, holding the trigger guard of every room."""
+    return Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}")
+
+
 class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None]):
-    """Recompute the heating start time and fire the configured action."""
+    """Recompute one room's heating start time and fire the configured action."""
 
     config_entry: ConfigEntry
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
-        """Initialize the coordinator."""
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+        subentry: ConfigSubentry,
+        store: Store[dict[str, Any]],
+        triggered: dict[str, str],
+    ) -> None:
+        """Initialize the coordinator for one room subentry.
+
+        ``triggered`` is the shared trigger guard map (subentry id ->
+        arrival isoformat) persisted in ``store``.
+        """
         super().__init__(
             hass,
             _LOGGER,
             config_entry=entry,
-            name=f"{DOMAIN} {entry.title}",
+            name=f"{DOMAIN} {subentry.title}",
             update_interval=UPDATE_INTERVAL,
         )
-        self._store: Store[dict[str, Any]] = Store(
-            hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}"
-        )
+        self.subentry = subentry
+        # Shared entities from the entry, room settings from the subentry.
+        self.settings: dict[str, Any] = {**entry.options, **subentry.data}
+        self._store = store
+        self._triggered = triggered
         self.arrival: datetime | None = None
         self.forecast_type: str | None = None
         self.forecast: list[ForecastPoint] = []
-        self.triggered_for: str | None = None
+        self.triggered_for: str | None = triggered.get(subentry.subentry_id)
         self._unsub_trigger: CALLBACK_TYPE | None = None
-
-    async def async_restore(self) -> None:
-        """Restore the trigger guard so a restart does not re-fire the action."""
-        data = await self._store.async_load()
-        if data:
-            self.triggered_for = data.get("triggered_for")
-
-    async def async_remove_store(self) -> None:
-        """Delete persisted state when the entry is removed."""
-        await self._store.async_remove()
 
     @callback
     def cancel_trigger(self) -> None:
@@ -84,7 +92,7 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
             self._unsub_trigger = None
 
     async def _async_update_data(self) -> PredictionResult | None:
-        options = self.config_entry.options
+        options = self.settings
         self.arrival = arrival = self._compute_arrival()
         if arrival is None or arrival <= dt_util.utcnow():
             # No (future) vacation end configured: idle.
@@ -120,7 +128,7 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
         cannot be read from the climate entity; use the configured preset
         temperature map and fall back to the target temperature.
         """
-        options = self.config_entry.options
+        options = self.settings
         if options[CONF_ACTION] == ACTION_SET_PRESET:
             presets = parse_preset_temperatures(
                 options.get(CONF_PRESET_TEMPERATURES) or []
@@ -137,7 +145,7 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
         date-only values (an input_datetime without time) fall back to
         midnight.
         """
-        options = self.config_entry.options
+        options = self.settings
         state = self.hass.states.get(options[CONF_END_DATE_ENTITY])
         if state is None or state.state in ("unknown", "unavailable"):
             return None
@@ -153,7 +161,7 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
         return None
 
     def _current_temperature(self) -> float | None:
-        state = self.hass.states.get(self.config_entry.options[CONF_CLIMATE_ENTITY])
+        state = self.hass.states.get(self.settings[CONF_CLIMATE_ENTITY])
         if state is None or state.state in ("unknown", "unavailable"):
             return None
         current = state.attributes.get("current_temperature")
@@ -163,7 +171,7 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
 
     async def _async_get_forecast(self) -> list[ForecastPoint]:
         """Fetch the forecast, preferring hourly resolution."""
-        entity_id = self.config_entry.options[CONF_WEATHER_ENTITY]
+        entity_id = self.settings[CONF_WEATHER_ENTITY]
         for forecast_type in FORECAST_TYPES:
             try:
                 response = await self.hass.services.async_call(
@@ -221,7 +229,7 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
         ):
             return
 
-        options = self.config_entry.options
+        options = self.settings
         entity_id = options[CONF_CLIMATE_ENTITY]
         action = options[CONF_ACTION]
         _LOGGER.info(
@@ -256,5 +264,6 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
             return
 
         self.triggered_for = arrival.isoformat()
-        await self._store.async_save({"triggered_for": self.triggered_for})
+        self._triggered[self.subentry.subentry_id] = self.triggered_for
+        await self._store.async_save({"triggered_for": self._triggered})
         self.async_update_listeners()

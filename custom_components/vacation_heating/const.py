@@ -4,6 +4,8 @@ from datetime import timedelta
 
 DOMAIN = "vacation_heating"
 
+SUBENTRY_TYPE_ROOM = "room"
+
 CONF_CLIMATE_ENTITY = "climate_entity"
 CONF_WEATHER_ENTITY = "weather_entity"
 CONF_END_DATE_ENTITY = "end_date_entity"

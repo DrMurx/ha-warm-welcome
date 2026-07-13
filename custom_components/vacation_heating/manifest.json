@@ -3,11 +3,15 @@
   "name": "Vacation Heating",
   "codeowners": [],
   "config_flow": true,
-  "dependencies": ["climate", "weather"],
+  "dependencies": [
+    "climate",
+    "weather"
+  ],
   "documentation": "https://github.com/YOUR_GITHUB_USERNAME/ha-vacation-heating",
   "integration_type": "service",
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/YOUR_GITHUB_USERNAME/ha-vacation-heating/issues",
   "requirements": [],
+  "single_config_entry": true,
   "version": "0.1.0"
 }

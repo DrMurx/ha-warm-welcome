@@ -3,56 +3,16 @@
     "step": {
       "user": {
         "title": "Vacation Heating",
-        "description": "Predicts when your floor heating must start so the room is warm when you return from vacation.",
+        "description": "Predicts when your floor heating must start so each room is warm when you return from vacation. Pick the entities shared by all rooms; afterwards, add each room via 'Add room' on the integration page.",
         "data": {
-          "name": "Name",
-          "climate_entity": "Climate entity",
           "weather_entity": "Weather entity",
           "end_date_entity": "Vacation end date entity"
         },
         "data_description": {
-          "climate_entity": "The thermostat of the room to pre-heat.",
           "weather_entity": "Provides the outdoor temperature forecast.",
           "end_date_entity": "Entity holding the date and time your vacation ends (your arrival). Must be an input_datetime with time enabled or a datetime entity."
         }
-      },
-      "reconfigure": {
-        "title": "Reconfigure Vacation Heating",
-        "data": {
-          "name": "Name",
-          "climate_entity": "Climate entity",
-          "weather_entity": "Weather entity",
-          "end_date_entity": "Vacation end date entity"
-        },
-        "data_description": {
-          "end_date_entity": "Entity holding the date and time your vacation ends (your arrival). Must be an input_datetime with time enabled or a datetime entity."
-        }
-      },
-      "settings": {
-        "title": "Heating settings",
-        "data": {
-          "heat_rates": "Heat rates",
-          "action": "Action at heating start",
-          "preset_mode": "Preset to set",
-          "preset_temperatures": "Preset temperatures",
-          "target_temperature": "Target temperature"
-        },
-        "data_description": {
-          "heat_rates": "One entry per point, formatted 'outdoor temperature: heating rate in °C per hour', e.g. '-10: 0.2'. Entries are sorted automatically; values in between are interpolated linearly.",
-          "action": "What to do on the climate entity when the calculated start time is reached.",
-          "preset_mode": "The climate entity's presets are listed; only used when the action includes setting a preset.",
-          "preset_temperatures": "Optional. The temperature each preset heats to, formatted 'preset: temperature', e.g. 'comfort: 21'. With a preset-only action the prediction targets the selected preset's temperature instead of the target temperature.",
-          "target_temperature": "Room temperature to reach by the time you arrive."
-        }
       }
-    },
-    "error": {
-      "invalid_heat_rates": "Heat rates must be entered as 'outdoor temperature: rate' pairs with positive rates and no duplicate temperatures, e.g. '-10: 0.2'.",
-      "invalid_preset_temperatures": "Preset temperatures must be entered as 'preset: temperature' pairs without duplicate presets, e.g. 'comfort: 21'.",
-      "preset_mode_required": "Select a preset when the action includes setting a preset."
-    },
-    "abort": {
-      "reconfigure_successful": "Reconfiguration was successful."
     }
   },
   "options": {
@@ -60,34 +20,70 @@
       "init": {
         "title": "Vacation Heating options",
         "data": {
-          "climate_entity": "Climate entity",
           "weather_entity": "Weather entity",
           "end_date_entity": "Vacation end date entity"
         },
         "data_description": {
+          "weather_entity": "Provides the outdoor temperature forecast.",
           "end_date_entity": "Entity holding the date and time your vacation ends (your arrival). Must be an input_datetime with time enabled or a datetime entity."
         }
-      },
-      "settings": {
-        "title": "Heating settings",
-        "data": {
-          "heat_rates": "Heat rates",
-          "action": "Action at heating start",
-          "preset_mode": "Preset to set",
-          "preset_temperatures": "Preset temperatures",
-          "target_temperature": "Target temperature"
-        },
-        "data_description": {
-          "heat_rates": "One entry per point, formatted 'outdoor temperature: heating rate in °C per hour', e.g. '-10: 0.2'.",
-          "preset_mode": "The climate entity's presets are listed; only used when the action includes setting a preset.",
-          "preset_temperatures": "Optional. The temperature each preset heats to, formatted 'preset: temperature', e.g. 'comfort: 21'. With a preset-only action the prediction targets the selected preset's temperature instead of the target temperature."
-        }
       }
-    },
-    "error": {
-      "invalid_heat_rates": "Heat rates must be entered as 'outdoor temperature: rate' pairs with positive rates and no duplicate temperatures, e.g. '-10: 0.2'.",
-      "invalid_preset_temperatures": "Preset temperatures must be entered as 'preset: temperature' pairs without duplicate presets, e.g. 'comfort: 21'.",
-      "preset_mode_required": "Select a preset when the action includes setting a preset."
+    }
+  },
+  "config_subentries": {
+    "room": {
+      "initiate_flow": {
+        "user": "Add room",
+        "reconfigure": "Reconfigure room"
+      },
+      "entry_type": "Room",
+      "step": {
+        "user": {
+          "title": "Add room",
+          "data": {
+            "name": "Name",
+            "climate_entity": "Climate entity"
+          },
+          "data_description": {
+            "climate_entity": "The thermostat of the room to pre-heat."
+          }
+        },
+        "reconfigure": {
+          "title": "Reconfigure room",
+          "data": {
+            "name": "Name",
+            "climate_entity": "Climate entity"
+          },
+          "data_description": {
+            "climate_entity": "The thermostat of the room to pre-heat."
+          }
+        },
+        "settings": {
+          "title": "Heating settings",
+          "data": {
+            "heat_rates": "Heat rates",
+            "action": "Action at heating start",
+            "preset_mode": "Preset to set",
+            "preset_temperatures": "Preset temperatures",
+            "target_temperature": "Target temperature"
+          },
+          "data_description": {
+            "heat_rates": "One entry per point, formatted 'outdoor temperature: heating rate in °C per hour', e.g. '-10: 0.2'. Entries are sorted automatically; values in between are interpolated linearly.",
+            "action": "What to do on the climate entity when the calculated start time is reached.",
+            "preset_mode": "The climate entity's presets are listed; only used when the action includes setting a preset.",
+            "preset_temperatures": "Optional. The temperature each preset heats to, formatted 'preset: temperature', e.g. 'comfort: 21'. With a preset-only action the prediction targets the selected preset's temperature instead of the target temperature.",
+            "target_temperature": "Room temperature to reach by the time you arrive."
+          }
+        }
+      },
+      "error": {
+        "invalid_heat_rates": "Heat rates must be entered as 'outdoor temperature: rate' pairs with positive rates and no duplicate temperatures, e.g. '-10: 0.2'.",
+        "invalid_preset_temperatures": "Preset temperatures must be entered as 'preset: temperature' pairs without duplicate presets, e.g. 'comfort: 21'.",
+        "preset_mode_required": "Select a preset when the action includes setting a preset."
+      },
+      "abort": {
+        "reconfigure_successful": "Reconfiguration was successful."
+      }
     }
   },
   "selector": {

@@ -38,8 +38,8 @@ SHARED_OPTIONS = {
 ROOM_DATA = {
     CONF_CLIMATE_ENTITY: "climate.living_room",
     CONF_TARGET_TEMPERATURE: 21.0,
-    # 0.5°C/h at 0°C outdoors; 6°C deficit -> 12 h pre-heat.
-    CONF_HEAT_RATES: ["0: 0.5"],
+    # 1°C gained in 2 h at 0°C outdoors = 0.5°C/h; 6°C deficit -> 12 h pre-heat.
+    CONF_HEAT_RATES: [{"outdoor_temp": 0, "gain": 1, "hours": 2}],
     CONF_ACTION: "both",
     CONF_PRESET_MODE: "comfort",
 }
@@ -173,7 +173,10 @@ async def test_preset_only_action_targets_preset_temperature(
     preset_room = {
         **ROOM_DATA,
         CONF_ACTION: "set_preset",
-        CONF_PRESET_TEMPERATURES: ["comfort: 18", "eco: 16"],
+        CONF_PRESET_TEMPERATURES: [
+            {"preset": "comfort", "temperature": 18},
+            {"preset": "eco", "temperature": 16},
+        ],
     }
     await setup_entry(hass, [room("Living Room", preset_room)])
 

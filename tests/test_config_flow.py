@@ -6,6 +6,7 @@ from homeassistant.config_entries import SOURCE_USER, ConfigSubentryData
 from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.util.unit_system import US_CUSTOMARY_SYSTEM
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.vacation_heating.config_flow import settings_schema
@@ -32,21 +33,32 @@ ROOM_INPUT = {
     CONF_CLIMATE_ENTITY: "climate.living_room",
 }
 
+HEAT_RATES_INPUT = [
+    {"outdoor_temp": 10, "gain": 3.5, "hours": 5},
+    {"outdoor_temp": -10, "gain": 1, "hours": 5},
+]
+
+PRESET_TEMPERATURES_INPUT = [
+    {"preset": "comfort", "temperature": 21.0},
+    {"preset": "eco", "temperature": 17.5},
+]
+
 SETTINGS_INPUT = {
     CONF_TARGET_TEMPERATURE: 21.0,
-    CONF_HEAT_RATES: ["10: 0.7", "-10: 0.2"],
+    CONF_HEAT_RATES: HEAT_RATES_INPUT,
     CONF_ACTION: "both",
     CONF_PRESET_MODE: "comfort",
-    CONF_PRESET_TEMPERATURES: ["comfort:21,0", "eco: 17.5"],
+    CONF_PRESET_TEMPERATURES: PRESET_TEMPERATURES_INPUT,
 }
 
 ROOM_DATA = {
     CONF_CLIMATE_ENTITY: "climate.living_room",
     CONF_TARGET_TEMPERATURE: 21.0,
-    CONF_HEAT_RATES: ["-10: 0.2", "10: 0.7"],
+    # Sorted by outdoor temperature on save.
+    CONF_HEAT_RATES: [HEAT_RATES_INPUT[1], HEAT_RATES_INPUT[0]],
     CONF_ACTION: "both",
     CONF_PRESET_MODE: "comfort",
-    CONF_PRESET_TEMPERATURES: ["comfort: 21", "eco: 17.5"],
+    CONF_PRESET_TEMPERATURES: PRESET_TEMPERATURES_INPUT,
 }
 
 
@@ -165,6 +177,23 @@ async def test_settings_schema_offers_entity_presets(hass: HomeAssistant) -> Non
     assert schema.schema[CONF_PRESET_MODE].config["options"] == []
 
 
+async def test_settings_schema_follows_unit_system(hass: HomeAssistant) -> None:
+    """Temperature fields use HA's configured unit system."""
+    schema = settings_schema(hass, "climate.missing")
+    target = schema.schema[CONF_TARGET_TEMPERATURE]
+    assert target.config["unit_of_measurement"] == "°C"
+    assert (target.config["min"], target.config["max"]) == (5, 35)
+
+    hass.config.units = US_CUSTOMARY_SYSTEM
+    schema = settings_schema(hass, "climate.missing")
+    target = schema.schema[CONF_TARGET_TEMPERATURE]
+    assert target.config["unit_of_measurement"] == "°F"
+    assert (target.config["min"], target.config["max"]) == (40, 95)
+    rate_fields = schema.schema[CONF_HEAT_RATES].config["fields"]
+    outdoor = rate_fields["outdoor_temp"]["selector"]["number"]
+    assert outdoor["unit_of_measurement"] == "°F"
+
+
 async def test_room_flow_rejects_invalid_settings(hass: HomeAssistant) -> None:
     """Malformed pairs and a missing preset keep the settings form open."""
     with patch_setup(), patch_unload():
@@ -176,8 +205,16 @@ async def test_room_flow_rejects_invalid_settings(hass: HomeAssistant) -> None:
             result["flow_id"], ROOM_INPUT
         )
 
-        settings = {**SETTINGS_INPUT, CONF_HEAT_RATES: ["banana"], CONF_ACTION: "set_preset"}
-        settings[CONF_PRESET_TEMPERATURES] = ["comfort"]
+        settings = {
+            **SETTINGS_INPUT,
+            # Invalid: no point with a positive gain, duplicate preset.
+            CONF_HEAT_RATES: [{"outdoor_temp": 0, "gain": -1, "hours": 2}],
+            CONF_PRESET_TEMPERATURES: [
+                {"preset": "eco", "temperature": 17},
+                {"preset": "eco", "temperature": 18},
+            ],
+            CONF_ACTION: "set_preset",
+        }
         del settings[CONF_PRESET_MODE]
         result = await hass.config_entries.subentries.async_configure(
             result["flow_id"], settings

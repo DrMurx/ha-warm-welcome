@@ -8,8 +8,6 @@ import pytest
 from custom_components.vacation_heating.heating_model import (
     ForecastPoint,
     compute_start,
-    format_heat_rates,
-    format_preset_temperatures,
     parse_heat_rates,
     parse_preset_temperatures,
     rate_at,
@@ -24,66 +22,71 @@ def hourly_forecast(start: datetime, hours: int, temperature: float) -> list[For
     ]
 
 
+def hr(outdoor_temp, gain, hours) -> dict:
+    return {"outdoor_temp": outdoor_temp, "gain": gain, "hours": hours}
+
+
 class TestParseHeatRates:
     def test_parses_and_sorts(self):
-        rates = parse_heat_rates(["10: 0.7", "-10:0.2", " 0 : 0.4 "])
+        rates = parse_heat_rates([hr(10, 3.5, 5), hr(-10, 1, 5), hr(0, 2, 5)])
         assert rates == [(-10.0, 0.2), (0.0, 0.4), (10.0, 0.7)]
 
-    def test_accepts_decimal_comma(self):
-        assert parse_heat_rates(["0: 0,5"]) == [(0.0, 0.5)]
+    def test_accepts_negative_and_zero_gains(self):
+        rates = parse_heat_rates([hr(-20, -1, 4), hr(-10, 0, 4), hr(0, 2, 4)])
+        assert rates == [(-20.0, -0.25), (-10.0, 0.0), (0.0, 0.5)]
 
-    def test_rejects_missing_separator(self):
-        with pytest.raises(ValueError, match="missing ':'"):
-            parse_heat_rates(["0 0.5"])
+    def test_rejects_missing_field(self):
+        with pytest.raises(ValueError, match="invalid heat rate"):
+            parse_heat_rates([{"outdoor_temp": 0, "gain": 1}])
 
     def test_rejects_non_numeric(self):
-        with pytest.raises(ValueError, match="invalid number"):
-            parse_heat_rates(["cold: fast"])
+        with pytest.raises(ValueError, match="invalid heat rate"):
+            parse_heat_rates([hr("cold", "fast", 1)])
 
-    def test_rejects_non_positive_rate(self):
+    def test_rejects_non_positive_duration(self):
+        with pytest.raises(ValueError, match="duration"):
+            parse_heat_rates([hr(0, 1, 0)])
+
+    def test_rejects_all_non_positive_rates(self):
         with pytest.raises(ValueError, match="positive"):
-            parse_heat_rates(["0: 0"])
+            parse_heat_rates([hr(-10, -1, 2), hr(0, 0, 2)])
 
     def test_rejects_duplicates(self):
         with pytest.raises(ValueError, match="duplicate"):
-            parse_heat_rates(["0: 0.5", "0: 0.6"])
+            parse_heat_rates([hr(0, 1, 2), hr(0, 2, 2)])
 
     def test_rejects_empty(self):
         with pytest.raises(ValueError, match="at least one"):
             parse_heat_rates([])
 
-    def test_format_round_trip(self):
-        rates = parse_heat_rates(["10: 0.7", "-10: 0.2"])
-        assert format_heat_rates(rates) == ["-10: 0.2", "10: 0.7"]
+
+def pt(preset, temperature) -> dict:
+    return {"preset": preset, "temperature": temperature}
 
 
 class TestParsePresetTemperatures:
     def test_parses(self):
-        presets = parse_preset_temperatures(["comfort: 21", " eco :17,5 "])
+        presets = parse_preset_temperatures([pt("comfort", 21), pt(" eco ", 17.5)])
         assert presets == {"comfort": 21.0, "eco": 17.5}
 
     def test_empty_list_is_allowed(self):
         assert parse_preset_temperatures([]) == {}
 
-    def test_rejects_missing_separator(self):
-        with pytest.raises(ValueError, match="missing"):
-            parse_preset_temperatures(["comfort 21"])
+    def test_rejects_missing_field(self):
+        with pytest.raises(ValueError, match="invalid preset"):
+            parse_preset_temperatures([{"preset": "comfort"}])
 
     def test_rejects_empty_preset(self):
-        with pytest.raises(ValueError, match="missing"):
-            parse_preset_temperatures([": 21"])
+        with pytest.raises(ValueError, match="missing preset name"):
+            parse_preset_temperatures([pt("  ", 21)])
 
     def test_rejects_non_numeric_temperature(self):
-        with pytest.raises(ValueError, match="invalid number"):
-            parse_preset_temperatures(["comfort: warm"])
+        with pytest.raises(ValueError, match="invalid preset"):
+            parse_preset_temperatures([pt("comfort", "warm")])
 
     def test_rejects_duplicates(self):
         with pytest.raises(ValueError, match="duplicate"):
-            parse_preset_temperatures(["eco: 17", "eco: 18"])
-
-    def test_format_round_trip(self):
-        presets = parse_preset_temperatures(["comfort:21,0", "eco: 17.5"])
-        assert format_preset_temperatures(presets) == ["comfort: 21", "eco: 17.5"]
+            parse_preset_temperatures([pt("eco", 17), pt("eco", 18)])
 
 
 class TestRateAt:
@@ -149,6 +152,40 @@ class TestComputeStart:
         result = compute_start(ARRIVAL, 20.0, 21.0, forecast, rates)
         assert result.start == ARRIVAL - timedelta(hours=3, minutes=30)
         assert result.preheat_hours == pytest.approx(3.5)
+
+    def test_negative_rate_extends_preheat(self):
+        # The heating loses 0.25°C/h during the two -10°C hours before
+        # arrival; earlier heating at 0°C must compensate. Deficit 1°C:
+        # cold hours add 0.5°C -> 1.5°C at 0.5°C/h -> 3 h -> 5 h total.
+        rates = [(-10.0, -0.25), (0.0, 0.5)]
+        start = ARRIVAL - timedelta(hours=48)
+        forecast = [
+            ForecastPoint(start + timedelta(hours=i), -10.0 if i >= 46 else 0.0)
+            for i in range(49)
+        ]
+        result = compute_start(ARRIVAL, 20.0, 21.0, forecast, rates)
+        assert result.start == ARRIVAL - timedelta(hours=5)
+        assert result.preheat_hours == pytest.approx(5.0)
+        assert not result.beyond_forecast
+        # The curve dips during the cold hours before recovering to target.
+        temps = [temperature for _, temperature in result.curve]
+        assert max(temps) == pytest.approx(21.5)
+        assert temps[-1] == 21.0
+
+    def test_uncoverable_deficit_hits_lookback(self):
+        # 10°C outside everywhere maps to a negative rate, so the deficit
+        # is never covered and the lookback cap applies.
+        forecast = hourly_forecast(ARRIVAL - timedelta(hours=48), 120, 10.0)
+        result = compute_start(
+            ARRIVAL,
+            20.0,
+            21.0,
+            forecast,
+            [(0.0, 0.5), (10.0, -0.1)],
+            max_lookback=timedelta(hours=10),
+        )
+        assert result.start == ARRIVAL - timedelta(hours=10)
+        assert result.beyond_forecast
 
     def test_sub_hour_precision(self):
         forecast = hourly_forecast(ARRIVAL - timedelta(hours=48), 120, 0.0)

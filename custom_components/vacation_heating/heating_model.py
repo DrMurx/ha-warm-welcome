@@ -1,8 +1,8 @@
 """Pure prediction math for the Vacation Heating integration.
 
 This module has no Home Assistant imports so it can be unit tested in
-isolation. All temperatures are in the unit the user configured their
-system with (typically °C); heat rates are degrees per hour.
+isolation. All temperatures are in Home Assistant's configured unit
+system (°C or °F); heat rates are degrees per hour.
 """
 
 from __future__ import annotations
@@ -10,6 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from itertools import pairwise
+from typing import Any
 
 DEFAULT_MAX_LOOKBACK = timedelta(days=14)
 # Assumed coverage of a single forecast point when the interval cannot be
@@ -41,80 +42,57 @@ class PredictionResult:
     curve: list[tuple[datetime, float]]
 
 
-def parse_heat_rate(entry: str) -> tuple[float, float]:
-    """Parse a single 'outdoor_temp: rate' pair.
+def parse_heat_rates(entries: list[dict[str, Any]]) -> list[tuple[float, float]]:
+    """Parse measured heat rate points into sorted (outdoor_temp, rate) pairs.
 
-    Raises ValueError if the entry is malformed or the rate is not positive.
+    Each entry is a measurement: at ``outdoor_temp`` outside, the room
+    gained ``gain`` degrees in ``hours`` hours; the rate is degrees per
+    hour. Gains may be negative or zero (a heating that cannot keep up),
+    but every duration must be positive and at least one point must have
+    a positive rate. Raises ValueError on malformed entries, duplicate
+    outdoor temperatures, or an empty list.
     """
-    temp_str, sep, rate_str = entry.partition(":")
-    if not sep:
-        raise ValueError(f"missing ':' in heat rate entry {entry!r}")
-    try:
-        temp = float(temp_str.strip().replace(",", "."))
-        rate = float(rate_str.strip().replace(",", "."))
-    except ValueError as err:
-        raise ValueError(f"invalid number in heat rate entry {entry!r}") from err
-    if rate <= 0:
-        raise ValueError(f"heat rate must be positive in entry {entry!r}")
-    return temp, rate
-
-
-def parse_heat_rates(entries: list[str]) -> list[tuple[float, float]]:
-    """Parse and sort a list of 'outdoor_temp: rate' pairs by temperature.
-
-    Raises ValueError on malformed entries, duplicate temperatures, or an
-    empty list.
-    """
-    pairs = [parse_heat_rate(entry) for entry in entries]
+    pairs: list[tuple[float, float]] = []
+    for entry in entries:
+        try:
+            temp = float(entry["outdoor_temp"])
+            gain = float(entry["gain"])
+            hours = float(entry["hours"])
+        except (KeyError, TypeError, ValueError) as err:
+            raise ValueError(f"invalid heat rate entry {entry!r}") from err
+        if hours <= 0:
+            raise ValueError(f"duration must be positive in heat rate entry {entry!r}")
+        pairs.append((temp, gain / hours))
     if not pairs:
         raise ValueError("at least one heat rate entry is required")
     pairs.sort(key=lambda pair: pair[0])
     temps = [temp for temp, _ in pairs]
     if len(set(temps)) != len(temps):
         raise ValueError("duplicate outdoor temperature in heat rate entries")
+    if all(rate <= 0 for _, rate in pairs):
+        raise ValueError("at least one heat rate must be positive")
     return pairs
 
 
-def format_heat_rates(pairs: list[tuple[float, float]]) -> list[str]:
-    """Format sorted pairs back into canonical 'temp: rate' strings."""
-    return [f"{temp:g}: {rate:g}" for temp, rate in pairs]
+def parse_preset_temperatures(entries: list[dict[str, Any]]) -> dict[str, float]:
+    """Parse preset temperature points; an empty list is allowed.
 
-
-def parse_preset_temperature(entry: str) -> tuple[str, float]:
-    """Parse a single 'preset: temperature' pair.
-
-    Raises ValueError if the entry is malformed.
-    """
-    preset, sep, temp_str = entry.partition(":")
-    preset = preset.strip()
-    if not sep or not preset:
-        raise ValueError(f"missing 'preset:' in preset temperature entry {entry!r}")
-    try:
-        temperature = float(temp_str.strip().replace(",", "."))
-    except ValueError as err:
-        raise ValueError(
-            f"invalid number in preset temperature entry {entry!r}"
-        ) from err
-    return preset, temperature
-
-
-def parse_preset_temperatures(entries: list[str]) -> dict[str, float]:
-    """Parse a list of 'preset: temperature' pairs; an empty list is allowed.
-
+    Each entry maps a ``preset`` name to the ``temperature`` it heats to.
     Raises ValueError on malformed entries or duplicate presets.
     """
     presets: dict[str, float] = {}
     for entry in entries:
-        preset, temperature = parse_preset_temperature(entry)
+        try:
+            preset = str(entry["preset"]).strip()
+            temperature = float(entry["temperature"])
+        except (KeyError, TypeError, ValueError) as err:
+            raise ValueError(f"invalid preset temperature entry {entry!r}") from err
+        if not preset:
+            raise ValueError(f"missing preset name in entry {entry!r}")
         if preset in presets:
             raise ValueError(f"duplicate preset in entry {entry!r}")
         presets[preset] = temperature
     return presets
-
-
-def format_preset_temperatures(presets: dict[str, float]) -> list[str]:
-    """Format a preset map back into canonical 'preset: temperature' strings."""
-    return [f"{preset}: {temperature:g}" for preset, temperature in presets.items()]
 
 
 def rate_at(rates: list[tuple[float, float]], outdoor_temp: float) -> float:
@@ -178,9 +156,11 @@ def compute_start(
 
     Walks backward from the arrival time through the forecast, accumulating
     degrees heated per interval at the interpolated heat rate, until the
-    temperature deficit is covered. If the required lead time extends past
-    forecast coverage (or ``max_lookback``), the result is flagged
-    ``beyond_forecast``.
+    temperature deficit is covered. Negative rates (a heating that cannot
+    keep up at that outdoor temperature) enlarge the deficit, requiring
+    even earlier positive intervals to compensate. If the required lead
+    time extends past forecast coverage (or ``max_lookback``), the result
+    is flagged ``beyond_forecast``.
     """
     deficit = target_temp - current_temp
     if deficit <= 0 or not forecast:

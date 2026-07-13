@@ -23,9 +23,14 @@ Then you add each **room** to it, configuring:
 - a **climate entity** — the room's thermostat (provides the current room
   temperature and receives the re-heat command),
 - a **target temperature** — what the room should be when you arrive,
-- a **heat rate map** — how fast the room heats up (°C/hour) at specific
-  outdoor temperatures, e.g. `-10: 0.2`, `0: 0.4`, `10: 0.7`. Rates between
-  the mapped points are interpolated linearly and clamped outside the range,
+- a **heat rate map** — measurements of how fast the room heats up at
+  specific outdoor temperatures. Each point records the outdoor
+  temperature, how many degrees the room gained, and over how many hours —
+  e.g. "at -10° outside the room gained 1° in 5 hours". The gain may be
+  negative if your heating cannot keep up at very low outdoor
+  temperatures; the prediction then starts correspondingly earlier so
+  warmer hours compensate. Rates between the mapped points are
+  interpolated linearly and clamped outside the range,
 - an **action** — whether to set a preset, a temperature, or both when the
   calculated start time is reached. The preset dropdown offers the presets
   advertised by the selected climate entity (e.g. `comfort`, `eco`,
@@ -59,7 +64,7 @@ the sensors show `unknown`.
 
 ## Installation
 
-Requires Home Assistant 2025.7 or newer.
+Requires Home Assistant 2026.1 or newer.
 
 ### HACS (recommended)
 
@@ -82,9 +87,10 @@ steps: first the name and climate entity, then the heat rates and the
 action — the preset choices in the second step come from the climate
 entity you picked in the first.
 
-Heat rate entries are typed as `outdoor temperature: rate` chips (e.g.
-`-10: 0.2` means: at -10 °C outside, the room gains 0.2 °C per hour). They
-are validated and sorted automatically.
+Heat rate points and preset temperatures are entered as structured list
+entries with one small form per point. All temperature fields follow your
+Home Assistant unit system (°C or °F); if you ever switch the unit
+system, re-enter the configured temperatures in the new unit.
 
 Everything can be changed later: the shared entities via the entry's
 **Configure** menu, each room (including its name) via the room's
@@ -144,8 +150,11 @@ the series are empty.
 ### Determining your heat rates
 
 Turn the heating on from a cooled-down state on days with different outdoor
-temperatures and note how many degrees the room gains per hour. One or two
-points are enough to start; add more points for better predictions.
+temperatures and note how many degrees the room gained over how many hours —
+that measurement is entered directly, no conversion to an hourly rate
+needed. One or two points are enough to start; add more points for better
+predictions. If the room *loses* temperature despite full heating on very
+cold days, enter that as a negative gain.
 
 ## Development
 

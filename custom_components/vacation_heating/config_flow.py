@@ -13,7 +13,7 @@ from homeassistant.config_entries import (
     OptionsFlow,
     SubentryFlowResult,
 )
-from homeassistant.const import CONF_NAME
+from homeassistant.const import CONF_NAME, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.selector import (
     EntitySelector,
@@ -21,6 +21,9 @@ from homeassistant.helpers.selector import (
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
+    ObjectSelector,
+    ObjectSelectorConfig,
+    ObjectSelectorField,
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
@@ -44,12 +47,7 @@ from .const import (
     DOMAIN,
     SUBENTRY_TYPE_ROOM,
 )
-from .heating_model import (
-    format_heat_rates,
-    format_preset_temperatures,
-    parse_heat_rates,
-    parse_preset_temperatures,
-)
+from .heating_model import parse_heat_rates, parse_preset_temperatures
 
 SHARED_SCHEMA = vol.Schema(
     {
@@ -72,21 +70,84 @@ ROOM_SCHEMA = vol.Schema(
 )
 
 
+def _temperature_number(
+    unit: str, min_value: float | None = None, max_value: float | None = None
+) -> NumberSelector:
+    config = NumberSelectorConfig(
+        step=0.5, unit_of_measurement=unit, mode=NumberSelectorMode.BOX
+    )
+    if min_value is not None:
+        config["min"] = min_value
+    if max_value is not None:
+        config["max"] = max_value
+    return NumberSelector(config)
+
+
 def settings_schema(hass: HomeAssistant, climate_entity_id: str) -> vol.Schema:
     """Build the settings form, with presets read from the climate entity.
 
     The preset dropdown offers the entity's currently advertised presets;
     custom values stay allowed so the flow also works while the entity is
-    unavailable.
+    unavailable. Temperature fields follow Home Assistant's unit system.
     """
     presets: list[str] = []
     if (state := hass.states.get(climate_entity_id)) is not None:
         presets = [str(preset) for preset in state.attributes.get("preset_modes") or []]
 
+    unit = hass.config.units.temperature_unit
+    fahrenheit = unit == UnitOfTemperature.FAHRENHEIT
+    target_default = 70.0 if fahrenheit else DEFAULT_TARGET_TEMPERATURE
+    target_min, target_max = (40, 95) if fahrenheit else (5, 35)
+
+    # Object selector field labels are plain strings (not translatable);
+    # they carry the unit dynamically. Field selectors must be given in
+    # dict form: ObjectSelector validation cannot handle instances.
+    def _temperature_field(**extra: Any) -> dict[str, Any]:
+        return {"number": {"step": 0.5, "unit_of_measurement": unit, "mode": "box", **extra}}
+
+    heat_rate_fields = {
+        "outdoor_temp": ObjectSelectorField(
+            required=True,
+            label=f"Outdoor temperature ({unit})",
+            selector=_temperature_field(),
+        ),
+        "gain": ObjectSelectorField(
+            required=True,
+            label=f"Temperature gain ({unit}, negative if the heating cannot keep up)",
+            selector=_temperature_field(step=0.1),
+        ),
+        "hours": ObjectSelectorField(
+            required=True,
+            label="Measured over (hours)",
+            selector={
+                "number": {"min": 0.5, "step": 0.5, "unit_of_measurement": "h", "mode": "box"}
+            },
+        ),
+    }
+    preset_temperature_fields = {
+        "preset": ObjectSelectorField(
+            required=True,
+            label="Preset",
+            selector={
+                "select": {"options": presets, "custom_value": True, "mode": "dropdown"}
+            },
+        ),
+        "temperature": ObjectSelectorField(
+            required=True,
+            label=f"Temperature ({unit})",
+            selector=_temperature_field(min=target_min, max=target_max),
+        ),
+    }
+
     return vol.Schema(
         {
-            vol.Required(CONF_HEAT_RATES): SelectSelector(
-                SelectSelectorConfig(options=[], multiple=True, custom_value=True)
+            vol.Required(CONF_HEAT_RATES): ObjectSelector(
+                ObjectSelectorConfig(
+                    multiple=True,
+                    label_field="outdoor_temp",
+                    description_field="gain",
+                    fields=heat_rate_fields,
+                )
             ),
             vol.Required(CONF_ACTION, default=ACTION_BOTH): SelectSelector(
                 SelectSelectorConfig(
@@ -102,20 +163,17 @@ def settings_schema(hass: HomeAssistant, climate_entity_id: str) -> vol.Schema:
                     mode=SelectSelectorMode.DROPDOWN,
                 )
             ),
-            vol.Optional(CONF_PRESET_TEMPERATURES): SelectSelector(
-                SelectSelectorConfig(options=[], multiple=True, custom_value=True)
-            ),
-            vol.Required(
-                CONF_TARGET_TEMPERATURE, default=DEFAULT_TARGET_TEMPERATURE
-            ): NumberSelector(
-                NumberSelectorConfig(
-                    min=5,
-                    max=35,
-                    step=0.5,
-                    unit_of_measurement="°C",
-                    mode=NumberSelectorMode.BOX,
+            vol.Optional(CONF_PRESET_TEMPERATURES): ObjectSelector(
+                ObjectSelectorConfig(
+                    multiple=True,
+                    label_field="preset",
+                    description_field="temperature",
+                    fields=preset_temperature_fields,
                 )
             ),
+            vol.Required(
+                CONF_TARGET_TEMPERATURE, default=target_default
+            ): _temperature_number(unit, target_min, target_max),
         }
     )
 
@@ -123,24 +181,24 @@ def settings_schema(hass: HomeAssistant, climate_entity_id: str) -> vol.Schema:
 def _validate_and_normalize(user_input: dict[str, Any]) -> dict[str, str]:
     """Validate settings input in place; return form errors.
 
-    On success the heat rate list is replaced with its canonical sorted
-    form so re-opened forms show the pairs in order.
+    On success the heat rate points are sorted by outdoor temperature so
+    re-opened forms show them in order.
     """
     errors: dict[str, str] = {}
     try:
-        rates = parse_heat_rates(user_input.get(CONF_HEAT_RATES, []))
+        parse_heat_rates(user_input.get(CONF_HEAT_RATES) or [])
     except ValueError:
         errors[CONF_HEAT_RATES] = "invalid_heat_rates"
     else:
-        user_input[CONF_HEAT_RATES] = format_heat_rates(rates)
-    try:
-        presets = parse_preset_temperatures(
-            user_input.get(CONF_PRESET_TEMPERATURES) or []
+        user_input[CONF_HEAT_RATES] = sorted(
+            user_input[CONF_HEAT_RATES], key=lambda entry: float(entry["outdoor_temp"])
         )
+    try:
+        parse_preset_temperatures(user_input.get(CONF_PRESET_TEMPERATURES) or [])
     except ValueError:
         errors[CONF_PRESET_TEMPERATURES] = "invalid_preset_temperatures"
     else:
-        user_input[CONF_PRESET_TEMPERATURES] = format_preset_temperatures(presets)
+        user_input.setdefault(CONF_PRESET_TEMPERATURES, [])
     if user_input.get(CONF_ACTION) != ACTION_SET_TEMPERATURE and not user_input.get(
         CONF_PRESET_MODE
     ):

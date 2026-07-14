@@ -7,7 +7,7 @@
  * a secondary axis, and a marker at the vacation end.
  */
 
-const CARD_VERSION = "0.1.2";
+const CARD_VERSION = "0.1.5";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const WIDTH = 640;
@@ -87,7 +87,7 @@ class VacationHeatingCard extends HTMLElement {
   // Unconditional while the card is being stabilized; will be gated
   // behind a debug option later.
   _log(...args) {
-    console.info("VACATION-HEATING-CARD:", ...args);
+    console.info("vacation_heating:", ...args);
   }
 
   setConfig(config) {
@@ -143,7 +143,7 @@ class VacationHeatingCard extends HTMLElement {
       );
       this._log("subscribed OK");
     } catch (err) {
-      console.error("VACATION-HEATING-CARD: subscription failed:", err);
+      console.error("vacation_heating: subscription failed:", err);
       this._error =
         "Could not connect to the Vacation Heating integration. Is it installed and set up?";
       this._render();
@@ -174,7 +174,7 @@ class VacationHeatingCard extends HTMLElement {
     try {
       this._renderCard();
     } catch (err) {
-      console.error("VACATION-HEATING-CARD: render failed:", err);
+      console.error("vacation_heating: render failed:", err);
       this.shadowRoot.innerHTML = "";
       const pre = document.createElement("pre");
       pre.style.whiteSpace = "pre-wrap";
@@ -475,10 +475,45 @@ class VacationHeatingCard extends HTMLElement {
   }
 }
 
-customElements.define("vacation-heating-card", VacationHeatingCard);
+/*
+ * Deferred registration. This module races HA's app bundle: HA installs
+ * a scoped-custom-element-registry polyfill that REPLACES
+ * window.customElements during boot. Defining before that swap puts the
+ * element into the native registry, which the polyfilled
+ * customElements.get() cannot see — Lovelace then reports "Custom
+ * element doesn't exist" although the element upgrades fine. Waiting
+ * for HA's own <home-assistant> element guarantees the final registry
+ * is in place; look up window.customElements freshly on every attempt.
+ */
+const CARD_TAG = "vacation-heating-card";
+const defineStarted = Date.now();
+
+function tryDefineCard() {
+  if (window.customElements.get(CARD_TAG)) return true;
+  const haReady = !!window.customElements.get("home-assistant");
+  // Fall back to defining anyway after 15s (e.g. non-HA pages).
+  if (!haReady && Date.now() - defineStarted < 15000) return false;
+  window.customElements.define(CARD_TAG, VacationHeatingCard);
+  console.info(
+    `vacation_heating: element defined after ${Date.now() - defineStarted}ms` +
+      (haReady ? "" : " (without home-assistant present)")
+  );
+  return true;
+}
+
+if (!tryDefineCard()) {
+  const defineInterval = setInterval(() => {
+    try {
+      if (tryDefineCard()) clearInterval(defineInterval);
+    } catch (err) {
+      clearInterval(defineInterval);
+      console.error("vacation_heating: define failed:", err);
+    }
+  }, 100);
+}
 
 console.info(
-  `%c VACATION-HEATING-CARD %c v${CARD_VERSION} `,
+  `%c vacation_heating %c card v${CARD_VERSION} `,
   "background: #3f51b5; color: white; font-weight: bold;",
   "background: #eee; color: #333;"
 );
@@ -489,5 +524,7 @@ window.customCards.push({
   name: "Vacation Heating",
   description:
     "Timeline of the predicted re-heat per room, with the outdoor forecast and the vacation end.",
-  preview: true,
+  // No live preview: it depends on an async websocket subscription,
+  // which the card picker's preview tile does not handle well.
+  preview: false,
 });

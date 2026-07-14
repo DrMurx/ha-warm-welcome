@@ -62,16 +62,18 @@
           "title": "Verwarmingsinstellingen",
           "data": {
             "heat_rates": "Verwarmingssnelheden",
-            "action": "Actie bij start van de verwarming",
+            "set_preset": "Preset instellen bij start van de verwarming",
+            "set_temperature": "Temperatuur instellen bij start van de verwarming",
             "preset_mode": "In te stellen preset",
             "preset_temperatures": "Preset-temperaturen",
             "target_temperature": "Doeltemperatuur"
           },
           "data_description": {
             "heat_rates": "Eén punt per meting: bij welke buitentemperatuur de kamer hoeveel graden in hoeveel uur won. De winst kan negatief zijn als de verwarming het bij die buitentemperatuur niet kan bijhouden. Waarden tussen de punten worden lineair geïnterpoleerd.",
-            "action": "Wat er op de klimaatentiteit wordt uitgevoerd wanneer de berekende starttijd is bereikt.",
-            "preset_mode": "De presets van de klimaatentiteit worden weergegeven; alleen gebruikt wanneer de actie het instellen van een preset omvat.",
-            "preset_temperatures": "Optioneel. De temperatuur waarnaar elke preset verwarmt. Bij een actie met alleen een preset richt de voorspelling zich op de temperatuur van de gekozen preset in plaats van op de doeltemperatuur.",
+            "set_preset": "De klimaatentiteit naar de gekozen preset schakelen wanneer de berekende starttijd is bereikt.",
+            "set_temperature": "De doeltemperatuur op de klimaatentiteit instellen wanneer de berekende starttijd is bereikt.",
+            "preset_mode": "De presets van de klimaatentiteit worden weergegeven; alleen gebruikt wanneer 'Preset instellen bij start van de verwarming' is ingeschakeld.",
+            "preset_temperatures": "Optioneel. De temperatuur waarnaar elke preset verwarmt. Als alleen de preset wordt ingesteld, richt de voorspelling zich op de temperatuur van de gekozen preset in plaats van op de doeltemperatuur.",
             "target_temperature": "Kamertemperatuur die bereikt moet zijn tegen de tijd dat je aankomt."
           }
         }
@@ -79,19 +81,11 @@
       "error": {
         "invalid_heat_rates": "Elk punt van de verwarmingssnelheid heeft een buitentemperatuur, een temperatuurwinst en een positieve duur nodig. De buitentemperaturen moeten uniek zijn en minstens één punt moet een positieve winst hebben.",
         "invalid_preset_temperatures": "Elke preset-temperatuur heeft een presetnaam en een temperatuur nodig; presets moeten uniek zijn.",
-        "preset_mode_required": "Selecteer een preset wanneer de actie het instellen van een preset omvat."
+        "preset_mode_required": "Selecteer een preset wanneer 'Preset instellen bij start van de verwarming' is ingeschakeld.",
+        "no_action": "Schakel minstens één actie in die bij de start van de verwarming wordt uitgevoerd."
       },
       "abort": {
         "reconfigure_successful": "Opnieuw configureren is gelukt."
-      }
-    }
-  },
-  "selector": {
-    "action": {
-      "options": {
-        "set_preset": "Preset instellen",
-        "set_temperature": "Temperatuur instellen",
-        "both": "Preset en temperatuur instellen"
       }
     }
   },
@@ -102,16 +96,16 @@
       }
     },
     "select": {
-      "action": {
-        "name": "Actie bij start van de verwarming",
-        "state": {
-          "set_preset": "Preset instellen",
-          "set_temperature": "Temperatuur instellen",
-          "both": "Preset en temperatuur instellen"
-        }
-      },
       "preset_mode": {
         "name": "In te stellen preset"
+      }
+    },
+    "switch": {
+      "set_preset": {
+        "name": "Preset instellen bij start van de verwarming"
+      },
+      "set_temperature": {
+        "name": "Temperatuur instellen bij start van de verwarming"
       }
     },
     "sensor": {

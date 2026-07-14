@@ -18,6 +18,8 @@ from custom_components.vacation_heating.const import (
     CONF_HEAT_RATES,
     CONF_PRESET_MODE,
     CONF_PRESET_TEMPERATURES,
+    CONF_SET_PRESET,
+    CONF_SET_TEMPERATURE,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DOMAIN,
@@ -38,7 +40,8 @@ ROOM_DATA = {
     CONF_TARGET_TEMPERATURE: 21.0,
     # 1°C gained in 2 h at 0°C outdoors = 0.5°C/h; 6°C deficit -> 12 h pre-heat.
     CONF_HEAT_RATES: [{"outdoor_temp": 0, "gain": 1, "hours": 2}],
-    CONF_ACTION: "both",
+    CONF_SET_PRESET: True,
+    CONF_SET_TEMPERATURE: True,
     CONF_PRESET_MODE: "comfort",
 }
 
@@ -148,7 +151,7 @@ async def test_preset_only_action_targets_preset_temperature(
     freezer.move_to(NOW)
     preset_room = {
         **ROOM_DATA,
-        CONF_ACTION: "set_preset",
+        CONF_SET_TEMPERATURE: False,
         CONF_PRESET_TEMPERATURES: [
             {"preset": "comfort", "temperature": 18},
             {"preset": "eco", "temperature": 16},
@@ -246,6 +249,38 @@ async def test_idle_when_end_date_in_past(hass, freezer, forecast_calls) -> None
 
     state = hass.states.get("sensor.living_room_heating_start")
     assert state.state == "unknown"
+
+
+async def test_migrates_action_to_booleans(hass, freezer, forecast_calls) -> None:
+    """A minor version 1 entry gets its room action select migrated."""
+    freezer.move_to(NOW)
+    await hass.config.async_set_time_zone("UTC")
+    hass.states.async_set("climate.living_room", "off", {"current_temperature": 15.0})
+    hass.states.async_set("weather.home", "sunny")
+    hass.states.async_set("input_datetime.vacation_end", "2026-07-20 12:00:00")
+    legacy = {
+        k: v
+        for k, v in ROOM_DATA.items()
+        if k not in (CONF_SET_PRESET, CONF_SET_TEMPERATURE)
+    }
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        title="Vacation Heating",
+        data={},
+        options=SHARED_OPTIONS,
+        subentries_data=[room("Living Room", {**legacy, CONF_ACTION: "set_preset"})],
+        version=1,
+        minor_version=1,
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert entry.minor_version == 2
+    data = next(iter(entry.subentries.values())).data
+    assert CONF_ACTION not in data
+    assert data[CONF_SET_PRESET] is True
+    assert data[CONF_SET_TEMPERATURE] is False
 
 
 async def test_refreshes_on_end_date_change(hass, freezer, forecast_calls) -> None:

@@ -16,6 +16,7 @@ from homeassistant.config_entries import (
 from homeassistant.const import CONF_NAME, UnitOfTemperature
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.selector import (
+    BooleanSelector,
     EntitySelector,
     EntitySelectorConfig,
     NumberSelector,
@@ -32,15 +33,13 @@ from homeassistant.helpers.selector import (
 import voluptuous as vol
 
 from .const import (
-    ACTION_BOTH,
-    ACTION_SET_TEMPERATURE,
-    ACTIONS,
-    CONF_ACTION,
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
     CONF_PRESET_MODE,
     CONF_PRESET_TEMPERATURES,
+    CONF_SET_PRESET,
+    CONF_SET_TEMPERATURE,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DEFAULT_TARGET_TEMPERATURE,
@@ -156,13 +155,8 @@ def settings_schema(hass: HomeAssistant, climate_entity_id: str) -> vol.Schema:
                     fields=heat_rate_fields,
                 )
             ),
-            vol.Required(CONF_ACTION, default=ACTION_BOTH): SelectSelector(
-                SelectSelectorConfig(
-                    options=ACTIONS,
-                    translation_key="action",
-                    mode=SelectSelectorMode.DROPDOWN,
-                )
-            ),
+            vol.Required(CONF_SET_PRESET, default=True): BooleanSelector(),
+            vol.Required(CONF_SET_TEMPERATURE, default=True): BooleanSelector(),
             vol.Optional(CONF_PRESET_MODE): SelectSelector(
                 SelectSelectorConfig(
                     options=presets,
@@ -206,9 +200,9 @@ def _validate_and_normalize(user_input: dict[str, Any]) -> dict[str, str]:
         errors[CONF_PRESET_TEMPERATURES] = "invalid_preset_temperatures"
     else:
         user_input.setdefault(CONF_PRESET_TEMPERATURES, [])
-    if user_input.get(CONF_ACTION) != ACTION_SET_TEMPERATURE and not user_input.get(
-        CONF_PRESET_MODE
-    ):
+    if not user_input.get(CONF_SET_PRESET) and not user_input.get(CONF_SET_TEMPERATURE):
+        errors["base"] = "no_action"
+    if user_input.get(CONF_SET_PRESET) and not user_input.get(CONF_PRESET_MODE):
         errors[CONF_PRESET_MODE] = "preset_mode_required"
     return errors
 
@@ -217,6 +211,9 @@ class VacationHeatingConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle the initial setup: the entities shared by all rooms."""
 
     VERSION = 1
+    # Minor version 2: room action select replaced by the set_preset and
+    # set_temperature booleans (migrated in async_migrate_entry).
+    MINOR_VERSION = 2
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None

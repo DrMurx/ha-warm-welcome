@@ -15,14 +15,16 @@ CONF_WEATHER_ENTITY = "weather_entity"
 CONF_END_DATE_ENTITY = "end_date_entity"
 CONF_TARGET_TEMPERATURE = "target_temperature"
 CONF_HEAT_RATES = "heat_rates"
-CONF_ACTION = "action"
+CONF_SET_PRESET = "set_preset"
+CONF_SET_TEMPERATURE = "set_temperature"
 CONF_PRESET_MODE = "preset_mode"
 CONF_PRESET_TEMPERATURES = "preset_temperatures"
 
+# Legacy action select, replaced by the two booleans above; only read by
+# the entry migration to minor version 2.
+CONF_ACTION = "action"
 ACTION_SET_PRESET = "set_preset"
 ACTION_SET_TEMPERATURE = "set_temperature"
-ACTION_BOTH = "both"
-ACTIONS = [ACTION_SET_PRESET, ACTION_SET_TEMPERATURE, ACTION_BOTH]
 
 DEFAULT_TARGET_TEMPERATURE = 21.0
 DEFAULT_TARGET_TEMPERATURE_F = 70.0

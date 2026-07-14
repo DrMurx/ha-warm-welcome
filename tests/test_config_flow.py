@@ -11,12 +11,13 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.vacation_heating.config_flow import settings_schema
 from custom_components.vacation_heating.const import (
-    CONF_ACTION,
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
     CONF_PRESET_MODE,
     CONF_PRESET_TEMPERATURES,
+    CONF_SET_PRESET,
+    CONF_SET_TEMPERATURE,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DOMAIN,
@@ -46,7 +47,8 @@ PRESET_TEMPERATURES_INPUT = [
 SETTINGS_INPUT = {
     CONF_TARGET_TEMPERATURE: 21.0,
     CONF_HEAT_RATES: HEAT_RATES_INPUT,
-    CONF_ACTION: "both",
+    CONF_SET_PRESET: True,
+    CONF_SET_TEMPERATURE: True,
     CONF_PRESET_MODE: "comfort",
     CONF_PRESET_TEMPERATURES: PRESET_TEMPERATURES_INPUT,
 }
@@ -56,7 +58,8 @@ ROOM_DATA = {
     CONF_TARGET_TEMPERATURE: 21.0,
     # Sorted by outdoor temperature on save.
     CONF_HEAT_RATES: [HEAT_RATES_INPUT[1], HEAT_RATES_INPUT[0]],
-    CONF_ACTION: "both",
+    CONF_SET_PRESET: True,
+    CONF_SET_TEMPERATURE: True,
     CONF_PRESET_MODE: "comfort",
     CONF_PRESET_TEMPERATURES: PRESET_TEMPERATURES_INPUT,
 }
@@ -213,7 +216,7 @@ async def test_room_flow_rejects_invalid_settings(hass: HomeAssistant) -> None:
                 {"preset": "eco", "temperature": 17},
                 {"preset": "eco", "temperature": 18},
             ],
-            CONF_ACTION: "set_preset",
+            CONF_SET_TEMPERATURE: False,
         }
         del settings[CONF_PRESET_MODE]
         result = await hass.config_entries.subentries.async_configure(
@@ -227,6 +230,27 @@ async def test_room_flow_rejects_invalid_settings(hass: HomeAssistant) -> None:
         CONF_PRESET_TEMPERATURES: "invalid_preset_temperatures",
         CONF_PRESET_MODE: "preset_mode_required",
     }
+
+
+async def test_room_flow_requires_an_action(hass: HomeAssistant) -> None:
+    """With both action booleans off the settings form shows an error."""
+    with patch_setup(), patch_unload():
+        entry = await make_entry(hass)
+        result = await hass.config_entries.subentries.async_init(
+            (entry.entry_id, SUBENTRY_TYPE_ROOM), context={"source": SOURCE_USER}
+        )
+        result = await hass.config_entries.subentries.async_configure(
+            result["flow_id"], ROOM_INPUT
+        )
+
+        result = await hass.config_entries.subentries.async_configure(
+            result["flow_id"],
+            {**SETTINGS_INPUT, CONF_SET_PRESET: False, CONF_SET_TEMPERATURE: False},
+        )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "settings"
+    assert result["errors"] == {"base": "no_action"}
 
 
 async def test_reconfigure_room(hass: HomeAssistant) -> None:

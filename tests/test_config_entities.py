@@ -8,11 +8,12 @@ from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.vacation_heating.const import (
-    CONF_ACTION,
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
     CONF_PRESET_MODE,
+    CONF_SET_PRESET,
+    CONF_SET_TEMPERATURE,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DOMAIN,
@@ -27,7 +28,8 @@ ROOM_DATA = {
     CONF_TARGET_TEMPERATURE: 21.0,
     # 1°C gained in 2 h at 0°C outdoors = 0.5°C/h.
     CONF_HEAT_RATES: [{"outdoor_temp": 0, "gain": 1, "hours": 2}],
-    CONF_ACTION: "both",
+    CONF_SET_PRESET: True,
+    CONF_SET_TEMPERATURE: True,
     CONF_PRESET_MODE: "comfort",
 }
 
@@ -69,16 +71,19 @@ def room_data(entry: MockConfigEntry) -> dict:
 
 
 async def test_config_entities_expose_settings(hass, freezer, forecast_calls) -> None:
-    """Each room gets a number and two selects reflecting its settings."""
+    """Each room gets a number, a preset select, and two action switches."""
     freezer.move_to(NOW)
     await setup_entry(hass)
 
     target = hass.states.get("number.living_room_target_temperature")
     assert float(target.state) == 21.0
 
-    action = hass.states.get("select.living_room_action_at_heating_start")
-    assert action.state == "both"
-    assert action.attributes["options"] == ["set_preset", "set_temperature", "both"]
+    set_preset = hass.states.get("switch.living_room_set_preset_at_heating_start")
+    assert set_preset.state == "on"
+    set_temperature = hass.states.get(
+        "switch.living_room_set_temperature_at_heating_start"
+    )
+    assert set_temperature.state == "on"
 
     preset = hass.states.get("select.living_room_preset_to_set")
     assert preset.state == "comfort"
@@ -106,25 +111,23 @@ async def test_target_temperature_updates_room_and_prediction(
     assert dt_util.parse_datetime(state.state) == ARRIVAL - timedelta(hours=16)
 
 
-async def test_action_select_updates_room(hass, freezer, forecast_calls) -> None:
-    """Selecting an action persists into the subentry."""
+async def test_action_switch_updates_room(hass, freezer, forecast_calls) -> None:
+    """Toggling an action switch persists into the subentry."""
     freezer.move_to(NOW)
     entry = await setup_entry(hass)
 
     await hass.services.async_call(
-        "select",
-        "select_option",
-        {
-            "entity_id": "select.living_room_action_at_heating_start",
-            "option": "set_temperature",
-        },
+        "switch",
+        "turn_off",
+        {"entity_id": "switch.living_room_set_preset_at_heating_start"},
         blocking=True,
     )
     await hass.async_block_till_done()
 
-    assert room_data(entry)[CONF_ACTION] == "set_temperature"
-    state = hass.states.get("select.living_room_action_at_heating_start")
-    assert state.state == "set_temperature"
+    assert room_data(entry)[CONF_SET_PRESET] is False
+    assert room_data(entry)[CONF_SET_TEMPERATURE] is True
+    state = hass.states.get("switch.living_room_set_preset_at_heating_start")
+    assert state.state == "off"
 
 
 async def test_preset_select_updates_room(hass, freezer, forecast_calls) -> None:

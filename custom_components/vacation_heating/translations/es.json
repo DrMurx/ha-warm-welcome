@@ -62,16 +62,18 @@
           "title": "Ajustes de calefacción",
           "data": {
             "heat_rates": "Velocidades de calentamiento",
-            "action": "Acción al inicio de la calefacción",
+            "set_preset": "Establecer preajuste al inicio de la calefacción",
+            "set_temperature": "Establecer temperatura al inicio de la calefacción",
             "preset_mode": "Preajuste a establecer",
             "preset_temperatures": "Temperaturas de los preajustes",
             "target_temperature": "Temperatura objetivo"
           },
           "data_description": {
             "heat_rates": "Un punto por medición: a qué temperatura exterior la habitación ganó cuántos grados en cuántas horas. La ganancia puede ser negativa si la calefacción no puede seguir el ritmo a esa temperatura exterior. Los valores entre los puntos se interpolan linealmente.",
-            "action": "Qué hacer en la entidad de climatización cuando se alcanza la hora de inicio calculada.",
-            "preset_mode": "Se listan los preajustes de la entidad de climatización; solo se usa cuando la acción incluye establecer un preajuste.",
-            "preset_temperatures": "Opcional. La temperatura a la que calienta cada preajuste. Con una acción de solo preajuste, la predicción apunta a la temperatura del preajuste seleccionado en lugar de a la temperatura objetivo.",
+            "set_preset": "Cambiar la entidad de climatización al preajuste seleccionado cuando se alcance la hora de inicio calculada.",
+            "set_temperature": "Establecer la temperatura objetivo en la entidad de climatización cuando se alcance la hora de inicio calculada.",
+            "preset_mode": "Se listan los preajustes de la entidad de climatización; solo se usa cuando 'Establecer preajuste al inicio de la calefacción' está activado.",
+            "preset_temperatures": "Opcional. La temperatura a la que calienta cada preajuste. Si solo se establece el preajuste, la predicción apunta a la temperatura del preajuste seleccionado en lugar de a la temperatura objetivo.",
             "target_temperature": "Temperatura de la habitación que debe alcanzarse para cuando llegues."
           }
         }
@@ -79,19 +81,11 @@
       "error": {
         "invalid_heat_rates": "Cada punto de velocidad de calentamiento necesita una temperatura exterior, una ganancia de temperatura y una duración positiva. Las temperaturas exteriores deben ser únicas y al menos un punto debe tener una ganancia positiva.",
         "invalid_preset_temperatures": "Cada temperatura de preajuste necesita un nombre de preajuste y una temperatura; los preajustes deben ser únicos.",
-        "preset_mode_required": "Selecciona un preajuste cuando la acción incluya establecer un preajuste."
+        "preset_mode_required": "Selecciona un preajuste cuando 'Establecer preajuste al inicio de la calefacción' esté activado.",
+        "no_action": "Activa al menos una acción a realizar al inicio de la calefacción."
       },
       "abort": {
         "reconfigure_successful": "La reconfiguración se realizó correctamente."
-      }
-    }
-  },
-  "selector": {
-    "action": {
-      "options": {
-        "set_preset": "Establecer preajuste",
-        "set_temperature": "Establecer temperatura",
-        "both": "Establecer preajuste y temperatura"
       }
     }
   },
@@ -102,16 +96,16 @@
       }
     },
     "select": {
-      "action": {
-        "name": "Acción al inicio de la calefacción",
-        "state": {
-          "set_preset": "Establecer preajuste",
-          "set_temperature": "Establecer temperatura",
-          "both": "Establecer preajuste y temperatura"
-        }
-      },
       "preset_mode": {
         "name": "Preajuste a establecer"
+      }
+    },
+    "switch": {
+      "set_preset": {
+        "name": "Establecer preajuste al inicio de la calefacción"
+      },
+      "set_temperature": {
+        "name": "Establecer temperatura al inicio de la calefacción"
       }
     },
     "sensor": {

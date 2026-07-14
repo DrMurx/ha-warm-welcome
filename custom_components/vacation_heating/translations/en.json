@@ -62,16 +62,18 @@
           "title": "Heating settings",
           "data": {
             "heat_rates": "Heat rates",
-            "action": "Action at heating start",
+            "set_preset": "Set preset at heating start",
+            "set_temperature": "Set temperature at heating start",
             "preset_mode": "Preset to set",
             "preset_temperatures": "Preset temperatures",
             "target_temperature": "Target temperature"
           },
           "data_description": {
             "heat_rates": "One point per measurement: at which outdoor temperature the room gained how many degrees in how many hours. The gain may be negative if the heating cannot keep up at that outdoor temperature. Values between the points are interpolated linearly.",
-            "action": "What to do on the climate entity when the calculated start time is reached.",
-            "preset_mode": "The climate entity's presets are listed; only used when the action includes setting a preset.",
-            "preset_temperatures": "Optional. The temperature each preset heats to. With a preset-only action the prediction targets the selected preset's temperature instead of the target temperature.",
+            "set_preset": "Switch the climate entity to the selected preset when the calculated start time is reached.",
+            "set_temperature": "Set the target temperature on the climate entity when the calculated start time is reached.",
+            "preset_mode": "The climate entity's presets are listed; only used when 'Set preset at heating start' is enabled.",
+            "preset_temperatures": "Optional. The temperature each preset heats to. When only the preset is set, the prediction targets the selected preset's temperature instead of the target temperature.",
             "target_temperature": "Room temperature to reach by the time you arrive."
           }
         }
@@ -79,19 +81,11 @@
       "error": {
         "invalid_heat_rates": "Each heat rate point needs an outdoor temperature, a temperature gain, and a positive duration. Outdoor temperatures must be unique and at least one point must have a positive gain.",
         "invalid_preset_temperatures": "Each preset temperature needs a preset name and a temperature; presets must be unique.",
-        "preset_mode_required": "Select a preset when the action includes setting a preset."
+        "preset_mode_required": "Select a preset when 'Set preset at heating start' is enabled.",
+        "no_action": "Enable at least one action to perform at the heating start."
       },
       "abort": {
         "reconfigure_successful": "Reconfiguration was successful."
-      }
-    }
-  },
-  "selector": {
-    "action": {
-      "options": {
-        "set_preset": "Set preset",
-        "set_temperature": "Set temperature",
-        "both": "Set preset and temperature"
       }
     }
   },
@@ -102,16 +96,16 @@
       }
     },
     "select": {
-      "action": {
-        "name": "Action at heating start",
-        "state": {
-          "set_preset": "Set preset",
-          "set_temperature": "Set temperature",
-          "both": "Set preset and temperature"
-        }
-      },
       "preset_mode": {
         "name": "Preset to set"
+      }
+    },
+    "switch": {
+      "set_preset": {
+        "name": "Set preset at heating start"
+      },
+      "set_temperature": {
+        "name": "Set temperature at heating start"
       }
     },
     "sensor": {

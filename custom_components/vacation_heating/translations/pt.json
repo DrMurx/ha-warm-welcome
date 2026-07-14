@@ -62,16 +62,18 @@
           "title": "Definições de aquecimento",
           "data": {
             "heat_rates": "Taxas de aquecimento",
-            "action": "Ação no início do aquecimento",
+            "set_preset": "Aplicar predefinição no início do aquecimento",
+            "set_temperature": "Definir temperatura no início do aquecimento",
             "preset_mode": "Predefinição a aplicar",
             "preset_temperatures": "Temperaturas das predefinições",
             "target_temperature": "Temperatura alvo"
           },
           "data_description": {
             "heat_rates": "Um ponto por medição: a que temperatura exterior a divisão ganhou quantos graus em quantas horas. O ganho pode ser negativo se o aquecimento não conseguir acompanhar a essa temperatura exterior. Os valores entre os pontos são interpolados linearmente.",
-            "action": "O que fazer na entidade de climatização quando a hora de início calculada for atingida.",
-            "preset_mode": "São listadas as predefinições da entidade de climatização; usado apenas quando a ação inclui aplicar uma predefinição.",
-            "preset_temperatures": "Opcional. A temperatura para a qual cada predefinição aquece. Com uma ação apenas de predefinição, a previsão visa a temperatura da predefinição selecionada em vez da temperatura alvo.",
+            "set_preset": "Mudar a entidade de climatização para a predefinição selecionada quando a hora de início calculada for atingida.",
+            "set_temperature": "Definir a temperatura alvo na entidade de climatização quando a hora de início calculada for atingida.",
+            "preset_mode": "São listadas as predefinições da entidade de climatização; usado apenas quando 'Aplicar predefinição no início do aquecimento' está ativado.",
+            "preset_temperatures": "Opcional. A temperatura para a qual cada predefinição aquece. Se apenas a predefinição for aplicada, a previsão visa a temperatura da predefinição selecionada em vez da temperatura alvo.",
             "target_temperature": "Temperatura da divisão a atingir até à tua chegada."
           }
         }
@@ -79,19 +81,11 @@
       "error": {
         "invalid_heat_rates": "Cada ponto de taxa de aquecimento precisa de uma temperatura exterior, de um ganho de temperatura e de uma duração positiva. As temperaturas exteriores têm de ser únicas e pelo menos um ponto tem de ter um ganho positivo.",
         "invalid_preset_temperatures": "Cada temperatura de predefinição precisa de um nome de predefinição e de uma temperatura; as predefinições têm de ser únicas.",
-        "preset_mode_required": "Seleciona uma predefinição quando a ação incluir aplicar uma predefinição."
+        "preset_mode_required": "Seleciona uma predefinição quando 'Aplicar predefinição no início do aquecimento' estiver ativado.",
+        "no_action": "Ativa pelo menos uma ação a realizar no início do aquecimento."
       },
       "abort": {
         "reconfigure_successful": "A reconfiguração foi bem-sucedida."
-      }
-    }
-  },
-  "selector": {
-    "action": {
-      "options": {
-        "set_preset": "Aplicar predefinição",
-        "set_temperature": "Definir temperatura",
-        "both": "Aplicar predefinição e definir temperatura"
       }
     }
   },
@@ -102,16 +96,16 @@
       }
     },
     "select": {
-      "action": {
-        "name": "Ação no início do aquecimento",
-        "state": {
-          "set_preset": "Aplicar predefinição",
-          "set_temperature": "Definir temperatura",
-          "both": "Aplicar predefinição e definir temperatura"
-        }
-      },
       "preset_mode": {
         "name": "Predefinição a aplicar"
+      }
+    },
+    "switch": {
+      "set_preset": {
+        "name": "Aplicar predefinição no início do aquecimento"
+      },
+      "set_temperature": {
+        "name": "Definir temperatura no início do aquecimento"
       }
     },
     "sensor": {

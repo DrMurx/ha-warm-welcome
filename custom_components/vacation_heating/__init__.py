@@ -10,7 +10,7 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import Event, HomeAssistant, callback
-from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import config_validation as cv, entity_registry as er
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.typing import ConfigType
@@ -18,8 +18,13 @@ from homeassistant.loader import async_get_integration
 
 from . import websocket
 from .const import (
+    ACTION_SET_PRESET,
+    ACTION_SET_TEMPERATURE,
+    CONF_ACTION,
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
+    CONF_SET_PRESET,
+    CONF_SET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DOMAIN,
     SIGNAL_UPDATE,
@@ -27,7 +32,7 @@ from .const import (
 )
 from .coordinator import ForecastCoordinator, VacationHeatingCoordinator, make_store
 
-PLATFORMS = [Platform.NUMBER, Platform.SELECT, Platform.SENSOR]
+PLATFORMS = [Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 CARD_FILENAME = "vacation-heating-card.js"
@@ -59,6 +64,35 @@ class VacationHeatingData:
 
 
 type VacationHeatingConfigEntry = ConfigEntry[VacationHeatingData]
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Migrate a config entry to the current schema."""
+    if entry.version > 1:
+        return False
+
+    if entry.minor_version < 2:
+        # The room action select became the set_preset and set_temperature
+        # booleans; its config entity is gone, drop it from the registry.
+        registry = er.async_get(hass)
+        for subentry_id, subentry in entry.subentries.items():
+            if (
+                subentry.subentry_type != SUBENTRY_TYPE_ROOM
+                or CONF_ACTION not in subentry.data
+            ):
+                continue
+            data = dict(subentry.data)
+            action = data.pop(CONF_ACTION)
+            data[CONF_SET_PRESET] = action in (ACTION_SET_PRESET, "both")
+            data[CONF_SET_TEMPERATURE] = action in (ACTION_SET_TEMPERATURE, "both")
+            hass.config_entries.async_update_subentry(entry, subentry, data=data)
+            if entity_id := registry.async_get_entity_id(
+                "select", DOMAIN, f"{subentry_id}_{CONF_ACTION}"
+            ):
+                registry.async_remove(entity_id)
+        hass.config_entries.async_update_entry(entry, minor_version=2)
+
+    return True
 
 
 async def async_setup_entry(

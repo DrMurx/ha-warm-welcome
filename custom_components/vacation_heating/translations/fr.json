@@ -62,16 +62,18 @@
           "title": "Paramètres de chauffage",
           "data": {
             "heat_rates": "Vitesses de chauffe",
-            "action": "Action au démarrage du chauffage",
+            "set_preset": "Appliquer le préréglage au démarrage du chauffage",
+            "set_temperature": "Régler la température au démarrage du chauffage",
             "preset_mode": "Préréglage à appliquer",
             "preset_temperatures": "Températures des préréglages",
             "target_temperature": "Température cible"
           },
           "data_description": {
             "heat_rates": "Un point par mesure : à quelle température extérieure la pièce a gagné combien de degrés en combien d'heures. Le gain peut être négatif si le chauffage ne suit pas à cette température extérieure. Les valeurs entre les points sont interpolées linéairement.",
-            "action": "Ce qui est exécuté sur l'entité climatique lorsque l'heure de démarrage calculée est atteinte.",
-            "preset_mode": "Les préréglages de l'entité climatique sont listés ; utilisé uniquement lorsque l'action inclut l'application d'un préréglage.",
-            "preset_temperatures": "Facultatif. La température atteinte par chaque préréglage. Avec une action de préréglage seul, la prédiction vise la température du préréglage sélectionné au lieu de la température cible.",
+            "set_preset": "Basculer l'entité climatique sur le préréglage sélectionné lorsque l'heure de démarrage calculée est atteinte.",
+            "set_temperature": "Régler la température cible sur l'entité climatique lorsque l'heure de démarrage calculée est atteinte.",
+            "preset_mode": "Les préréglages de l'entité climatique sont listés ; utilisé uniquement lorsque « Appliquer le préréglage au démarrage du chauffage » est activé.",
+            "preset_temperatures": "Facultatif. La température atteinte par chaque préréglage. Si seul le préréglage est appliqué, la prédiction vise la température du préréglage sélectionné au lieu de la température cible.",
             "target_temperature": "Température de la pièce à atteindre pour votre arrivée."
           }
         }
@@ -79,19 +81,11 @@
       "error": {
         "invalid_heat_rates": "Chaque point de vitesse de chauffe nécessite une température extérieure, un gain de température et une durée positive. Les températures extérieures doivent être uniques et au moins un point doit avoir un gain positif.",
         "invalid_preset_temperatures": "Chaque température de préréglage nécessite un nom de préréglage et une température ; les préréglages doivent être uniques.",
-        "preset_mode_required": "Sélectionnez un préréglage lorsque l'action inclut l'application d'un préréglage."
+        "preset_mode_required": "Sélectionnez un préréglage lorsque « Appliquer le préréglage au démarrage du chauffage » est activé.",
+        "no_action": "Activez au moins une action à exécuter au démarrage du chauffage."
       },
       "abort": {
         "reconfigure_successful": "La reconfiguration a réussi."
-      }
-    }
-  },
-  "selector": {
-    "action": {
-      "options": {
-        "set_preset": "Appliquer le préréglage",
-        "set_temperature": "Régler la température",
-        "both": "Appliquer le préréglage et régler la température"
       }
     }
   },
@@ -102,16 +96,16 @@
       }
     },
     "select": {
-      "action": {
-        "name": "Action au démarrage du chauffage",
-        "state": {
-          "set_preset": "Appliquer le préréglage",
-          "set_temperature": "Régler la température",
-          "both": "Appliquer le préréglage et régler la température"
-        }
-      },
       "preset_mode": {
         "name": "Préréglage à appliquer"
+      }
+    },
+    "switch": {
+      "set_preset": {
+        "name": "Appliquer le préréglage au démarrage du chauffage"
+      },
+      "set_temperature": {
+        "name": "Régler la température au démarrage du chauffage"
       }
     },
     "sensor": {

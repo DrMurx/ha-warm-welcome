@@ -31,14 +31,14 @@ Then you add each **room** to it, configuring:
   temperatures; the prediction then starts correspondingly earlier so
   warmer hours compensate. Rates between the mapped points are
   interpolated linearly and clamped outside the range,
-- an **action** — whether to set a preset, a temperature, or both when the
-  calculated start time is reached. The preset dropdown offers the presets
-  advertised by the selected climate entity (e.g. `comfort`, `eco`,
-  `boost`),
+- the **actions** — whether to set a preset and/or a temperature when the
+  calculated start time is reached, one checkbox each (at least one must
+  be enabled). The preset dropdown offers the presets advertised by the
+  selected climate entity (e.g. `comfort`, `eco`, `boost`),
 - optional **preset temperatures** — the temperature each preset heats to,
   e.g. `comfort: 21`, `eco: 17`. Presets switch the thermostat to a setpoint
   configured inside the climate device, which this integration cannot read;
-  with a preset-only action the prediction targets the mapped temperature
+  when only the preset is set, the prediction targets the mapped temperature
   of the selected preset (falling back to the target temperature if the
   preset is not mapped).
 
@@ -61,9 +61,9 @@ The entry itself provides one shared sensor:
   current interval, the `forecast` attribute holds the full series.
 
 When the start moment arrives (and the end date is still in the future),
-the configured action is executed once per vacation. The "already
+the enabled actions are executed once per vacation. The "already
 triggered" flag survives Home Assistant restarts. If Home Assistant was
-down at the computed moment, the action fires immediately after startup.
+down at the computed moment, the actions fire immediately after startup.
 
 If the end date entity is unset or in the past, the integration idles and
 the sensors show `unknown`.
@@ -90,7 +90,7 @@ Add integration → Vacation Heating**. The integration is added once,
 asking for the shared weather and vacation end entities. Then add each
 room via **Add room** on the integration's page. Adding a room has two
 steps: first the name and climate entity, then the heat rates and the
-action — the preset choices in the second step come from the climate
+actions — the preset choices in the second step come from the climate
 entity you picked in the first.
 
 Heat rate points and preset temperatures are entered as structured list
@@ -104,9 +104,10 @@ Everything can be changed later: the shared entities via the entry's
 
 For quick adjustments (and for use in automations), each room's device
 also exposes its main settings as configuration entities — a **target
-temperature** number and selects for the **action** and the **preset to
-set**. Changing them writes straight back into the room's configuration,
-and the prediction updates immediately.
+temperature** number, switches for **set preset** and **set temperature**
+at the heating start, and a select for the **preset to set**. Changing
+them writes straight back into the room's configuration, and the
+prediction updates immediately.
 
 ## Dashboard card
 

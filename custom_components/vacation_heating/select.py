@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import VacationHeatingConfigEntry
-from .const import ACTIONS, CONF_ACTION, CONF_CLIMATE_ENTITY, CONF_PRESET_MODE
+from .const import CONF_CLIMATE_ENTITY, CONF_PRESET_MODE
 from .coordinator import VacationHeatingCoordinator
 from .entity import VacationHeatingRoomEntity
 
@@ -18,33 +18,11 @@ async def async_setup_entry(
     entry: VacationHeatingConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Set up the action and preset selects of every room."""
+    """Set up the preset select of every room."""
     for subentry_id, coordinator in entry.runtime_data.rooms.items():
         async_add_entities(
-            [ActionSelect(coordinator), PresetModeSelect(coordinator)],
-            config_subentry_id=subentry_id,
+            [PresetModeSelect(coordinator)], config_subentry_id=subentry_id
         )
-
-
-class ActionSelect(VacationHeatingRoomEntity, SelectEntity):
-    """What to do on the climate entity at the heating start."""
-
-    _attr_translation_key = "action"
-    _attr_entity_category = EntityCategory.CONFIG
-    _attr_options = ACTIONS
-
-    def __init__(self, coordinator: VacationHeatingCoordinator) -> None:
-        """Initialize the action select."""
-        super().__init__(coordinator, CONF_ACTION)
-
-    @property
-    def current_option(self) -> str:
-        """The configured action."""
-        return self.coordinator.settings[CONF_ACTION]
-
-    async def async_select_option(self, option: str) -> None:
-        """Store the new action in the room subentry."""
-        self._update_setting(CONF_ACTION, option)
 
 
 class PresetModeSelect(VacationHeatingRoomEntity, SelectEntity):

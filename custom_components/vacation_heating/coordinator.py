@@ -15,14 +15,13 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from homeassistant.util import dt as dt_util
 
 from .const import (
-    ACTION_SET_PRESET,
-    ACTION_SET_TEMPERATURE,
-    CONF_ACTION,
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
     CONF_PRESET_MODE,
     CONF_PRESET_TEMPERATURES,
+    CONF_SET_PRESET,
+    CONF_SET_TEMPERATURE,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DOMAIN,
@@ -191,7 +190,7 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
         temperature map and fall back to the target temperature.
         """
         options = self.settings
-        if options[CONF_ACTION] == ACTION_SET_PRESET:
+        if options.get(CONF_SET_PRESET) and not options.get(CONF_SET_TEMPERATURE):
             presets = parse_preset_temperatures(
                 options.get(CONF_PRESET_TEMPERATURES) or []
             )
@@ -255,16 +254,19 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
 
         options = self.settings
         entity_id = options[CONF_CLIMATE_ENTITY]
-        action = options[CONF_ACTION]
+        set_preset = bool(options.get(CONF_SET_PRESET))
+        set_temperature = bool(options.get(CONF_SET_TEMPERATURE))
         _LOGGER.info(
-            "Starting pre-heat of %s for arrival at %s (action: %s)",
+            "Starting pre-heat of %s for arrival at %s (set preset: %s, "
+            "set temperature: %s)",
             entity_id,
             arrival,
-            action,
+            set_preset,
+            set_temperature,
         )
         try:
-            if action != ACTION_SET_TEMPERATURE:
-                # The preset can be missing if the action was switched via
+            if set_preset:
+                # The preset can be missing if set_preset was enabled via
                 # the config entity without one configured.
                 if preset := options.get(CONF_PRESET_MODE):
                     await self.hass.services.async_call(
@@ -278,7 +280,7 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
                         "No preset configured for %s; skipping set_preset_mode",
                         entity_id,
                     )
-            if action != ACTION_SET_PRESET:
+            if set_temperature:
                 await self.hass.services.async_call(
                     "climate",
                     "set_temperature",

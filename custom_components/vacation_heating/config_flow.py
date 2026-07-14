@@ -44,8 +44,11 @@ from .const import (
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DEFAULT_TARGET_TEMPERATURE,
+    DEFAULT_TARGET_TEMPERATURE_F,
     DOMAIN,
     SUBENTRY_TYPE_ROOM,
+    TARGET_TEMPERATURE_RANGE_C,
+    TARGET_TEMPERATURE_RANGE_F,
 )
 from .heating_model import parse_heat_rates, parse_preset_temperatures
 
@@ -96,8 +99,12 @@ def settings_schema(hass: HomeAssistant, climate_entity_id: str) -> vol.Schema:
 
     unit = hass.config.units.temperature_unit
     fahrenheit = unit == UnitOfTemperature.FAHRENHEIT
-    target_default = 70.0 if fahrenheit else DEFAULT_TARGET_TEMPERATURE
-    target_min, target_max = (40, 95) if fahrenheit else (5, 35)
+    target_default = (
+        DEFAULT_TARGET_TEMPERATURE_F if fahrenheit else DEFAULT_TARGET_TEMPERATURE
+    )
+    target_min, target_max = (
+        TARGET_TEMPERATURE_RANGE_F if fahrenheit else TARGET_TEMPERATURE_RANGE_C
+    )
 
     # Object selector field labels are plain strings (not translatable);
     # they carry the unit dynamically. Field selectors must be given in

@@ -1,0 +1,86 @@
+"""Select entities exposing room settings."""
+
+from __future__ import annotations
+
+from homeassistant.components.select import SelectEntity
+from homeassistant.const import EntityCategory
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+
+from . import VacationHeatingConfigEntry
+from .const import ACTIONS, CONF_ACTION, CONF_CLIMATE_ENTITY, CONF_PRESET_MODE
+from .coordinator import VacationHeatingCoordinator
+from .entity import VacationHeatingRoomEntity
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: VacationHeatingConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
+) -> None:
+    """Set up the action and preset selects of every room."""
+    for subentry_id, coordinator in entry.runtime_data.rooms.items():
+        async_add_entities(
+            [ActionSelect(coordinator), PresetModeSelect(coordinator)],
+            config_subentry_id=subentry_id,
+        )
+
+
+class ActionSelect(VacationHeatingRoomEntity, SelectEntity):
+    """What to do on the climate entity at the heating start."""
+
+    _attr_translation_key = "action"
+    _attr_entity_category = EntityCategory.CONFIG
+    _attr_options = ACTIONS
+
+    def __init__(self, coordinator: VacationHeatingCoordinator) -> None:
+        """Initialize the action select."""
+        super().__init__(coordinator, CONF_ACTION)
+
+    @property
+    def current_option(self) -> str:
+        """The configured action."""
+        return self.coordinator.settings[CONF_ACTION]
+
+    async def async_select_option(self, option: str) -> None:
+        """Store the new action in the room subentry."""
+        self._update_setting(CONF_ACTION, option)
+
+
+class PresetModeSelect(VacationHeatingRoomEntity, SelectEntity):
+    """The preset to set at the heating start."""
+
+    _attr_translation_key = "preset_mode"
+    _attr_entity_category = EntityCategory.CONFIG
+
+    def __init__(self, coordinator: VacationHeatingCoordinator) -> None:
+        """Initialize the preset select."""
+        super().__init__(coordinator, CONF_PRESET_MODE)
+
+    @property
+    def options(self) -> list[str]:
+        """The climate entity's advertised presets plus the configured one.
+
+        Including the configured value keeps the entity valid while the
+        climate entity is unavailable or no longer offers that preset.
+        """
+        state = self.coordinator.hass.states.get(
+            self.coordinator.settings[CONF_CLIMATE_ENTITY]
+        )
+        presets = [
+            str(preset)
+            for preset in (state.attributes.get("preset_modes") if state else None) or []
+        ]
+        current = self.current_option
+        if current and current not in presets:
+            presets.append(current)
+        return presets
+
+    @property
+    def current_option(self) -> str | None:
+        """The configured preset."""
+        return self.coordinator.settings.get(CONF_PRESET_MODE)
+
+    async def async_select_option(self, option: str) -> None:
+        """Store the new preset in the room subentry."""
+        self._update_setting(CONF_PRESET_MODE, option)

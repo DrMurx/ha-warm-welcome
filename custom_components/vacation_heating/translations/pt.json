@@ -96,6 +96,24 @@
     }
   },
   "entity": {
+    "number": {
+      "target_temperature": {
+        "name": "Temperatura alvo"
+      }
+    },
+    "select": {
+      "action": {
+        "name": "Ação no início do aquecimento",
+        "state": {
+          "set_preset": "Aplicar predefinição",
+          "set_temperature": "Definir temperatura",
+          "both": "Aplicar predefinição e definir temperatura"
+        }
+      },
+      "preset_mode": {
+        "name": "Predefinição a aplicar"
+      }
+    },
     "sensor": {
       "heating_start": {
         "name": "Início do aquecimento"

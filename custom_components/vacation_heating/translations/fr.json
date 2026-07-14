@@ -96,6 +96,24 @@
     }
   },
   "entity": {
+    "number": {
+      "target_temperature": {
+        "name": "Température cible"
+      }
+    },
+    "select": {
+      "action": {
+        "name": "Action au démarrage du chauffage",
+        "state": {
+          "set_preset": "Appliquer le préréglage",
+          "set_temperature": "Régler la température",
+          "both": "Appliquer le préréglage et régler la température"
+        }
+      },
+      "preset_mode": {
+        "name": "Préréglage à appliquer"
+      }
+    },
     "sensor": {
       "heating_start": {
         "name": "Démarrage du chauffage"

@@ -102,6 +102,12 @@ Everything can be changed later: the shared entities via the entry's
 **Configure** menu, each room (including its name) via the room's
 **Reconfigure** menu.
 
+For quick adjustments (and for use in automations), each room's device
+also exposes its main settings as configuration entities — a **target
+temperature** number and selects for the **action** and the **preset to
+set**. Changing them writes straight back into the room's configuration,
+and the prediction updates immediately.
+
 ## Dashboard card
 
 The integration bundles its own Lovelace card — it is registered

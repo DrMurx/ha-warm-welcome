@@ -2030,7 +2030,7 @@ wheels = [
 
 [[package]]
 name = "ha-vacation-heating"
-version = "0.1.8"
+version = "0.1.9"
 source = { virtual = "." }
 
 [package.dev-dependencies]

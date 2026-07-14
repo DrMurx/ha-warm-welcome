@@ -96,6 +96,24 @@
     }
   },
   "entity": {
+    "number": {
+      "target_temperature": {
+        "name": "Target temperature"
+      }
+    },
+    "select": {
+      "action": {
+        "name": "Action at heating start",
+        "state": {
+          "set_preset": "Set preset",
+          "set_temperature": "Set temperature",
+          "both": "Set preset and temperature"
+        }
+      },
+      "preset_mode": {
+        "name": "Preset to set"
+      }
+    },
     "sensor": {
       "heating_start": {
         "name": "Heating start"

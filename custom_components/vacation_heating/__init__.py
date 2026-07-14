@@ -27,7 +27,7 @@ from .const import (
 )
 from .coordinator import ForecastCoordinator, VacationHeatingCoordinator, make_store
 
-PLATFORMS = [Platform.SENSOR]
+PLATFORMS = [Platform.NUMBER, Platform.SELECT, Platform.SENSOR]
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 CARD_FILENAME = "vacation-heating-card.js"

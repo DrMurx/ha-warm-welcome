@@ -96,6 +96,24 @@
     }
   },
   "entity": {
+    "number": {
+      "target_temperature": {
+        "name": "Temperatura objetivo"
+      }
+    },
+    "select": {
+      "action": {
+        "name": "Acción al inicio de la calefacción",
+        "state": {
+          "set_preset": "Establecer preajuste",
+          "set_temperature": "Establecer temperatura",
+          "both": "Establecer preajuste y temperatura"
+        }
+      },
+      "preset_mode": {
+        "name": "Preajuste a establecer"
+      }
+    },
     "sensor": {
       "heating_start": {
         "name": "Inicio de la calefacción"

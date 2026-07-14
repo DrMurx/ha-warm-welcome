@@ -96,6 +96,24 @@
     }
   },
   "entity": {
+    "number": {
+      "target_temperature": {
+        "name": "Zieltemperatur"
+      }
+    },
+    "select": {
+      "action": {
+        "name": "Aktion beim Heizstart",
+        "state": {
+          "set_preset": "Voreinstellung setzen",
+          "set_temperature": "Temperatur setzen",
+          "both": "Voreinstellung und Temperatur setzen"
+        }
+      },
+      "preset_mode": {
+        "name": "Zu setzende Voreinstellung"
+      }
+    },
     "sensor": {
       "heating_start": {
         "name": "Heizstart"

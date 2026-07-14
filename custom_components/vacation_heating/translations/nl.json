@@ -96,6 +96,24 @@
     }
   },
   "entity": {
+    "number": {
+      "target_temperature": {
+        "name": "Doeltemperatuur"
+      }
+    },
+    "select": {
+      "action": {
+        "name": "Actie bij start van de verwarming",
+        "state": {
+          "set_preset": "Preset instellen",
+          "set_temperature": "Temperatuur instellen",
+          "both": "Preset en temperatuur instellen"
+        }
+      },
+      "preset_mode": {
+        "name": "In te stellen preset"
+      }
+    },
     "sensor": {
       "heating_start": {
         "name": "Start verwarming"

@@ -29,6 +29,7 @@ from .const import (
     DOMAIN,
 )
 from .coordinator import ForecastCoordinator, VacationHeatingCoordinator
+from .entity import VacationHeatingRoomEntity
 
 
 def _predicted_temperatures(
@@ -55,12 +56,8 @@ async def async_setup_entry(
         )
 
 
-class VacationHeatingSensor(
-    CoordinatorEntity[VacationHeatingCoordinator], SensorEntity
-):
+class VacationHeatingSensor(VacationHeatingRoomEntity, SensorEntity):
     """Base class for vacation heating sensors."""
-
-    _attr_has_entity_name = True
 
     def __init__(
         self,
@@ -68,15 +65,8 @@ class VacationHeatingSensor(
         description: SensorEntityDescription,
     ) -> None:
         """Initialize the sensor."""
-        super().__init__(coordinator)
-        subentry = coordinator.subentry
         self.entity_description = description
-        self._attr_unique_id = f"{subentry.subentry_id}_{description.key}"
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, subentry.subentry_id)},
-            name=subentry.title,
-            entry_type=DeviceEntryType.SERVICE,
-        )
+        super().__init__(coordinator, description.key)
 
 
 class OutdoorForecastSensor(

@@ -264,12 +264,20 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
         )
         try:
             if action != ACTION_SET_TEMPERATURE:
-                await self.hass.services.async_call(
-                    "climate",
-                    "set_preset_mode",
-                    {"entity_id": entity_id, "preset_mode": options[CONF_PRESET_MODE]},
-                    blocking=True,
-                )
+                # The preset can be missing if the action was switched via
+                # the config entity without one configured.
+                if preset := options.get(CONF_PRESET_MODE):
+                    await self.hass.services.async_call(
+                        "climate",
+                        "set_preset_mode",
+                        {"entity_id": entity_id, "preset_mode": preset},
+                        blocking=True,
+                    )
+                else:
+                    _LOGGER.warning(
+                        "No preset configured for %s; skipping set_preset_mode",
+                        entity_id,
+                    )
             if action != ACTION_SET_PRESET:
                 await self.hass.services.async_call(
                     "climate",

@@ -106,7 +106,9 @@ Everything can be changed later: the shared entities via the entry's
 
 The integration bundles its own Lovelace card — it is registered
 automatically (no HACS frontend module, no resource configuration) and
-needs no options:
+needs no options. After installing or upgrading, restart Home Assistant
+and **hard-refresh the browser** (Cmd/Ctrl+Shift+R) — the frontend's
+service worker caches the page that loads the card:
 
 ```yaml
 type: custom:vacation-heating-card

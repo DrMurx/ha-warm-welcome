@@ -5,7 +5,10 @@
   "config_flow": true,
   "dependencies": [
     "climate",
-    "weather"
+    "frontend",
+    "http",
+    "weather",
+    "websocket_api"
   ],
   "documentation": "https://github.com/YOUR_GITHUB_USERNAME/ha-vacation-heating",
   "integration_type": "service",

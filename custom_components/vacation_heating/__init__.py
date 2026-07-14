@@ -3,21 +3,51 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
+from homeassistant.components.frontend import add_extra_js_url
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.typing import ConfigType
+from homeassistant.loader import async_get_integration
 
+from . import websocket
 from .const import (
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_WEATHER_ENTITY,
+    DOMAIN,
+    SIGNAL_UPDATE,
     SUBENTRY_TYPE_ROOM,
 )
 from .coordinator import ForecastCoordinator, VacationHeatingCoordinator, make_store
 
 PLATFORMS = [Platform.SENSOR]
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+CARD_FILENAME = "vacation-heating-card.js"
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Register the websocket API and the bundled Lovelace card."""
+    websocket.async_register(hass)
+
+    await hass.http.async_register_static_paths(
+        [
+            StaticPathConfig(
+                f"/{DOMAIN}", str(Path(__file__).parent / "frontend"), True
+            )
+        ]
+    )
+    # The version in the URL busts browser caches on upgrades.
+    integration = await async_get_integration(hass, DOMAIN)
+    add_extra_js_url(hass, f"/{DOMAIN}/{CARD_FILENAME}?v={integration.version}")
+    return True
 
 
 @dataclass
@@ -79,6 +109,15 @@ async def async_setup_entry(
     entry.async_on_unload(forecast_coordinator.async_add_listener(_forecast_updated))
 
     @callback
+    def _notify_card() -> None:
+        """Push fresh data to the card's websocket subscriptions."""
+        async_dispatcher_send(hass, SIGNAL_UPDATE)
+
+    entry.async_on_unload(forecast_coordinator.async_add_listener(_notify_card))
+    for coordinator in rooms.values():
+        entry.async_on_unload(coordinator.async_add_listener(_notify_card))
+
+    @callback
     def _tracked_entity_changed(event: Event) -> None:
         entity_id = event.data["entity_id"]
         if entity_id == entry.options[CONF_WEATHER_ENTITY]:
@@ -101,6 +140,9 @@ async def async_setup_entry(
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    # Card subscriptions outlive entry reloads (they hang on the
+    # dispatcher signal, not on the coordinators); push the new data.
+    async_dispatcher_send(hass, SIGNAL_UPDATE)
     return True
 
 

@@ -6,6 +6,10 @@ DOMAIN = "vacation_heating"
 
 SUBENTRY_TYPE_ROOM = "room"
 
+# Dispatcher signal fired on every prediction or forecast update; feeds
+# the websocket subscriptions of the bundled Lovelace card.
+SIGNAL_UPDATE = f"{DOMAIN}_updated"
+
 CONF_CLIMATE_ENTITY = "climate_entity"
 CONF_WEATHER_ENTITY = "weather_entity"
 CONF_END_DATE_ENTITY = "end_date_entity"

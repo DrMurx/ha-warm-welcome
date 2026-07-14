@@ -102,9 +102,30 @@ Everything can be changed later: the shared entities via the entry's
 **Configure** menu, each room (including its name) via the room's
 **Reconfigure** menu.
 
-## Charting the prediction
+## Dashboard card
 
-Two series are exposed for charting, both as `{datetime, temperature}`
+The integration bundles its own Lovelace card — it is registered
+automatically (no HACS frontend module, no resource configuration) and
+needs no options:
+
+```yaml
+type: custom:vacation-heating-card
+title: Vacation re-heat   # optional
+```
+
+The card subscribes to the integration over websocket and updates live.
+It shows one curve per room from its computed heating start (marked with
+a dot) to the target temperature at arrival, a dashed vertical marker at
+the vacation end, and the outdoor forecast as a dashed line on its own
+right-hand axis. The legend lists each room's start time; a ⚠ marks
+predictions that had to extrapolate beyond the forecast. While no future
+vacation end is set, the card shows an idle message.
+
+## Charting with ApexCharts instead
+
+If you prefer building your own chart (e.g. with the community
+[ApexCharts card](https://github.com/RomRider/apexcharts-card)), two
+series are exposed as attributes, both as `{datetime, temperature}`
 point lists:
 
 - `predicted_temperatures` on each room's `heating_start` sensor — the
@@ -118,9 +139,9 @@ These attributes are excluded from the recorder (no database growth); they
 always reflect the latest prediction, which is recomputed every 30 minutes
 and immediately after any source entity or option changes.
 
-With the [ApexCharts card](https://github.com/RomRider/apexcharts-card)
-(available via HACS) you can plot the timeline of several rooms in one
-chart — the point where a room's line starts rising is its heating start:
+With the ApexCharts card (available via HACS) you can plot the timeline
+of several rooms in one chart — the point where a room's line starts
+rising is its heating start:
 
 ```yaml
 type: custom:apexcharts-card

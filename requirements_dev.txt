@@ -1,2 +1,5 @@
 pytest-homeassistant-custom-component
+# Provides the hass_frontend module so the frontend dependency
+# (bundled Lovelace card) can be set up in tests.
+home-assistant-frontend
 ruff

@@ -7,6 +7,8 @@
  * a secondary axis, and a marker at the vacation end.
  */
 
+const CARD_VERSION = "0.1.1";
+
 const SVG_NS = "http://www.w3.org/2000/svg";
 const WIDTH = 640;
 const HEIGHT = 300;
@@ -81,18 +83,26 @@ class VacationHeatingCard extends HTMLElement {
     this._unsub = null;
   }
 
+  _log(...args) {
+    if (this._config.debug) console.info("VACATION-HEATING-CARD:", ...args);
+  }
+
   setConfig(config) {
     this._config = config || {};
+    this._log("setConfig", JSON.stringify(this._config));
     this._render();
   }
 
   set hass(hass) {
+    const first = !this._hass;
     this._hass = hass;
+    if (first) this._log("hass set (connection:", !!hass?.connection, ")");
     this._subscribe();
   }
 
   connectedCallback() {
     this._connected = true;
+    this._log("connectedCallback");
     this._subscribe();
   }
 
@@ -117,16 +127,20 @@ class VacationHeatingCard extends HTMLElement {
       return;
     }
     this._subscribing = true;
+    this._log("subscribing…");
     try {
       this._unsub = await this._hass.connection.subscribeMessage(
         (data) => {
+          this._log("payload received:", JSON.stringify(data));
           this._data = data;
           this._error = null;
           this._render();
         },
         { type: "vacation_heating/subscribe" }
       );
+      this._log("subscribed OK");
     } catch (err) {
+      console.error("VACATION-HEATING-CARD: subscription failed:", err);
       this._error =
         "Could not connect to the Vacation Heating integration. Is it installed and set up?";
       this._render();
@@ -154,6 +168,20 @@ class VacationHeatingCard extends HTMLElement {
   }
 
   _render() {
+    try {
+      this._renderCard();
+    } catch (err) {
+      console.error("VACATION-HEATING-CARD: render failed:", err);
+      this.shadowRoot.innerHTML = "";
+      const pre = document.createElement("pre");
+      pre.style.whiteSpace = "pre-wrap";
+      pre.style.padding = "12px";
+      pre.textContent = `vacation-heating-card render error:\n${err?.stack || err}`;
+      this.shadowRoot.append(pre);
+    }
+  }
+
+  _renderCard() {
     const root = this.shadowRoot;
     root.innerHTML = "";
     const style = document.createElement("style");
@@ -168,10 +196,12 @@ class VacationHeatingCard extends HTMLElement {
     root.append(card);
 
     if (this._error) {
+      this._log("render: error state");
       content.append(this._message(this._error));
       return;
     }
     if (!this._data) {
+      this._log("render: waiting for data");
       content.append(this._message("Loading…"));
       return;
     }
@@ -186,6 +216,9 @@ class VacationHeatingCard extends HTMLElement {
       }));
 
     if (!arrival || arrival <= Date.now() || !rooms.length) {
+      this._log(
+        `render: idle (arrival=${this._data.arrival}, plottable rooms=${rooms.length}/${(this._data.rooms || []).length})`
+      );
       content.append(
         this._message(
           "No upcoming re-heat. Set a future vacation end date to see the prediction."
@@ -194,6 +227,7 @@ class VacationHeatingCard extends HTMLElement {
       return;
     }
 
+    this._log(`render: chart with ${rooms.length} room(s)`);
     content.append(this._chart(rooms, arrival));
     content.append(this._legend(rooms));
   }
@@ -439,6 +473,12 @@ class VacationHeatingCard extends HTMLElement {
 }
 
 customElements.define("vacation-heating-card", VacationHeatingCard);
+
+console.info(
+  `%c VACATION-HEATING-CARD %c v${CARD_VERSION} `,
+  "background: #3f51b5; color: white; font-weight: bold;",
+  "background: #eee; color: #333;"
+);
 
 window.customCards = window.customCards || [];
 window.customCards.push({

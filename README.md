@@ -192,12 +192,12 @@ cold days, enter that as a negative gain.
 
 ## Development
 
+Dependencies are managed with [uv](https://docs.astral.sh/uv/):
+
 ```bash
-python3.13 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements_dev.txt
-ruff check .
-pytest tests/ -v
+uv sync
+uv run ruff check .
+uv run pytest tests/ -v
 ```
 
 ## Releasing

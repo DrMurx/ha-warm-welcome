@@ -1,3 +1,24 @@
+[project]
+name = "ha-vacation-heating"
+version = "0.1.6"
+description = "Home Assistant custom integration that predicts when to re-heat each room after a vacation"
+requires-python = ">=3.13"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest-homeassistant-custom-component",
+    # Provides the hass_frontend module so the frontend dependency
+    # (bundled Lovelace card) can be set up in tests.
+    "home-assistant-frontend",
+    "ruff",
+]
+
+[tool.uv]
+# Not an installable package: the integration ships via HACS from
+# custom_components/, only the dev environment is managed here.
+package = false
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]

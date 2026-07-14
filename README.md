@@ -108,9 +108,9 @@ Two series are exposed for charting, both as `{datetime, temperature}`
 point lists:
 
 - `predicted_temperatures` on each room's `heating_start` sensor — the
-  predicted room temperature: flat at the current temperature from now
-  until the heating start, then rising to the target at arrival (with a
-  point at every heat-rate change),
+  predicted room temperature, from the current temperature at the heating
+  start rising to the target at arrival (with a point at every heat-rate
+  change),
 - `forecast` on the shared `outdoor_forecast` sensor — the outdoor
   temperature forecast used for the predictions.
 

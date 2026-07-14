@@ -15,7 +15,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.util import dt as dt_util
 
 from . import VacationHeatingConfigEntry
 from .const import (
@@ -35,18 +34,10 @@ from .coordinator import ForecastCoordinator, VacationHeatingCoordinator
 def _predicted_temperatures(
     curve: list[tuple[datetime, float]],
 ) -> list[dict[str, Any]]:
-    """Serialize the indoor trajectory, extended flat back to now.
-
-    The room holds its current temperature until the heating starts; the
-    extra leading point lets charts draw that plateau.
-    """
-    points = list(curve)
-    now = dt_util.utcnow()
-    if points and now < points[0][0]:
-        points.insert(0, (now, points[0][1]))
+    """Serialize the indoor trajectory from the heating start to arrival."""
     return [
         {"datetime": when.isoformat(), "temperature": round(temperature, 2)}
-        for when, temperature in points
+        for when, temperature in curve
     ]
 
 

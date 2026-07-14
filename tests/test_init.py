@@ -155,9 +155,9 @@ async def test_chart_attributes(hass, freezer, forecast_calls) -> None:
 
     state = hass.states.get("sensor.living_room_heating_start")
     curve = state.attributes["predicted_temperatures"]
-    # Flat from now at the current temperature, target reached at arrival.
-    assert curve[0] == {"datetime": NOW.isoformat(), "temperature": 15.0}
-    assert curve[1] == {"datetime": EXPECTED_START.isoformat(), "temperature": 15.0}
+    # From the heating start at the current temperature to the target at
+    # arrival; no leading "now" point.
+    assert curve[0] == {"datetime": EXPECTED_START.isoformat(), "temperature": 15.0}
     assert curve[-1] == {"datetime": ARRIVAL.isoformat(), "temperature": 21.0}
     temperatures = [point["temperature"] for point in curve]
     assert temperatures == sorted(temperatures)

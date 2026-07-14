@@ -118,8 +118,8 @@ title: Vacation re-heat   # optional
 The card subscribes to the integration over websocket and updates live.
 It shows one curve per room from its computed heating start (marked with
 a dot) to the target temperature at arrival, a dashed vertical marker at
-the vacation end, and the outdoor forecast as a dashed line on its own
-right-hand axis. The legend lists each room's start time; a ⚠ marks
+the vacation end, and the outdoor forecast as a dashed blue line on the
+same temperature axis. The legend lists each room's start time; a ⚠ marks
 predictions that had to extrapolate beyond the forecast. While no future
 vacation end is set, the card shows an idle message.
 

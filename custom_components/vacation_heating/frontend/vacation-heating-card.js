@@ -4,17 +4,17 @@
  * Zero configuration: the card subscribes to the integration's websocket
  * API and shows every room's predicted temperature curve from its
  * computed heating start to the arrival, the shared outdoor forecast on
- * a secondary axis, and a marker at the vacation end.
+ * the same temperature axis, and a marker at the vacation end.
  */
 
-const CARD_VERSION = "0.1.7";
+const CARD_VERSION = "0.1.8";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const WIDTH = 640;
 const HEIGHT = 300;
-const MARGIN = { left: 48, right: 48, top: 20, bottom: 40 };
+const MARGIN = { left: 48, right: 16, top: 20, bottom: 40 };
+// No blue: the outdoor forecast owns that hue.
 const ROOM_COLORS = [
-  "var(--primary-color, #03a9f4)",
   "#e67e22",
   "#2ecc71",
   "#9b59b6",
@@ -22,7 +22,8 @@ const ROOM_COLORS = [
   "#16a085",
   "#f1c40f",
 ];
-const OUTDOOR_COLOR = "var(--secondary-text-color, #727272)";
+const OUTDOOR_COLOR = "#2196f3";
+const ARRIVAL_COLOR = "var(--accent-color, #ff9800)";
 const HOUR = 36e5;
 
 const CSS = `
@@ -235,30 +236,27 @@ class VacationHeatingCard extends HTMLElement {
     const x = (ts) =>
       MARGIN.left +
       ((ts - t0) / (t1 - t0)) * (WIDTH - MARGIN.left - MARGIN.right);
-    const yScale = (lo, hi) => (value) =>
-      HEIGHT -
-      MARGIN.bottom -
-      ((value - lo) / (hi - lo)) * (HEIGHT - MARGIN.top - MARGIN.bottom);
-
-    const indoorTemps = rooms.flatMap((room) =>
-      room.curve.map((point) => point.temperature)
-    );
-    const yIn = this._domain(indoorTemps, 0.5);
-    const yInScale = yScale(yIn.lo, yIn.hi);
 
     const forecast = (this._data.forecast || [])
       .map((point) => ({ ts: Date.parse(point.datetime), t: point.temperature }))
       .filter((point) => point.ts >= t0 && point.ts <= t1);
-    const yOut = forecast.length
-      ? this._domain(forecast.map((point) => point.t), 1)
-      : null;
+
+    const temps = rooms
+      .flatMap((room) => room.curve.map((point) => point.temperature))
+      .concat(forecast.map((point) => point.t));
+    const domain = this._domain(temps, 0.5);
+    const y = (value) =>
+      HEIGHT -
+      MARGIN.bottom -
+      ((value - domain.lo) / (domain.hi - domain.lo)) *
+        (HEIGHT - MARGIN.top - MARGIN.bottom);
 
     const svg = svgEl("svg", { viewBox: `0 0 ${WIDTH} ${HEIGHT}` });
 
-    this._drawGridAndAxes(svg, x, yInScale, yIn, yOut, yScale, t0, t1);
-    if (yOut) this._drawForecast(svg, forecast, x, yScale(yOut.lo, yOut.hi));
+    this._drawGridAndAxes(svg, x, y, domain, t0, t1);
+    if (forecast.length) this._drawForecast(svg, forecast, x, y);
     this._drawArrival(svg, x(arrival));
-    for (const room of rooms) this._drawRoom(svg, room, x, yInScale);
+    for (const room of rooms) this._drawRoom(svg, room, x, y);
 
     return svg;
   }
@@ -270,36 +268,24 @@ class VacationHeatingCard extends HTMLElement {
     return { lo: lo - pad, hi: hi + pad };
   }
 
-  _drawGridAndAxes(svg, x, yInScale, yIn, yOut, yScale, t0, t1) {
+  _drawGridAndAxes(svg, x, y, domain, t0, t1) {
     const grid = "var(--divider-color, #e0e0e0)";
     const text = "var(--secondary-text-color, #727272)";
     const font = { "font-size": "11", fill: text };
     const plotBottom = HEIGHT - MARGIN.bottom;
 
-    // Horizontal grid + left (indoor) labels.
-    for (const value of this._ticks(yIn.lo, yIn.hi)) {
-      const y = yInScale(value);
+    // Horizontal grid + temperature labels.
+    for (const value of this._ticks(domain.lo, domain.hi)) {
+      const yPos = y(value);
       svg.append(
         svgEl("line", {
-          x1: MARGIN.left, x2: WIDTH - MARGIN.right, y1: y, y2: y,
+          x1: MARGIN.left, x2: WIDTH - MARGIN.right, y1: yPos, y2: yPos,
           stroke: grid, "stroke-width": "1",
         }),
         svgEl("text", {
-          x: MARGIN.left - 6, y: y + 4, "text-anchor": "end", ...font,
+          x: MARGIN.left - 6, y: yPos + 4, "text-anchor": "end", ...font,
         }, `${value}°`)
       );
-    }
-    // Right (outdoor) labels on the same grid area, own scale.
-    if (yOut) {
-      const yOutScale = yScale(yOut.lo, yOut.hi);
-      for (const value of this._ticks(yOut.lo, yOut.hi)) {
-        svg.append(
-          svgEl("text", {
-            x: WIDTH - MARGIN.right + 6, y: yOutScale(value) + 4,
-            "text-anchor": "start", ...font,
-          }, `${value}°`)
-        );
-      }
     }
 
     // Time ticks.
@@ -358,9 +344,9 @@ class VacationHeatingCard extends HTMLElement {
     return { ticks, daily: stepHours >= 24 };
   }
 
-  _drawForecast(svg, forecast, x, yOutScale) {
+  _drawForecast(svg, forecast, x, y) {
     const line = forecast
-      .map((point) => `${x(point.ts)},${yOutScale(point.t)}`)
+      .map((point) => `${x(point.ts)},${y(point.t)}`)
       .join(" ");
     const baseline = HEIGHT - MARGIN.bottom;
     const first = forecast[0];
@@ -378,23 +364,21 @@ class VacationHeatingCard extends HTMLElement {
   }
 
   _drawArrival(svg, xPos) {
-    const color = "var(--primary-text-color, #212121)";
     svg.append(
       svgEl("line", {
         x1: xPos, x2: xPos, y1: MARGIN.top - 4, y2: HEIGHT - MARGIN.bottom,
-        stroke: color, "stroke-width": "1.5", "stroke-dasharray": "3 3",
-        opacity: "0.7",
+        stroke: ARRIVAL_COLOR, "stroke-width": "1.5", "stroke-dasharray": "3 3",
       }),
       svgEl("text", {
         x: xPos - 5, y: MARGIN.top + 4, "text-anchor": "end",
-        "font-size": "11", fill: color,
+        "font-size": "11", fill: ARRIVAL_COLOR,
       }, "Arrival")
     );
   }
 
-  _drawRoom(svg, room, x, yInScale) {
+  _drawRoom(svg, room, x, y) {
     const points = room.curve.map(
-      (point) => `${x(Date.parse(point.datetime))},${yInScale(point.temperature)}`
+      (point) => `${x(Date.parse(point.datetime))},${y(point.temperature)}`
     );
     if (points.length > 1) {
       svg.append(
@@ -444,8 +428,8 @@ class VacationHeatingCard extends HTMLElement {
     outdoor.className = "item";
     const dash = document.createElement("span");
     dash.className = "dot";
-    dash.style.background = "var(--secondary-text-color)";
-    dash.style.opacity = "0.5";
+    dash.style.background = OUTDOOR_COLOR;
+    dash.style.opacity = "0.7";
     const label = document.createElement("span");
     label.className = "when";
     label.textContent = "Outdoor forecast";

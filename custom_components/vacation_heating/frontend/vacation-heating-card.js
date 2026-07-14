@@ -43,9 +43,25 @@ const CSS = `
   .legend .when { color: var(--secondary-text-color); }
 `;
 
+// Paint properties must be set as CSS: var() references are invalid in
+// SVG presentation attributes (the stroke silently becomes 'none').
+const STYLE_PROPS = new Set([
+  "stroke",
+  "fill",
+  "opacity",
+  "stroke-width",
+  "stroke-dasharray",
+  "stroke-linejoin",
+  "font-size",
+  "text-anchor",
+]);
+
 function svgEl(tag, attrs = {}, text) {
   const el = document.createElementNS(SVG_NS, tag);
-  for (const [key, value] of Object.entries(attrs)) el.setAttribute(key, value);
+  for (const [key, value] of Object.entries(attrs)) {
+    if (STYLE_PROPS.has(key)) el.style.setProperty(key, value);
+    else el.setAttribute(key, value);
+  }
   if (text !== undefined) el.textContent = text;
   return el;
 }

@@ -123,6 +123,10 @@ header:
 graph_span: 8d
 span:
   start: hour
+all_series_config:
+  # Stop lines at their last data point instead of extending them
+  # flat to the end of the graph (the card's default).
+  extend_to: false
 series:
   - entity: sensor.living_room_heating_start
     name: Living room

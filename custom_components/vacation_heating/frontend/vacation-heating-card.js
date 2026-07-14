@@ -7,7 +7,7 @@
  * a secondary axis, and a marker at the vacation end.
  */
 
-const CARD_VERSION = "0.1.6";
+const CARD_VERSION = "0.1.7";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const WIDTH = 640;
@@ -81,31 +81,20 @@ class VacationHeatingCard extends HTMLElement {
     this._data = null;
     this._error = null;
     this._unsub = null;
-    this._log("constructed");
-  }
-
-  // Unconditional while the card is being stabilized; will be gated
-  // behind a debug option later.
-  _log(...args) {
-    console.info("vacation_heating:", ...args);
   }
 
   setConfig(config) {
     this._config = config || {};
-    this._log("setConfig", JSON.stringify(this._config));
     this._render();
   }
 
   set hass(hass) {
-    const first = !this._hass;
     this._hass = hass;
-    if (first) this._log("hass set (connection:", !!hass?.connection, ")");
     this._subscribe();
   }
 
   connectedCallback() {
     this._connected = true;
-    this._log("connectedCallback");
     this._subscribe();
   }
 
@@ -130,18 +119,15 @@ class VacationHeatingCard extends HTMLElement {
       return;
     }
     this._subscribing = true;
-    this._log("subscribing…");
     try {
       this._unsub = await this._hass.connection.subscribeMessage(
         (data) => {
-          this._log("payload received:", JSON.stringify(data));
           this._data = data;
           this._error = null;
           this._render();
         },
         { type: "vacation_heating/subscribe" }
       );
-      this._log("subscribed OK");
     } catch (err) {
       console.error("vacation_heating: subscription failed:", err);
       this._error =
@@ -199,12 +185,10 @@ class VacationHeatingCard extends HTMLElement {
     root.append(card);
 
     if (this._error) {
-      this._log("render: error state");
       content.append(this._message(this._error));
       return;
     }
     if (!this._data) {
-      this._log("render: waiting for data");
       content.append(this._message("Loading…"));
       return;
     }
@@ -219,9 +203,6 @@ class VacationHeatingCard extends HTMLElement {
       }));
 
     if (!arrival || arrival <= Date.now() || !rooms.length) {
-      this._log(
-        `render: idle (arrival=${this._data.arrival}, plottable rooms=${rooms.length}/${(this._data.rooms || []).length})`
-      );
       content.append(
         this._message(
           "No upcoming re-heat. Set a future vacation end date to see the prediction."
@@ -230,7 +211,6 @@ class VacationHeatingCard extends HTMLElement {
       return;
     }
 
-    this._log(`render: chart with ${rooms.length} room(s)`);
     content.append(this._chart(rooms, arrival));
     content.append(this._legend(rooms));
   }
@@ -494,10 +474,6 @@ function tryDefineCard() {
   // Fall back to defining anyway after 15s (e.g. non-HA pages).
   if (!haReady && Date.now() - defineStarted < 15000) return false;
   window.customElements.define(CARD_TAG, VacationHeatingCard);
-  console.info(
-    `vacation_heating: element defined after ${Date.now() - defineStarted}ms` +
-      (haReady ? "" : " (without home-assistant present)")
-  );
   return true;
 }
 

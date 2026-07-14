@@ -13,12 +13,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set manifest version to release tag
+      - name: Set manifest and card version to release tag
         run: |
           version="${GITHUB_REF_NAME#v}"
           jq --arg v "$version" '.version = $v' \
             custom_components/vacation_heating/manifest.json > /tmp/manifest.json
           mv /tmp/manifest.json custom_components/vacation_heating/manifest.json
+          sed -i "s/^const CARD_VERSION = \".*\";/const CARD_VERSION = \"$version\";/" \
+            custom_components/vacation_heating/frontend/vacation-heating-card.js
+          grep -q "CARD_VERSION = \"$version\"" \
+            custom_components/vacation_heating/frontend/vacation-heating-card.js
 
       - name: Create zip
         run: |

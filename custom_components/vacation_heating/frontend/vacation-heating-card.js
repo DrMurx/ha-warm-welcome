@@ -81,10 +81,13 @@ class VacationHeatingCard extends HTMLElement {
     this._data = null;
     this._error = null;
     this._unsub = null;
+    this._log("constructed");
   }
 
+  // Unconditional while the card is being stabilized; will be gated
+  // behind a debug option later.
   _log(...args) {
-    if (this._config.debug) console.info("VACATION-HEATING-CARD:", ...args);
+    console.info("VACATION-HEATING-CARD:", ...args);
   }
 
   setConfig(config) {

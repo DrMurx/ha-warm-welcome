@@ -22,14 +22,14 @@ from .const import (
     ATTR_ARRIVAL,
     ATTR_BEYOND_FORECAST,
     ATTR_DEFICIT,
+    ATTR_FORECAST,
     ATTR_FORECAST_TYPE,
-    ATTR_OUTDOOR_FORECAST,
     ATTR_PREDICTED_TEMPERATURES,
     ATTR_PREHEAT_HOURS,
     ATTR_TRIGGERED_FOR,
     DOMAIN,
 )
-from .coordinator import VacationHeatingCoordinator
+from .coordinator import ForecastCoordinator, VacationHeatingCoordinator
 
 
 def _predicted_temperatures(
@@ -55,8 +55,9 @@ async def async_setup_entry(
     entry: VacationHeatingConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Set up the sensors of every room subentry."""
-    for subentry_id, coordinator in entry.runtime_data.items():
+    """Set up the shared forecast sensor and the sensors of every room."""
+    async_add_entities([OutdoorForecastSensor(entry.runtime_data.forecast, entry)])
+    for subentry_id, coordinator in entry.runtime_data.rooms.items():
         async_add_entities(
             [HeatingStartSensor(coordinator), RequiredPreheatSensor(coordinator)],
             config_subentry_id=subentry_id,
@@ -87,14 +88,67 @@ class VacationHeatingSensor(
         )
 
 
+class OutdoorForecastSensor(
+    CoordinatorEntity[ForecastCoordinator], SensorEntity
+):
+    """The shared outdoor forecast, exposed for charting."""
+
+    _attr_has_entity_name = True
+    # The forecast series would bloat the recorder database; cards read
+    # the live state, so history is not needed.
+    _unrecorded_attributes = frozenset({ATTR_FORECAST})
+
+    def __init__(
+        self,
+        coordinator: ForecastCoordinator,
+        entry: VacationHeatingConfigEntry,
+    ) -> None:
+        """Initialize the sensor on the entry-level device."""
+        super().__init__(coordinator)
+        self.entity_description = SensorEntityDescription(
+            key="outdoor_forecast",
+            translation_key="outdoor_forecast",
+            device_class=SensorDeviceClass.TEMPERATURE,
+            suggested_display_precision=1,
+        )
+        self._attr_native_unit_of_measurement = (
+            coordinator.hass.config.units.temperature_unit
+        )
+        self._attr_unique_id = f"{entry.entry_id}_outdoor_forecast"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, entry.entry_id)},
+            name=entry.title,
+            entry_type=DeviceEntryType.SERVICE,
+        )
+
+    @property
+    def native_value(self) -> float | None:
+        """The forecast temperature of the current interval."""
+        if not (data := self.coordinator.data):
+            return None
+        return data[0].temperature
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Expose the forecast points."""
+        return {
+            ATTR_FORECAST_TYPE: self.coordinator.forecast_type,
+            ATTR_FORECAST: [
+                {
+                    "datetime": point.time.isoformat(),
+                    "temperature": round(point.temperature, 2),
+                }
+                for point in self.coordinator.data or []
+            ],
+        }
+
+
 class HeatingStartSensor(VacationHeatingSensor):
     """When the heating must be turned on."""
 
     # The chart series would bloat the recorder database; cards read the
     # live state, so history is not needed.
-    _unrecorded_attributes = frozenset(
-        {ATTR_PREDICTED_TEMPERATURES, ATTR_OUTDOOR_FORECAST}
-    )
+    _unrecorded_attributes = frozenset({ATTR_PREDICTED_TEMPERATURES})
 
     def __init__(self, coordinator: VacationHeatingCoordinator) -> None:
         """Initialize the sensor."""
@@ -128,13 +182,6 @@ class HeatingStartSensor(VacationHeatingSensor):
                     ATTR_FORECAST_TYPE: coordinator.forecast_type,
                     ATTR_ARRIVAL: coordinator.arrival,
                     ATTR_PREDICTED_TEMPERATURES: _predicted_temperatures(data.curve),
-                    ATTR_OUTDOOR_FORECAST: [
-                        {
-                            "datetime": point.time.isoformat(),
-                            "temperature": round(point.temperature, 2),
-                        }
-                        for point in coordinator.forecast
-                    ],
                 }
             )
         return attrs

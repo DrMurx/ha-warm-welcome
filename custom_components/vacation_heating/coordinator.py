@@ -48,6 +48,61 @@ def make_store(hass: HomeAssistant, entry: ConfigEntry) -> Store[dict[str, Any]]
     return Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}")
 
 
+class ForecastCoordinator(DataUpdateCoordinator[list[ForecastPoint]]):
+    """Fetch the outdoor forecast shared by all rooms of an entry."""
+
+    config_entry: ConfigEntry
+
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+        """Initialize the forecast coordinator."""
+        super().__init__(
+            hass,
+            _LOGGER,
+            config_entry=entry,
+            name=f"{DOMAIN} {entry.title} forecast",
+            update_interval=UPDATE_INTERVAL,
+        )
+        self.forecast_type: str | None = None
+
+    async def _async_update_data(self) -> list[ForecastPoint]:
+        """Fetch the forecast, preferring hourly resolution."""
+        entity_id = self.config_entry.options[CONF_WEATHER_ENTITY]
+        for forecast_type in FORECAST_TYPES:
+            try:
+                response = await self.hass.services.async_call(
+                    "weather",
+                    "get_forecasts",
+                    {"entity_id": entity_id, "type": forecast_type},
+                    blocking=True,
+                    return_response=True,
+                )
+            except HomeAssistantError:
+                continue
+            raw = (response or {}).get(entity_id, {}).get("forecast") or []
+            points = self._parse_forecast(raw, forecast_type)
+            if points:
+                self.forecast_type = forecast_type
+                return points
+        raise UpdateFailed(f"No forecast available from {entity_id}")
+
+    @staticmethod
+    def _parse_forecast(
+        raw: list[dict[str, Any]], forecast_type: str
+    ) -> list[ForecastPoint]:
+        points: list[ForecastPoint] = []
+        for item in raw:
+            when = dt_util.parse_datetime(str(item.get("datetime")))
+            temperature = item.get("temperature")
+            if when is None or temperature is None:
+                continue
+            temperature = float(temperature)
+            if forecast_type == "daily" and item.get("templow") is not None:
+                # Daily forecasts give a high/low; use the midpoint.
+                temperature = (temperature + float(item["templow"])) / 2
+            points.append(ForecastPoint(dt_util.as_utc(when), temperature))
+        return points
+
+
 class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None]):
     """Recompute one room's heating start time and fire the configured action."""
 
@@ -58,31 +113,38 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
         hass: HomeAssistant,
         entry: ConfigEntry,
         subentry: ConfigSubentry,
+        forecast_coordinator: ForecastCoordinator,
         store: Store[dict[str, Any]],
         triggered: dict[str, str],
     ) -> None:
         """Initialize the coordinator for one room subentry.
 
-        ``triggered`` is the shared trigger guard map (subentry id ->
-        arrival isoformat) persisted in ``store``.
+        Refreshes are driven by the forecast coordinator (which polls
+        every 30 minutes) and by source entity changes, so no own update
+        interval is needed. ``triggered`` is the shared trigger guard map
+        (subentry id -> arrival isoformat) persisted in ``store``.
         """
         super().__init__(
             hass,
             _LOGGER,
             config_entry=entry,
             name=f"{DOMAIN} {subentry.title}",
-            update_interval=UPDATE_INTERVAL,
+            update_interval=None,
         )
         self.subentry = subentry
+        self.forecast_coordinator = forecast_coordinator
         # Shared entities from the entry, room settings from the subentry.
         self.settings: dict[str, Any] = {**entry.options, **subentry.data}
         self._store = store
         self._triggered = triggered
         self.arrival: datetime | None = None
-        self.forecast_type: str | None = None
-        self.forecast: list[ForecastPoint] = []
         self.triggered_for: str | None = triggered.get(subentry.subentry_id)
         self._unsub_trigger: CALLBACK_TYPE | None = None
+
+    @property
+    def forecast_type(self) -> str | None:
+        """The forecast resolution the prediction is based on."""
+        return self.forecast_coordinator.forecast_type
 
     @callback
     def cancel_trigger(self) -> None:
@@ -97,7 +159,6 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
         if arrival is None or arrival <= dt_util.utcnow():
             # No (future) vacation end configured: idle.
             self.cancel_trigger()
-            self.forecast = []
             return None
 
         current_temp = self._current_temperature()
@@ -106,8 +167,11 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
                 f"No current temperature available from {options[CONF_CLIMATE_ENTITY]}"
             )
 
+        forecast = self.forecast_coordinator.data
+        if not forecast:
+            raise UpdateFailed("No outdoor forecast available yet")
+
         rates = parse_heat_rates(options[CONF_HEAT_RATES])
-        forecast = await self._async_get_forecast()
         result = compute_start(
             arrival,
             current_temp,
@@ -116,8 +180,6 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
             rates,
             max_lookback=MAX_LOOKBACK,
         )
-        # Kept for charting; clipped to the prediction window.
-        self.forecast = [point for point in forecast if point.time <= arrival]
         self._schedule_trigger(result.start, arrival)
         return result
 
@@ -168,44 +230,6 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
         if current is None:
             return None
         return float(current)
-
-    async def _async_get_forecast(self) -> list[ForecastPoint]:
-        """Fetch the forecast, preferring hourly resolution."""
-        entity_id = self.settings[CONF_WEATHER_ENTITY]
-        for forecast_type in FORECAST_TYPES:
-            try:
-                response = await self.hass.services.async_call(
-                    "weather",
-                    "get_forecasts",
-                    {"entity_id": entity_id, "type": forecast_type},
-                    blocking=True,
-                    return_response=True,
-                )
-            except HomeAssistantError:
-                continue
-            raw = (response or {}).get(entity_id, {}).get("forecast") or []
-            points = self._parse_forecast(raw, forecast_type)
-            if points:
-                self.forecast_type = forecast_type
-                return points
-        raise UpdateFailed(f"No forecast available from {entity_id}")
-
-    @staticmethod
-    def _parse_forecast(
-        raw: list[dict[str, Any]], forecast_type: str
-    ) -> list[ForecastPoint]:
-        points: list[ForecastPoint] = []
-        for item in raw:
-            when = dt_util.parse_datetime(str(item.get("datetime")))
-            temperature = item.get("temperature")
-            if when is None or temperature is None:
-                continue
-            temperature = float(temperature)
-            if forecast_type == "daily" and item.get("templow") is not None:
-                # Daily forecasts give a high/low; use the midpoint.
-                temperature = (temperature + float(item["templow"])) / 2
-            points.append(ForecastPoint(dt_util.as_utc(when), temperature))
-        return points
 
     @callback
     def _schedule_trigger(self, start: datetime, arrival: datetime) -> None:

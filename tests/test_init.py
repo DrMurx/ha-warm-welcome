@@ -144,6 +144,9 @@ async def test_multiple_rooms_predict_independently(hass, freezer, forecast_call
     bedroom_state = hass.states.get("sensor.bedroom_heating_start")
     assert dt_util.parse_datetime(bedroom_state.state) == ARRIVAL - timedelta(hours=6)
 
+    # The forecast is fetched once for the entry, not once per room.
+    assert len(forecast_calls) == 1
+
 
 async def test_chart_attributes(hass, freezer, forecast_calls) -> None:
     """The start sensor carries the indoor trajectory and the clipped forecast."""
@@ -159,10 +162,15 @@ async def test_chart_attributes(hass, freezer, forecast_calls) -> None:
     temperatures = [point["temperature"] for point in curve]
     assert temperatures == sorted(temperatures)
 
-    outdoor = state.attributes["outdoor_forecast"]
+    # The room sensor no longer carries the forecast; the entry-level
+    # forecast sensor does, unclipped.
+    assert "outdoor_forecast" not in state.attributes
+    forecast_sensor = hass.states.get("sensor.vacation_heating_outdoor_forecast")
+    assert float(forecast_sensor.state) == 0.0
+    assert forecast_sensor.attributes["forecast_type"] == "hourly"
+    outdoor = forecast_sensor.attributes["forecast"]
     assert outdoor[0] == {"datetime": NOW.isoformat(), "temperature": 0.0}
-    # Clipped to the arrival; the mock forecast extends days beyond it.
-    assert outdoor[-1]["datetime"] == ARRIVAL.isoformat()
+    assert outdoor[-1]["datetime"] == (NOW + timedelta(hours=119)).isoformat()
 
 
 async def test_preset_only_action_targets_preset_temperature(

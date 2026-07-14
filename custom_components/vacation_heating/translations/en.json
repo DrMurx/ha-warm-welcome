@@ -102,6 +102,9 @@
       },
       "required_preheat": {
         "name": "Required pre-heat time"
+      },
+      "outdoor_forecast": {
+        "name": "Outdoor forecast"
       }
     }
   }

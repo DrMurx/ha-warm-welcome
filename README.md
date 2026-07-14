@@ -51,8 +51,14 @@ temperature is covered. That point in time is the heating start:
 - `sensor.<name>_heating_start` — timestamp of the computed start (with
   diagnostic attributes: required pre-heat hours, temperature deficit,
   forecast type used, whether the prediction had to extrapolate beyond the
-  forecast, plus the chart series described below),
+  forecast, plus the predicted temperature curve described below),
 - `sensor.<name>_required_preheat` — required pre-heat duration in hours.
+
+The entry itself provides one shared sensor:
+
+- `sensor.vacation_heating_outdoor_forecast` — the outdoor temperature
+  forecast the predictions are based on: the state is the forecast for the
+  current interval, the `forecast` attribute holds the full series.
 
 When the start moment arrives (and the end date is still in the future),
 the configured action is executed once per vacation. The "already
@@ -98,16 +104,17 @@ Everything can be changed later: the shared entities via the entry's
 
 ## Charting the prediction
 
-The `heating_start` sensor exposes two attributes made for charting:
+Two series are exposed for charting, both as `{datetime, temperature}`
+point lists:
 
-- `predicted_temperatures` — the predicted room temperature as
-  `{datetime, temperature}` points: flat at the current temperature from
-  now until the heating start, then rising to the target at arrival (with
-  a point at every heat-rate change),
-- `outdoor_forecast` — the outdoor forecast used for the prediction,
-  clipped to the arrival time.
+- `predicted_temperatures` on each room's `heating_start` sensor — the
+  predicted room temperature: flat at the current temperature from now
+  until the heating start, then rising to the target at arrival (with a
+  point at every heat-rate change),
+- `forecast` on the shared `outdoor_forecast` sensor — the outdoor
+  temperature forecast used for the predictions.
 
-Both attributes are excluded from the recorder (no database growth); they
+These attributes are excluded from the recorder (no database growth); they
 always reflect the latest prediction, which is recomputed every 30 minutes
 and immediately after any source entity or option changes.
 
@@ -138,12 +145,12 @@ series:
     data_generator: |
       return (entity.attributes.predicted_temperatures || [])
         .map((p) => [new Date(p.datetime), p.temperature]);
-  - entity: sensor.living_room_heating_start
+  - entity: sensor.vacation_heating_outdoor_forecast
     name: Outside
     type: area
     opacity: 0.2
     data_generator: |
-      return (entity.attributes.outdoor_forecast || [])
+      return (entity.attributes.forecast || [])
         .map((p) => [new Date(p.datetime), p.temperature]);
 ```
 

@@ -1,0 +1,111 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Chauffage vacances",
+        "description": "Prédit quand votre chauffage au sol doit démarrer pour que chaque pièce soit chaude à votre retour de vacances. Choisissez les entités partagées par toutes les pièces ; ajoutez ensuite chaque pièce via « Ajouter une pièce » sur la page de l'intégration.",
+        "data": {
+          "weather_entity": "Entité météo",
+          "end_date_entity": "Entité de date de fin de vacances"
+        },
+        "data_description": {
+          "weather_entity": "Fournit les prévisions de température extérieure.",
+          "end_date_entity": "Entité contenant la date et l'heure de la fin de vos vacances (votre arrivée). Doit être un input_datetime avec l'heure activée ou une entité datetime."
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options de Chauffage vacances",
+        "data": {
+          "weather_entity": "Entité météo",
+          "end_date_entity": "Entité de date de fin de vacances"
+        },
+        "data_description": {
+          "weather_entity": "Fournit les prévisions de température extérieure.",
+          "end_date_entity": "Entité contenant la date et l'heure de la fin de vos vacances (votre arrivée). Doit être un input_datetime avec l'heure activée ou une entité datetime."
+        }
+      }
+    }
+  },
+  "config_subentries": {
+    "room": {
+      "initiate_flow": {
+        "user": "Ajouter une pièce",
+        "reconfigure": "Reconfigurer la pièce"
+      },
+      "entry_type": "Pièce",
+      "step": {
+        "user": {
+          "title": "Ajouter une pièce",
+          "data": {
+            "name": "Nom",
+            "climate_entity": "Entité climatique"
+          },
+          "data_description": {
+            "climate_entity": "Le thermostat de la pièce à préchauffer."
+          }
+        },
+        "reconfigure": {
+          "title": "Reconfigurer la pièce",
+          "data": {
+            "name": "Nom",
+            "climate_entity": "Entité climatique"
+          },
+          "data_description": {
+            "climate_entity": "Le thermostat de la pièce à préchauffer."
+          }
+        },
+        "settings": {
+          "title": "Paramètres de chauffage",
+          "data": {
+            "heat_rates": "Vitesses de chauffe",
+            "action": "Action au démarrage du chauffage",
+            "preset_mode": "Préréglage à appliquer",
+            "preset_temperatures": "Températures des préréglages",
+            "target_temperature": "Température cible"
+          },
+          "data_description": {
+            "heat_rates": "Un point par mesure : à quelle température extérieure la pièce a gagné combien de degrés en combien d'heures. Le gain peut être négatif si le chauffage ne suit pas à cette température extérieure. Les valeurs entre les points sont interpolées linéairement.",
+            "action": "Ce qui est exécuté sur l'entité climatique lorsque l'heure de démarrage calculée est atteinte.",
+            "preset_mode": "Les préréglages de l'entité climatique sont listés ; utilisé uniquement lorsque l'action inclut l'application d'un préréglage.",
+            "preset_temperatures": "Facultatif. La température atteinte par chaque préréglage. Avec une action de préréglage seul, la prédiction vise la température du préréglage sélectionné au lieu de la température cible.",
+            "target_temperature": "Température de la pièce à atteindre pour votre arrivée."
+          }
+        }
+      },
+      "error": {
+        "invalid_heat_rates": "Chaque point de vitesse de chauffe nécessite une température extérieure, un gain de température et une durée positive. Les températures extérieures doivent être uniques et au moins un point doit avoir un gain positif.",
+        "invalid_preset_temperatures": "Chaque température de préréglage nécessite un nom de préréglage et une température ; les préréglages doivent être uniques.",
+        "preset_mode_required": "Sélectionnez un préréglage lorsque l'action inclut l'application d'un préréglage."
+      },
+      "abort": {
+        "reconfigure_successful": "La reconfiguration a réussi."
+      }
+    }
+  },
+  "selector": {
+    "action": {
+      "options": {
+        "set_preset": "Appliquer le préréglage",
+        "set_temperature": "Régler la température",
+        "both": "Appliquer le préréglage et régler la température"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "heating_start": {
+        "name": "Démarrage du chauffage"
+      },
+      "required_preheat": {
+        "name": "Temps de préchauffage requis"
+      },
+      "outdoor_forecast": {
+        "name": "Prévisions extérieures"
+      }
+    }
+  }
+}

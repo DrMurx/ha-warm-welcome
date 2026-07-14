@@ -7,7 +7,7 @@
  * the same temperature axis, and a marker at the vacation end.
  */
 
-const CARD_VERSION = "0.1.8";
+const CARD_VERSION = "0.1.9";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const WIDTH = 640;
@@ -45,6 +45,77 @@ const CSS = `
   }
   .legend .when { color: var(--secondary-text-color); }
 `;
+
+// UI strings per language ({when} is replaced with the formatted start
+// time). Falls back to English for unlisted languages.
+const STRINGS = {
+  en: {
+    loading: "Loading…",
+    error:
+      "Could not connect to the Vacation Heating integration. Is it installed and set up?",
+    idle: "No upcoming re-heat. Set a future vacation end date to see the prediction.",
+    arrival: "Arrival",
+    heating: "heating",
+    starts: "starts {when}",
+    beyond_forecast: "Prediction extends beyond the available forecast",
+    outdoor: "Outdoor forecast",
+  },
+  de: {
+    loading: "Wird geladen…",
+    error:
+      "Keine Verbindung zur Urlaubsheizung-Integration. Ist sie installiert und eingerichtet?",
+    idle: "Kein anstehendes Aufheizen. Setze ein zukünftiges Urlaubsende, um die Vorhersage zu sehen.",
+    arrival: "Ankunft",
+    heating: "heizt",
+    starts: "startet {when}",
+    beyond_forecast: "Die Vorhersage reicht über die verfügbare Wettervorhersage hinaus",
+    outdoor: "Außentemperatur-Vorhersage",
+  },
+  nl: {
+    loading: "Laden…",
+    error:
+      "Kan geen verbinding maken met de Vakantieverwarming-integratie. Is deze geïnstalleerd en ingesteld?",
+    idle: "Geen aankomende opwarming. Stel een toekomstig einde van de vakantie in om de voorspelling te zien.",
+    arrival: "Aankomst",
+    heating: "verwarmt",
+    starts: "start {when}",
+    beyond_forecast: "De voorspelling reikt verder dan de beschikbare weersverwachting",
+    outdoor: "Buitentemperatuurverwachting",
+  },
+  fr: {
+    loading: "Chargement…",
+    error:
+      "Impossible de se connecter à l'intégration Chauffage vacances. Est-elle installée et configurée ?",
+    idle: "Aucun réchauffage à venir. Définissez une date de fin de vacances future pour voir la prédiction.",
+    arrival: "Arrivée",
+    heating: "chauffe",
+    starts: "démarre {when}",
+    beyond_forecast: "La prédiction s'étend au-delà des prévisions disponibles",
+    outdoor: "Prévisions extérieures",
+  },
+  es: {
+    loading: "Cargando…",
+    error:
+      "No se pudo conectar con la integración Calefacción de vacaciones. ¿Está instalada y configurada?",
+    idle: "No hay recalentamiento próximo. Establece una fecha futura de fin de vacaciones para ver la predicción.",
+    arrival: "Llegada",
+    heating: "calentando",
+    starts: "empieza {when}",
+    beyond_forecast: "La predicción se extiende más allá de la previsión disponible",
+    outdoor: "Previsión exterior",
+  },
+  pt: {
+    loading: "A carregar…",
+    error:
+      "Não foi possível ligar à integração Aquecimento de férias. Está instalada e configurada?",
+    idle: "Sem reaquecimento previsto. Define uma data futura de fim das férias para ver a previsão.",
+    arrival: "Chegada",
+    heating: "a aquecer",
+    starts: "começa {when}",
+    beyond_forecast: "A previsão estende-se além da previsão meteorológica disponível",
+    outdoor: "Previsão exterior",
+  },
+};
 
 // Paint properties must be set as CSS: var() references are invalid in
 // SVG presentation attributes (the stroke silently becomes 'none').
@@ -131,8 +202,7 @@ class VacationHeatingCard extends HTMLElement {
       );
     } catch (err) {
       console.error("vacation_heating: subscription failed:", err);
-      this._error =
-        "Could not connect to the Vacation Heating integration. Is it installed and set up?";
+      this._error = true;
       this._render();
     } finally {
       this._subscribing = false;
@@ -141,6 +211,11 @@ class VacationHeatingCard extends HTMLElement {
 
   _locale() {
     return this._hass?.locale?.language || navigator.language;
+  }
+
+  _tr(key) {
+    const lang = (this._locale() || "en").split("-")[0].toLowerCase();
+    return (STRINGS[lang] || STRINGS.en)[key] ?? STRINGS.en[key];
   }
 
   _fmt(ts, options) {
@@ -186,11 +261,11 @@ class VacationHeatingCard extends HTMLElement {
     root.append(card);
 
     if (this._error) {
-      content.append(this._message(this._error));
+      content.append(this._message(this._tr("error")));
       return;
     }
     if (!this._data) {
-      content.append(this._message("Loading…"));
+      content.append(this._message(this._tr("loading")));
       return;
     }
 
@@ -204,11 +279,7 @@ class VacationHeatingCard extends HTMLElement {
       }));
 
     if (!arrival || arrival <= Date.now() || !rooms.length) {
-      content.append(
-        this._message(
-          "No upcoming re-heat. Set a future vacation end date to see the prediction."
-        )
-      );
+      content.append(this._message(this._tr("idle")));
       return;
     }
 
@@ -372,7 +443,7 @@ class VacationHeatingCard extends HTMLElement {
       svgEl("text", {
         x: xPos - 5, y: MARGIN.top + 4, "text-anchor": "end",
         "font-size": "11", fill: ARRIVAL_COLOR,
-      }, "Arrival")
+      }, this._tr("arrival"))
     );
   }
 
@@ -415,11 +486,11 @@ class VacationHeatingCard extends HTMLElement {
       when.className = "when";
       when.textContent =
         room.startTs <= Date.now()
-          ? "heating"
-          : `starts ${this._fmtStart(room.startTs)}`;
+          ? this._tr("heating")
+          : this._tr("starts").replace("{when}", this._fmtStart(room.startTs));
       if (room.beyond_forecast) {
         when.textContent += " ⚠";
-        when.title = "Prediction extends beyond the available forecast";
+        when.title = this._tr("beyond_forecast");
       }
       item.append(dot, name, when);
       legend.append(item);
@@ -432,7 +503,7 @@ class VacationHeatingCard extends HTMLElement {
     dash.style.opacity = "0.7";
     const label = document.createElement("span");
     label.className = "when";
-    label.textContent = "Outdoor forecast";
+    label.textContent = this._tr("outdoor");
     outdoor.append(dash, label);
     legend.append(outdoor);
     return legend;

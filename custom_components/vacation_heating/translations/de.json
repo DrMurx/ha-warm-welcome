@@ -1,0 +1,111 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Urlaubsheizung",
+        "description": "Berechnet, wann deine Fußbodenheizung starten muss, damit jeder Raum warm ist, wenn du aus dem Urlaub zurückkehrst. Wähle die von allen Räumen gemeinsam genutzten Entitäten; danach fügst du jeden Raum über 'Raum hinzufügen' auf der Seite der Integration hinzu.",
+        "data": {
+          "weather_entity": "Wetter-Entität",
+          "end_date_entity": "Entität für das Urlaubsende"
+        },
+        "data_description": {
+          "weather_entity": "Liefert die Vorhersage der Außentemperatur.",
+          "end_date_entity": "Entität mit Datum und Uhrzeit deiner Rückkehr (Urlaubsende). Muss ein input_datetime mit aktivierter Uhrzeit oder eine datetime-Entität sein."
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Optionen der Urlaubsheizung",
+        "data": {
+          "weather_entity": "Wetter-Entität",
+          "end_date_entity": "Entität für das Urlaubsende"
+        },
+        "data_description": {
+          "weather_entity": "Liefert die Vorhersage der Außentemperatur.",
+          "end_date_entity": "Entität mit Datum und Uhrzeit deiner Rückkehr (Urlaubsende). Muss ein input_datetime mit aktivierter Uhrzeit oder eine datetime-Entität sein."
+        }
+      }
+    }
+  },
+  "config_subentries": {
+    "room": {
+      "initiate_flow": {
+        "user": "Raum hinzufügen",
+        "reconfigure": "Raum neu konfigurieren"
+      },
+      "entry_type": "Raum",
+      "step": {
+        "user": {
+          "title": "Raum hinzufügen",
+          "data": {
+            "name": "Name",
+            "climate_entity": "Klima-Entität"
+          },
+          "data_description": {
+            "climate_entity": "Das Thermostat des vorzuheizenden Raums."
+          }
+        },
+        "reconfigure": {
+          "title": "Raum neu konfigurieren",
+          "data": {
+            "name": "Name",
+            "climate_entity": "Klima-Entität"
+          },
+          "data_description": {
+            "climate_entity": "Das Thermostat des vorzuheizenden Raums."
+          }
+        },
+        "settings": {
+          "title": "Heizeinstellungen",
+          "data": {
+            "heat_rates": "Heizraten",
+            "action": "Aktion beim Heizstart",
+            "preset_mode": "Zu setzende Voreinstellung",
+            "preset_temperatures": "Temperaturen der Voreinstellungen",
+            "target_temperature": "Zieltemperatur"
+          },
+          "data_description": {
+            "heat_rates": "Ein Punkt pro Messung: bei welcher Außentemperatur der Raum wie viele Grad in wie vielen Stunden gewonnen hat. Der Gewinn kann negativ sein, wenn die Heizung bei dieser Außentemperatur nicht mithalten kann. Werte zwischen den Punkten werden linear interpoliert.",
+            "action": "Was auf der Klima-Entität ausgeführt wird, wenn die berechnete Startzeit erreicht ist.",
+            "preset_mode": "Aufgeführt sind die Voreinstellungen der Klima-Entität; wird nur verwendet, wenn die Aktion das Setzen einer Voreinstellung umfasst.",
+            "preset_temperatures": "Optional. Die Temperatur, auf die jede Voreinstellung heizt. Bei einer Aktion nur mit Voreinstellung zielt die Vorhersage auf die Temperatur der gewählten Voreinstellung statt auf die Zieltemperatur.",
+            "target_temperature": "Raumtemperatur, die bis zu deiner Ankunft erreicht sein soll."
+          }
+        }
+      },
+      "error": {
+        "invalid_heat_rates": "Jeder Heizraten-Punkt benötigt eine Außentemperatur, einen Temperaturgewinn und eine positive Dauer. Die Außentemperaturen müssen eindeutig sein und mindestens ein Punkt muss einen positiven Gewinn haben.",
+        "invalid_preset_temperatures": "Jede Voreinstellungs-Temperatur benötigt einen Namen der Voreinstellung und eine Temperatur; Voreinstellungen müssen eindeutig sein.",
+        "preset_mode_required": "Wähle eine Voreinstellung, wenn die Aktion das Setzen einer Voreinstellung umfasst."
+      },
+      "abort": {
+        "reconfigure_successful": "Die Neukonfiguration war erfolgreich."
+      }
+    }
+  },
+  "selector": {
+    "action": {
+      "options": {
+        "set_preset": "Voreinstellung setzen",
+        "set_temperature": "Temperatur setzen",
+        "both": "Voreinstellung und Temperatur setzen"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "heating_start": {
+        "name": "Heizstart"
+      },
+      "required_preheat": {
+        "name": "Erforderliche Vorheizzeit"
+      },
+      "outdoor_forecast": {
+        "name": "Außentemperatur-Vorhersage"
+      }
+    }
+  }
+}

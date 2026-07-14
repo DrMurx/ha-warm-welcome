@@ -1,0 +1,111 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Vakantieverwarming",
+        "description": "Voorspelt wanneer je vloerverwarming moet starten zodat elke kamer warm is wanneer je terugkomt van vakantie. Kies de entiteiten die alle kamers delen; voeg daarna elke kamer toe via 'Kamer toevoegen' op de pagina van de integratie.",
+        "data": {
+          "weather_entity": "Weer-entiteit",
+          "end_date_entity": "Entiteit einde vakantie"
+        },
+        "data_description": {
+          "weather_entity": "Levert de verwachting van de buitentemperatuur.",
+          "end_date_entity": "Entiteit met de datum en tijd waarop je vakantie eindigt (je aankomst). Moet een input_datetime met tijd ingeschakeld of een datetime-entiteit zijn."
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opties voor Vakantieverwarming",
+        "data": {
+          "weather_entity": "Weer-entiteit",
+          "end_date_entity": "Entiteit einde vakantie"
+        },
+        "data_description": {
+          "weather_entity": "Levert de verwachting van de buitentemperatuur.",
+          "end_date_entity": "Entiteit met de datum en tijd waarop je vakantie eindigt (je aankomst). Moet een input_datetime met tijd ingeschakeld of een datetime-entiteit zijn."
+        }
+      }
+    }
+  },
+  "config_subentries": {
+    "room": {
+      "initiate_flow": {
+        "user": "Kamer toevoegen",
+        "reconfigure": "Kamer opnieuw configureren"
+      },
+      "entry_type": "Kamer",
+      "step": {
+        "user": {
+          "title": "Kamer toevoegen",
+          "data": {
+            "name": "Naam",
+            "climate_entity": "Klimaatentiteit"
+          },
+          "data_description": {
+            "climate_entity": "De thermostaat van de kamer die voorverwarmd moet worden."
+          }
+        },
+        "reconfigure": {
+          "title": "Kamer opnieuw configureren",
+          "data": {
+            "name": "Naam",
+            "climate_entity": "Klimaatentiteit"
+          },
+          "data_description": {
+            "climate_entity": "De thermostaat van de kamer die voorverwarmd moet worden."
+          }
+        },
+        "settings": {
+          "title": "Verwarmingsinstellingen",
+          "data": {
+            "heat_rates": "Verwarmingssnelheden",
+            "action": "Actie bij start van de verwarming",
+            "preset_mode": "In te stellen preset",
+            "preset_temperatures": "Preset-temperaturen",
+            "target_temperature": "Doeltemperatuur"
+          },
+          "data_description": {
+            "heat_rates": "Eén punt per meting: bij welke buitentemperatuur de kamer hoeveel graden in hoeveel uur won. De winst kan negatief zijn als de verwarming het bij die buitentemperatuur niet kan bijhouden. Waarden tussen de punten worden lineair geïnterpoleerd.",
+            "action": "Wat er op de klimaatentiteit wordt uitgevoerd wanneer de berekende starttijd is bereikt.",
+            "preset_mode": "De presets van de klimaatentiteit worden weergegeven; alleen gebruikt wanneer de actie het instellen van een preset omvat.",
+            "preset_temperatures": "Optioneel. De temperatuur waarnaar elke preset verwarmt. Bij een actie met alleen een preset richt de voorspelling zich op de temperatuur van de gekozen preset in plaats van op de doeltemperatuur.",
+            "target_temperature": "Kamertemperatuur die bereikt moet zijn tegen de tijd dat je aankomt."
+          }
+        }
+      },
+      "error": {
+        "invalid_heat_rates": "Elk punt van de verwarmingssnelheid heeft een buitentemperatuur, een temperatuurwinst en een positieve duur nodig. De buitentemperaturen moeten uniek zijn en minstens één punt moet een positieve winst hebben.",
+        "invalid_preset_temperatures": "Elke preset-temperatuur heeft een presetnaam en een temperatuur nodig; presets moeten uniek zijn.",
+        "preset_mode_required": "Selecteer een preset wanneer de actie het instellen van een preset omvat."
+      },
+      "abort": {
+        "reconfigure_successful": "Opnieuw configureren is gelukt."
+      }
+    }
+  },
+  "selector": {
+    "action": {
+      "options": {
+        "set_preset": "Preset instellen",
+        "set_temperature": "Temperatuur instellen",
+        "both": "Preset en temperatuur instellen"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "heating_start": {
+        "name": "Start verwarming"
+      },
+      "required_preheat": {
+        "name": "Benodigde voorverwarmtijd"
+      },
+      "outdoor_forecast": {
+        "name": "Buitentemperatuurverwachting"
+      }
+    }
+  }
+}

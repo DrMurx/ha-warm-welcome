@@ -1,0 +1,111 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Aquecimento de férias",
+        "description": "Prevê quando o teu piso radiante deve arrancar para que cada divisão esteja quente quando regressares de férias. Escolhe as entidades partilhadas por todas as divisões; depois adiciona cada divisão através de 'Adicionar divisão' na página da integração.",
+        "data": {
+          "weather_entity": "Entidade meteorológica",
+          "end_date_entity": "Entidade de data de fim das férias"
+        },
+        "data_description": {
+          "weather_entity": "Fornece a previsão da temperatura exterior.",
+          "end_date_entity": "Entidade com a data e hora em que as tuas férias terminam (a tua chegada). Tem de ser um input_datetime com hora ativada ou uma entidade datetime."
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opções do Aquecimento de férias",
+        "data": {
+          "weather_entity": "Entidade meteorológica",
+          "end_date_entity": "Entidade de data de fim das férias"
+        },
+        "data_description": {
+          "weather_entity": "Fornece a previsão da temperatura exterior.",
+          "end_date_entity": "Entidade com a data e hora em que as tuas férias terminam (a tua chegada). Tem de ser um input_datetime com hora ativada ou uma entidade datetime."
+        }
+      }
+    }
+  },
+  "config_subentries": {
+    "room": {
+      "initiate_flow": {
+        "user": "Adicionar divisão",
+        "reconfigure": "Reconfigurar divisão"
+      },
+      "entry_type": "Divisão",
+      "step": {
+        "user": {
+          "title": "Adicionar divisão",
+          "data": {
+            "name": "Nome",
+            "climate_entity": "Entidade de climatização"
+          },
+          "data_description": {
+            "climate_entity": "O termóstato da divisão a pré-aquecer."
+          }
+        },
+        "reconfigure": {
+          "title": "Reconfigurar divisão",
+          "data": {
+            "name": "Nome",
+            "climate_entity": "Entidade de climatização"
+          },
+          "data_description": {
+            "climate_entity": "O termóstato da divisão a pré-aquecer."
+          }
+        },
+        "settings": {
+          "title": "Definições de aquecimento",
+          "data": {
+            "heat_rates": "Taxas de aquecimento",
+            "action": "Ação no início do aquecimento",
+            "preset_mode": "Predefinição a aplicar",
+            "preset_temperatures": "Temperaturas das predefinições",
+            "target_temperature": "Temperatura alvo"
+          },
+          "data_description": {
+            "heat_rates": "Um ponto por medição: a que temperatura exterior a divisão ganhou quantos graus em quantas horas. O ganho pode ser negativo se o aquecimento não conseguir acompanhar a essa temperatura exterior. Os valores entre os pontos são interpolados linearmente.",
+            "action": "O que fazer na entidade de climatização quando a hora de início calculada for atingida.",
+            "preset_mode": "São listadas as predefinições da entidade de climatização; usado apenas quando a ação inclui aplicar uma predefinição.",
+            "preset_temperatures": "Opcional. A temperatura para a qual cada predefinição aquece. Com uma ação apenas de predefinição, a previsão visa a temperatura da predefinição selecionada em vez da temperatura alvo.",
+            "target_temperature": "Temperatura da divisão a atingir até à tua chegada."
+          }
+        }
+      },
+      "error": {
+        "invalid_heat_rates": "Cada ponto de taxa de aquecimento precisa de uma temperatura exterior, de um ganho de temperatura e de uma duração positiva. As temperaturas exteriores têm de ser únicas e pelo menos um ponto tem de ter um ganho positivo.",
+        "invalid_preset_temperatures": "Cada temperatura de predefinição precisa de um nome de predefinição e de uma temperatura; as predefinições têm de ser únicas.",
+        "preset_mode_required": "Seleciona uma predefinição quando a ação incluir aplicar uma predefinição."
+      },
+      "abort": {
+        "reconfigure_successful": "A reconfiguração foi bem-sucedida."
+      }
+    }
+  },
+  "selector": {
+    "action": {
+      "options": {
+        "set_preset": "Aplicar predefinição",
+        "set_temperature": "Definir temperatura",
+        "both": "Aplicar predefinição e definir temperatura"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "heating_start": {
+        "name": "Início do aquecimento"
+      },
+      "required_preheat": {
+        "name": "Tempo de pré-aquecimento necessário"
+      },
+      "outdoor_forecast": {
+        "name": "Previsão exterior"
+      }
+    }
+  }
+}

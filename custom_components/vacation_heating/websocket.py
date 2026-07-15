@@ -31,9 +31,17 @@ def _serialize(points: list[tuple[datetime, float]]) -> list[dict[str, Any]]:
 def _payload(hass: HomeAssistant) -> dict[str, Any]:
     """Chart data of the (single) config entry."""
     for entry in hass.config_entries.async_entries(DOMAIN):
-        if entry.state is not ConfigEntryState.LOADED:
+        # The refresh dispatched at the end of async_setup_entry (after a
+        # reload) fires while the entry is still SETUP_IN_PROGRESS; its
+        # runtime data is already in place by then.
+        if entry.state not in (
+            ConfigEntryState.LOADED,
+            ConfigEntryState.SETUP_IN_PROGRESS,
+        ):
             continue
-        data = entry.runtime_data
+        data = getattr(entry, "runtime_data", None)
+        if data is None:
+            continue
         arrival: datetime | None = None
         rooms: list[dict[str, Any]] = []
         for coordinator in data.rooms.values():

@@ -67,6 +67,43 @@ async def test_subscribe_receives_data_and_updates(
     ).isoformat()
 
 
+async def test_subscription_survives_config_entity_reload(
+    hass: HomeAssistant, freezer, forecast_calls, hass_ws_client, hass_admin_user
+) -> None:
+    """Changing a config entity reloads the entry; the card gets fresh data.
+
+    Regression test: the refresh dispatched at the end of the reload used
+    to fire before the entry state was LOADED, pushing the empty payload
+    and locking the card into "no upcoming re-heat".
+    """
+    freezer.move_to(NOW)
+    await setup_entry(hass)
+
+    client = await hass_ws_client(hass, await _frozen_time_token(hass, hass_admin_user))
+    await client.send_json({"id": 1, "type": "vacation_heating/subscribe"})
+    assert (await client.receive_json())["success"]
+    await client.receive_json()  # initial payload
+
+    await hass.services.async_call(
+        "number",
+        "set_value",
+        {
+            "entity_id": "number.living_room_vacation_heating_target_temperature",
+            "value": 22.0,
+        },
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    message = await client.receive_json()
+    payload = message["event"]
+    (room,) = payload["rooms"]
+    assert room["name"] == "Living Room"
+    # Deficit is now 7°C at 0.5°C/h -> 14 h pre-heat.
+    assert room["start"] == (ARRIVAL - timedelta(hours=14)).isoformat()
+    assert room["curve"][-1]["temperature"] == 22.0
+
+
 async def test_subscribe_without_a_loaded_entry(
     hass: HomeAssistant, hass_ws_client
 ) -> None:

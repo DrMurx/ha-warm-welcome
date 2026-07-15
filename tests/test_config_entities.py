@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.vacation_heating.const import (
+from custom_components.warm_welcome.const import (
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
@@ -45,7 +45,7 @@ async def setup_entry(hass: HomeAssistant) -> MockConfigEntry:
     hass.states.async_set("input_datetime.vacation_end", "2026-07-20 12:00:00")
     entry = MockConfigEntry(
         domain=DOMAIN,
-        title="Vacation Heating",
+        title="Warm Welcome",
         data={},
         options={
             CONF_WEATHER_ENTITY: "weather.home",
@@ -75,17 +75,17 @@ async def test_config_entities_expose_settings(hass, freezer, forecast_calls) ->
     freezer.move_to(NOW)
     await setup_entry(hass)
 
-    target = hass.states.get("number.living_room_vacation_heating_target_temperature")
+    target = hass.states.get("number.living_room_warm_welcome_target_temperature")
     assert float(target.state) == 21.0
 
-    set_preset = hass.states.get("switch.living_room_vacation_heating_use_preset")
+    set_preset = hass.states.get("switch.living_room_warm_welcome_use_preset")
     assert set_preset.state == "on"
     set_temperature = hass.states.get(
-        "switch.living_room_vacation_heating_use_temperature"
+        "switch.living_room_warm_welcome_use_temperature"
     )
     assert set_temperature.state == "on"
 
-    preset = hass.states.get("select.living_room_vacation_heating_target_preset")
+    preset = hass.states.get("select.living_room_warm_welcome_target_preset")
     assert preset.state == "comfort"
     assert preset.attributes["options"] == ["eco", "comfort"]
 
@@ -100,7 +100,7 @@ async def test_target_temperature_updates_room_and_prediction(
     await hass.services.async_call(
         "number",
         "set_value",
-        {"entity_id": "number.living_room_vacation_heating_target_temperature", "value": 23.0},
+        {"entity_id": "number.living_room_warm_welcome_target_temperature", "value": 23.0},
         blocking=True,
     )
     await hass.async_block_till_done()
@@ -119,14 +119,14 @@ async def test_action_switch_updates_room(hass, freezer, forecast_calls) -> None
     await hass.services.async_call(
         "switch",
         "turn_off",
-        {"entity_id": "switch.living_room_vacation_heating_use_preset"},
+        {"entity_id": "switch.living_room_warm_welcome_use_preset"},
         blocking=True,
     )
     await hass.async_block_till_done()
 
     assert room_data(entry)[CONF_SET_PRESET] is False
     assert room_data(entry)[CONF_SET_TEMPERATURE] is True
-    state = hass.states.get("switch.living_room_vacation_heating_use_preset")
+    state = hass.states.get("switch.living_room_warm_welcome_use_preset")
     assert state.state == "off"
 
 
@@ -139,12 +139,12 @@ async def test_dependent_entities_unavailable_while_toggle_off(
 
     for toggle, dependent in (
         (
-            "switch.living_room_vacation_heating_use_preset",
-            "select.living_room_vacation_heating_target_preset",
+            "switch.living_room_warm_welcome_use_preset",
+            "select.living_room_warm_welcome_target_preset",
         ),
         (
-            "switch.living_room_vacation_heating_use_temperature",
-            "number.living_room_vacation_heating_target_temperature",
+            "switch.living_room_warm_welcome_use_temperature",
+            "number.living_room_warm_welcome_target_temperature",
         ),
     ):
         await hass.services.async_call(
@@ -168,13 +168,13 @@ async def test_preset_select_updates_room(hass, freezer, forecast_calls) -> None
     await hass.services.async_call(
         "select",
         "select_option",
-        {"entity_id": "select.living_room_vacation_heating_target_preset", "option": "eco"},
+        {"entity_id": "select.living_room_warm_welcome_target_preset", "option": "eco"},
         blocking=True,
     )
     await hass.async_block_till_done()
 
     assert room_data(entry)[CONF_TARGET_PRESET] == "eco"
-    state = hass.states.get("select.living_room_vacation_heating_target_preset")
+    state = hass.states.get("select.living_room_warm_welcome_target_preset")
     assert state.state == "eco"
 
 
@@ -193,6 +193,6 @@ async def test_preset_select_keeps_unknown_configured_preset(
     freezer.tick(timedelta(seconds=15))
     await hass.async_block_till_done()
 
-    preset = hass.states.get("select.living_room_vacation_heating_target_preset")
+    preset = hass.states.get("select.living_room_warm_welcome_target_preset")
     assert preset.state == "comfort"
     assert preset.attributes["options"] == ["away", "comfort"]

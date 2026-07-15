@@ -9,15 +9,15 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import VacationHeatingConfigEntry
+from . import WarmWelcomeConfigEntry
 from .const import CONF_SET_PRESET, CONF_SET_TEMPERATURE
-from .coordinator import VacationHeatingCoordinator
-from .entity import VacationHeatingRoomEntity
+from .coordinator import WarmWelcomeCoordinator
+from .entity import WarmWelcomeRoomEntity
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: VacationHeatingConfigEntry,
+    entry: WarmWelcomeConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the action switches of every room."""
@@ -31,7 +31,7 @@ async def async_setup_entry(
         )
 
 
-class ActionSwitch(VacationHeatingRoomEntity, SwitchEntity):
+class ActionSwitch(WarmWelcomeRoomEntity, SwitchEntity):
     """Whether one aspect of the climate entity is set at the heating start."""
 
     _attr_entity_category = EntityCategory.CONFIG
@@ -41,7 +41,7 @@ class ActionSwitch(VacationHeatingRoomEntity, SwitchEntity):
         CONF_SET_TEMPERATURE: "use_temperature",
     }
 
-    def __init__(self, coordinator: VacationHeatingCoordinator, key: str) -> None:
+    def __init__(self, coordinator: WarmWelcomeCoordinator, key: str) -> None:
         """Initialize the switch for one action flag."""
         super().__init__(coordinator, key)
         self._suggest_object_id(ENTITY_ID_FORMAT, self.OBJECT_ID_SUFFIXES[key])

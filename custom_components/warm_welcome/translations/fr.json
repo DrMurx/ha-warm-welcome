@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Chauffage vacances",
+        "title": "Accueil chaleureux",
         "description": "Prédit quand votre chauffage au sol doit démarrer pour que chaque pièce soit chaude à votre retour de vacances. Choisissez les entités partagées par toutes les pièces ; ajoutez ensuite chaque pièce via « Ajouter une pièce » sur la page de l'intégration.",
         "data": {
           "weather_entity": "Entité météo",
@@ -18,7 +18,7 @@
   "options": {
     "step": {
       "init": {
-        "title": "Options de Chauffage vacances",
+        "title": "Options d'Accueil chaleureux",
         "data": {
           "weather_entity": "Entité météo",
           "end_date_entity": "Entité de date de fin de vacances"

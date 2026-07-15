@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Calefacción de vacaciones",
+        "title": "Bienvenida cálida",
         "description": "Predice cuándo debe arrancar tu suelo radiante para que cada habitación esté caliente cuando vuelvas de vacaciones. Elige las entidades compartidas por todas las habitaciones; después añade cada habitación mediante 'Añadir habitación' en la página de la integración.",
         "data": {
           "weather_entity": "Entidad meteorológica",
@@ -18,7 +18,7 @@
   "options": {
     "step": {
       "init": {
-        "title": "Opciones de Calefacción de vacaciones",
+        "title": "Opciones de Bienvenida cálida",
         "data": {
           "weather_entity": "Entidad meteorológica",
           "end_date_entity": "Entidad de fecha de fin de vacaciones"

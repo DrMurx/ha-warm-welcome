@@ -5,7 +5,7 @@ from typing import ClassVar
 
 import pytest
 
-from custom_components.vacation_heating.heating_model import (
+from custom_components.warm_welcome.heating_model import (
     ForecastPoint,
     compute_start,
     parse_heat_rates,

@@ -1,5 +1,5 @@
 /**
- * Vacation Heating card, bundled with the vacation_heating integration.
+ * Warm Welcome card, bundled with the warm_welcome integration.
  *
  * Zero configuration: the card subscribes to the integration's websocket
  * API and shows every room's predicted temperature curve from its
@@ -7,7 +7,7 @@
  * the same temperature axis, and a marker at the vacation end.
  */
 
-const CARD_VERSION = "0.1.14";
+const CARD_VERSION = "0.1.15";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const WIDTH = 640;
@@ -52,7 +52,7 @@ const STRINGS = {
   en: {
     loading: "Loading…",
     error:
-      "Could not connect to the Vacation Heating integration. Is it installed and set up?",
+      "Could not connect to the Warm Welcome integration. Is it installed and set up?",
     idle: "No upcoming re-heat. Set a future vacation end date to see the prediction.",
     arrival: "Arrival",
     heating: "heating",
@@ -63,7 +63,7 @@ const STRINGS = {
   de: {
     loading: "Wird geladen…",
     error:
-      "Keine Verbindung zur Urlaubsheizung-Integration. Ist sie installiert und eingerichtet?",
+      "Keine Verbindung zur Integration „Warmer Empfang“. Ist sie installiert und eingerichtet?",
     idle: "Kein anstehendes Aufheizen. Setze ein zukünftiges Urlaubsende, um die Vorhersage zu sehen.",
     arrival: "Ankunft",
     heating: "heizt",
@@ -74,7 +74,7 @@ const STRINGS = {
   nl: {
     loading: "Laden…",
     error:
-      "Kan geen verbinding maken met de Vakantieverwarming-integratie. Is deze geïnstalleerd en ingesteld?",
+      "Kan geen verbinding maken met de integratie Warm welkom. Is deze geïnstalleerd en ingesteld?",
     idle: "Geen aankomende opwarming. Stel een toekomstig einde van de vakantie in om de voorspelling te zien.",
     arrival: "Aankomst",
     heating: "verwarmt",
@@ -85,7 +85,7 @@ const STRINGS = {
   fr: {
     loading: "Chargement…",
     error:
-      "Impossible de se connecter à l'intégration Chauffage vacances. Est-elle installée et configurée ?",
+      "Impossible de se connecter à l'intégration Accueil chaleureux. Est-elle installée et configurée ?",
     idle: "Aucun réchauffage à venir. Définissez une date de fin de vacances future pour voir la prédiction.",
     arrival: "Arrivée",
     heating: "chauffe",
@@ -96,7 +96,7 @@ const STRINGS = {
   es: {
     loading: "Cargando…",
     error:
-      "No se pudo conectar con la integración Calefacción de vacaciones. ¿Está instalada y configurada?",
+      "No se pudo conectar con la integración Bienvenida cálida. ¿Está instalada y configurada?",
     idle: "No hay recalentamiento próximo. Establece una fecha futura de fin de vacaciones para ver la predicción.",
     arrival: "Llegada",
     heating: "calentando",
@@ -107,7 +107,7 @@ const STRINGS = {
   pt: {
     loading: "A carregar…",
     error:
-      "Não foi possível ligar à integração Aquecimento de férias. Está instalada e configurada?",
+      "Não foi possível ligar à integração Boas-vindas calorosas. Está instalada e configurada?",
     idle: "Sem reaquecimento previsto. Define uma data futura de fim das férias para ver a previsão.",
     arrival: "Chegada",
     heating: "a aquecer",
@@ -145,7 +145,7 @@ function niceStep(raw, steps) {
   return steps[steps.length - 1];
 }
 
-class VacationHeatingCard extends HTMLElement {
+class WarmWelcomeCard extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
@@ -198,10 +198,10 @@ class VacationHeatingCard extends HTMLElement {
           this._error = null;
           this._render();
         },
-        { type: "vacation_heating/subscribe" }
+        { type: "warm_welcome/subscribe" }
       );
     } catch (err) {
-      console.error("vacation_heating: subscription failed:", err);
+      console.error("warm_welcome: subscription failed:", err);
       this._error = true;
       this._render();
     } finally {
@@ -236,12 +236,12 @@ class VacationHeatingCard extends HTMLElement {
     try {
       this._renderCard();
     } catch (err) {
-      console.error("vacation_heating: render failed:", err);
+      console.error("warm_welcome: render failed:", err);
       this.shadowRoot.innerHTML = "";
       const pre = document.createElement("pre");
       pre.style.whiteSpace = "pre-wrap";
       pre.style.padding = "12px";
-      pre.textContent = `vacation-heating-card render error:\n${err?.stack || err}`;
+      pre.textContent = `warm-welcome-card render error:\n${err?.stack || err}`;
       this.shadowRoot.append(pre);
     }
   }
@@ -520,7 +520,7 @@ class VacationHeatingCard extends HTMLElement {
  * for HA's own <home-assistant> element guarantees the final registry
  * is in place; look up window.customElements freshly on every attempt.
  */
-const CARD_TAG = "vacation-heating-card";
+const CARD_TAG = "warm-welcome-card";
 const defineStarted = Date.now();
 
 function tryDefineCard() {
@@ -528,7 +528,7 @@ function tryDefineCard() {
   const haReady = !!window.customElements.get("home-assistant");
   // Fall back to defining anyway after 15s (e.g. non-HA pages).
   if (!haReady && Date.now() - defineStarted < 15000) return false;
-  window.customElements.define(CARD_TAG, VacationHeatingCard);
+  window.customElements.define(CARD_TAG, WarmWelcomeCard);
   return true;
 }
 
@@ -538,21 +538,21 @@ if (!tryDefineCard()) {
       if (tryDefineCard()) clearInterval(defineInterval);
     } catch (err) {
       clearInterval(defineInterval);
-      console.error("vacation_heating: define failed:", err);
+      console.error("warm_welcome: define failed:", err);
     }
   }, 100);
 }
 
 console.info(
-  `%c vacation_heating %c card v${CARD_VERSION} `,
+  `%c warm_welcome %c card v${CARD_VERSION} `,
   "background: #3f51b5; color: white; font-weight: bold;",
   "background: #eee; color: #333;"
 );
 
 window.customCards = window.customCards || [];
 window.customCards.push({
-  type: "vacation-heating-card",
-  name: "Vacation Heating",
+  type: "warm-welcome-card",
+  name: "Warm Welcome",
   description:
     "Timeline of the predicted re-heat per room, with the outdoor forecast and the vacation end.",
   // No live preview: it depends on an async websocket subscription,

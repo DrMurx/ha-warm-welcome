@@ -1,8 +1,8 @@
-"""Constants for the Vacation Heating integration."""
+"""Constants for the Warm Welcome integration."""
 
 from datetime import timedelta
 
-DOMAIN = "vacation_heating"
+DOMAIN = "warm_welcome"
 
 SUBENTRY_TYPE_ROOM = "room"
 

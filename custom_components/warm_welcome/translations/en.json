@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Vacation Heating",
+        "title": "Warm Welcome",
         "description": "Predicts when your floor heating must start so each room is warm when you return from vacation. Pick the entities shared by all rooms; afterwards, add each room via 'Add room' on the integration page.",
         "data": {
           "weather_entity": "Weather entity",
@@ -18,7 +18,7 @@
   "options": {
     "step": {
       "init": {
-        "title": "Vacation Heating options",
+        "title": "Warm Welcome options",
         "data": {
           "weather_entity": "Weather entity",
           "end_date_entity": "Vacation end date entity"

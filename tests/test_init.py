@@ -12,7 +12,7 @@ from pytest_homeassistant_custom_component.common import (
     async_mock_service,
 )
 
-from custom_components.vacation_heating.const import (
+from custom_components.warm_welcome.const import (
     CONF_ACTION,
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
@@ -72,7 +72,7 @@ async def setup_entry(
     hass.states.async_set("input_datetime.vacation_end", "2026-07-20 12:00:00")
     entry = MockConfigEntry(
         domain=DOMAIN,
-        title="Vacation Heating",
+        title="Warm Welcome",
         data={},
         options=SHARED_OPTIONS,
         subentries_data=subentries if subentries is not None else [room("Living Room")],
@@ -140,7 +140,7 @@ async def test_chart_attributes(hass, freezer, forecast_calls) -> None:
     # The room sensor no longer carries the forecast; the entry-level
     # forecast sensor does, unclipped.
     assert "outdoor_forecast" not in state.attributes
-    forecast_sensor = hass.states.get("sensor.vacation_heating_outdoor_forecast")
+    forecast_sensor = hass.states.get("sensor.warm_welcome_outdoor_forecast")
     assert float(forecast_sensor.state) == 0.0
     assert forecast_sensor.attributes["forecast_type"] == "hourly"
     outdoor = forecast_sensor.attributes["forecast"]
@@ -245,7 +245,7 @@ async def test_idle_when_end_date_in_past(hass, freezer, forecast_calls) -> None
     hass.states.async_set("input_datetime.vacation_end", "2026-07-01 12:00:00")
     entry = MockConfigEntry(
         domain=DOMAIN,
-        title="Vacation Heating",
+        title="Warm Welcome",
         data={},
         options=SHARED_OPTIONS,
         subentries_data=[room("Living Room")],
@@ -273,7 +273,7 @@ async def test_migrates_action_to_booleans(hass, freezer, forecast_calls) -> Non
     legacy[CONF_LEGACY_PRESET_MODE] = "comfort"
     entry = MockConfigEntry(
         domain=DOMAIN,
-        title="Vacation Heating",
+        title="Warm Welcome",
         data={},
         options=SHARED_OPTIONS,
         subentries_data=[room("Living Room", {**legacy, CONF_ACTION: "set_preset"})],

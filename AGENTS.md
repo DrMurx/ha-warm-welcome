@@ -4,7 +4,7 @@ Guidance for AI development agents working on this repository.
 
 ## What this project is
 
-**Vacation Heating** is a Home Assistant custom integration (HACS-installable)
+**Warm Welcome** is a Home Assistant custom integration (HACS-installable)
 for slow heating systems such as floor heating. While the user is away, the
 heating is turned down; based on the outdoor temperature forecast and a
 per-room heat rate map, the integration predicts when the heating must be
@@ -21,7 +21,7 @@ entity change. See `README.md` for the full user-facing behavior.
 
 ## Layout
 
-- `custom_components/vacation_heating/` — the integration (Python 3.13+,
+- `custom_components/warm_welcome/` — the integration (Python 3.13+,
   Home Assistant 2026.1+). Key modules:
   - `heating_model.py` — pure prediction logic (backward walk, rate
     interpolation); no HA dependencies, easiest to unit-test.
@@ -36,7 +36,7 @@ entity change. See `README.md` for the full user-facing behavior.
   - `number.py`, `select.py` — per-room config entities that write back into
     the room's options.
   - `websocket.py` — live data subscription for the bundled card.
-  - `frontend/vacation-heating-card.js` — the bundled Lovelace card,
+  - `frontend/warm-welcome-card.js` — the bundled Lovelace card,
     registered automatically as a static resource.
   - `translations/` — `en`, `de`, `nl`, `fr`, `es`, `pt`; keep all six in
     sync when changing config-flow or entity strings.
@@ -57,8 +57,8 @@ uv run pytest tests/ -v  # run the test suite
 ## Conventions
 
 - **Version bump on every change**: bump the patch level in
-  `custom_components/vacation_heating/manifest.json`, `pyproject.toml`, and
-  `CARD_VERSION` in `frontend/vacation-heating-card.js` — all three must stay
+  `custom_components/warm_welcome/manifest.json`, `pyproject.toml`, and
+  `CARD_VERSION` in `frontend/warm-welcome-card.js` — all three must stay
   identical. The card version is appended to the resource URL for cache
   busting, so stale-card bugs appear if it is forgotten.
 - **Commit per working milestone**: no commits for intermediate debug steps;

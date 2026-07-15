@@ -17,19 +17,19 @@ jobs:
         run: |
           version="${GITHUB_REF_NAME#v}"
           jq --arg v "$version" '.version = $v' \
-            custom_components/vacation_heating/manifest.json > /tmp/manifest.json
-          mv /tmp/manifest.json custom_components/vacation_heating/manifest.json
+            custom_components/warm_welcome/manifest.json > /tmp/manifest.json
+          mv /tmp/manifest.json custom_components/warm_welcome/manifest.json
           sed -i "s/^const CARD_VERSION = \".*\";/const CARD_VERSION = \"$version\";/" \
-            custom_components/vacation_heating/frontend/vacation-heating-card.js
+            custom_components/warm_welcome/frontend/warm-welcome-card.js
           grep -q "CARD_VERSION = \"$version\"" \
-            custom_components/vacation_heating/frontend/vacation-heating-card.js
+            custom_components/warm_welcome/frontend/warm-welcome-card.js
 
       - name: Create zip
         run: |
-          cd custom_components/vacation_heating
-          zip -r ../../vacation_heating.zip .
+          cd custom_components/warm_welcome
+          zip -r ../../warm_welcome.zip .
 
       - name: Upload release asset
         uses: softprops/action-gh-release@v2
         with:
-          files: vacation_heating.zip
+          files: warm_welcome.zip

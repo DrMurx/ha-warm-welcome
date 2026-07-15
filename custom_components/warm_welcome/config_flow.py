@@ -1,4 +1,4 @@
-"""Config flow for the Vacation Heating integration."""
+"""Config flow for the Warm Welcome integration."""
 
 from __future__ import annotations
 
@@ -207,7 +207,7 @@ def _validate_and_normalize(user_input: dict[str, Any]) -> dict[str, str]:
     return errors
 
 
-class VacationHeatingConfigFlow(ConfigFlow, domain=DOMAIN):
+class WarmWelcomeConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle the initial setup: the entities shared by all rooms."""
 
     VERSION = 1
@@ -222,16 +222,16 @@ class VacationHeatingConfigFlow(ConfigFlow, domain=DOMAIN):
         """Pick the shared weather and vacation end entities."""
         if user_input is not None:
             return self.async_create_entry(
-                title="Vacation Heating", data={}, options=user_input
+                title="Warm Welcome", data={}, options=user_input
             )
 
         return self.async_show_form(step_id="user", data_schema=SHARED_SCHEMA)
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry: ConfigEntry) -> VacationHeatingOptionsFlow:
+    def async_get_options_flow(config_entry: ConfigEntry) -> WarmWelcomeOptionsFlow:
         """Return the options flow handler."""
-        return VacationHeatingOptionsFlow()
+        return WarmWelcomeOptionsFlow()
 
     @classmethod
     @callback
@@ -242,7 +242,7 @@ class VacationHeatingConfigFlow(ConfigFlow, domain=DOMAIN):
         return {SUBENTRY_TYPE_ROOM: RoomSubentryFlow}
 
 
-class VacationHeatingOptionsFlow(OptionsFlow):
+class WarmWelcomeOptionsFlow(OptionsFlow):
     """Allow changing the shared entities after setup.
 
     A plain options flow: the entry's update listener performs the reload

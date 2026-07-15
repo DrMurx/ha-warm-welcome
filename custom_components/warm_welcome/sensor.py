@@ -16,7 +16,7 @@ from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import VacationHeatingConfigEntry
+from . import WarmWelcomeConfigEntry
 from .const import (
     ATTR_ARRIVAL,
     ATTR_BEYOND_FORECAST,
@@ -30,8 +30,8 @@ from .const import (
     ATTR_TRIGGERED_FOR,
     DOMAIN,
 )
-from .coordinator import ForecastCoordinator, VacationHeatingCoordinator
-from .entity import VacationHeatingRoomEntity
+from .coordinator import ForecastCoordinator, WarmWelcomeCoordinator
+from .entity import WarmWelcomeRoomEntity
 
 
 def _predicted_temperatures(
@@ -46,7 +46,7 @@ def _predicted_temperatures(
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: VacationHeatingConfigEntry,
+    entry: WarmWelcomeConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the shared forecast sensor and the sensors of every room."""
@@ -58,12 +58,12 @@ async def async_setup_entry(
         )
 
 
-class VacationHeatingSensor(VacationHeatingRoomEntity, SensorEntity):
-    """Base class for vacation heating sensors."""
+class WarmWelcomeSensor(WarmWelcomeRoomEntity, SensorEntity):
+    """Base class for Warm Welcome sensors."""
 
     def __init__(
         self,
-        coordinator: VacationHeatingCoordinator,
+        coordinator: WarmWelcomeCoordinator,
         description: SensorEntityDescription,
     ) -> None:
         """Initialize the sensor."""
@@ -84,7 +84,7 @@ class OutdoorForecastSensor(
     def __init__(
         self,
         coordinator: ForecastCoordinator,
-        entry: VacationHeatingConfigEntry,
+        entry: WarmWelcomeConfigEntry,
     ) -> None:
         """Initialize the sensor on the entry-level device."""
         super().__init__(coordinator)
@@ -126,14 +126,14 @@ class OutdoorForecastSensor(
         }
 
 
-class HeatingStartSensor(VacationHeatingSensor):
+class HeatingStartSensor(WarmWelcomeSensor):
     """When the heating must be turned on."""
 
     # The chart series would bloat the recorder database; cards read the
     # live state, so history is not needed.
     _unrecorded_attributes = frozenset({ATTR_PREDICTED_TEMPERATURES})
 
-    def __init__(self, coordinator: VacationHeatingCoordinator) -> None:
+    def __init__(self, coordinator: WarmWelcomeCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(
             coordinator,
@@ -172,10 +172,10 @@ class HeatingStartSensor(VacationHeatingSensor):
         return attrs
 
 
-class RequiredPreheatSensor(VacationHeatingSensor):
+class RequiredPreheatSensor(WarmWelcomeSensor):
     """How long the room needs to reach the target temperature."""
 
-    def __init__(self, coordinator: VacationHeatingCoordinator) -> None:
+    def __init__(self, coordinator: WarmWelcomeCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(
             coordinator,

@@ -104,7 +104,7 @@ class ForecastCoordinator(DataUpdateCoordinator[list[ForecastPoint]]):
         return points
 
 
-class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None]):
+class WarmWelcomeCoordinator(DataUpdateCoordinator[PredictionResult | None]):
     """Recompute one room's heating start time and fire the configured action."""
 
     config_entry: ConfigEntry

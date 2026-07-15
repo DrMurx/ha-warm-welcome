@@ -7,15 +7,15 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from . import VacationHeatingConfigEntry
+from . import WarmWelcomeConfigEntry
 from .const import CONF_CLIMATE_ENTITY, CONF_SET_PRESET, CONF_TARGET_PRESET
-from .coordinator import VacationHeatingCoordinator
-from .entity import VacationHeatingRoomEntity
+from .coordinator import WarmWelcomeCoordinator
+from .entity import WarmWelcomeRoomEntity
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: VacationHeatingConfigEntry,
+    entry: WarmWelcomeConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Set up the preset select of every room."""
@@ -25,13 +25,13 @@ async def async_setup_entry(
         )
 
 
-class TargetPresetSelect(VacationHeatingRoomEntity, SelectEntity):
+class TargetPresetSelect(WarmWelcomeRoomEntity, SelectEntity):
     """The preset to set at the heating start."""
 
     _attr_translation_key = "target_preset"
     _attr_entity_category = EntityCategory.CONFIG
 
-    def __init__(self, coordinator: VacationHeatingCoordinator) -> None:
+    def __init__(self, coordinator: WarmWelcomeCoordinator) -> None:
         """Initialize the preset select."""
         super().__init__(coordinator, CONF_TARGET_PRESET)
         self._suggest_object_id(ENTITY_ID_FORMAT, "target_preset")

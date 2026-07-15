@@ -32,7 +32,7 @@ async def test_subscribe_receives_data_and_updates(
     await setup_entry(hass)
 
     client = await hass_ws_client(hass, await _frozen_time_token(hass, hass_admin_user))
-    await client.send_json({"id": 1, "type": "vacation_heating/subscribe"})
+    await client.send_json({"id": 1, "type": "warm_welcome/subscribe"})
     result = await client.receive_json()
     assert result["success"]
 
@@ -80,7 +80,7 @@ async def test_subscription_survives_config_entity_reload(
     await setup_entry(hass)
 
     client = await hass_ws_client(hass, await _frozen_time_token(hass, hass_admin_user))
-    await client.send_json({"id": 1, "type": "vacation_heating/subscribe"})
+    await client.send_json({"id": 1, "type": "warm_welcome/subscribe"})
     assert (await client.receive_json())["success"]
     await client.receive_json()  # initial payload
 
@@ -88,7 +88,7 @@ async def test_subscription_survives_config_entity_reload(
         "number",
         "set_value",
         {
-            "entity_id": "number.living_room_vacation_heating_target_temperature",
+            "entity_id": "number.living_room_warm_welcome_target_temperature",
             "value": 22.0,
         },
         blocking=True,
@@ -108,9 +108,9 @@ async def test_subscribe_without_a_loaded_entry(
     hass: HomeAssistant, hass_ws_client
 ) -> None:
     """Without a set-up entry the subscription reports an empty state."""
-    assert await async_setup_component(hass, "vacation_heating", {})
+    assert await async_setup_component(hass, "warm_welcome", {})
     client = await hass_ws_client(hass)
-    await client.send_json({"id": 1, "type": "vacation_heating/subscribe"})
+    await client.send_json({"id": 1, "type": "warm_welcome/subscribe"})
     result = await client.receive_json()
     assert result["success"]
     message = await client.receive_json()
@@ -130,4 +130,4 @@ async def test_card_module_registered(
     await setup_entry(hass)
 
     urls = hass.data[DATA_EXTRA_MODULE_URL].urls
-    assert any("vacation-heating-card.js" in url for url in urls)
+    assert any("warm-welcome-card.js" in url for url in urls)

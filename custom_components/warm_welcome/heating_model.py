@@ -1,4 +1,4 @@
-"""Pure prediction math for the Vacation Heating integration.
+"""Pure prediction math for the Warm Welcome integration.
 
 This module has no Home Assistant imports so it can be unit tested in
 isolation. All temperatures are in Home Assistant's configured unit

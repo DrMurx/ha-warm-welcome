@@ -1,4 +1,4 @@
-"""The Vacation Heating integration."""
+"""The Warm Welcome integration."""
 
 from __future__ import annotations
 
@@ -32,12 +32,12 @@ from .const import (
     SIGNAL_UPDATE,
     SUBENTRY_TYPE_ROOM,
 )
-from .coordinator import ForecastCoordinator, VacationHeatingCoordinator, make_store
+from .coordinator import ForecastCoordinator, WarmWelcomeCoordinator, make_store
 
 PLATFORMS = [Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
-CARD_FILENAME = "vacation-heating-card.js"
+CARD_FILENAME = "warm-welcome-card.js"
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -58,14 +58,14 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 
 @dataclass
-class VacationHeatingData:
+class WarmWelcomeData:
     """Runtime data of a config entry."""
 
     forecast: ForecastCoordinator
-    rooms: dict[str, VacationHeatingCoordinator]
+    rooms: dict[str, WarmWelcomeCoordinator]
 
 
-type VacationHeatingConfigEntry = ConfigEntry[VacationHeatingData]
+type WarmWelcomeConfigEntry = ConfigEntry[WarmWelcomeData]
 
 
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -119,9 +119,9 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_setup_entry(
-    hass: HomeAssistant, entry: VacationHeatingConfigEntry
+    hass: HomeAssistant, entry: WarmWelcomeConfigEntry
 ) -> bool:
-    """Set up Vacation Heating from a config entry.
+    """Set up Warm Welcome from a config entry.
 
     The entry holds the shared weather and vacation end entities and one
     forecast coordinator; each room is a subentry with its own coordinator
@@ -139,21 +139,21 @@ async def async_setup_entry(
     forecast_coordinator = ForecastCoordinator(hass, entry)
     await forecast_coordinator.async_config_entry_first_refresh()
 
-    rooms: dict[str, VacationHeatingCoordinator] = {}
+    rooms: dict[str, WarmWelcomeCoordinator] = {}
     # Which room to refresh per climate entity; the shared entities
     # affect every room.
-    refresh_map: dict[str, list[VacationHeatingCoordinator]] = {}
+    refresh_map: dict[str, list[WarmWelcomeCoordinator]] = {}
     for subentry_id, subentry in entry.subentries.items():
         if subentry.subentry_type != SUBENTRY_TYPE_ROOM:
             continue
-        coordinator = VacationHeatingCoordinator(
+        coordinator = WarmWelcomeCoordinator(
             hass, entry, subentry, forecast_coordinator, store, triggered
         )
         await coordinator.async_config_entry_first_refresh()
         rooms[subentry_id] = coordinator
         refresh_map.setdefault(subentry.data[CONF_CLIMATE_ENTITY], []).append(coordinator)
         entry.async_on_unload(coordinator.cancel_trigger)
-    entry.runtime_data = VacationHeatingData(forecast_coordinator, rooms)
+    entry.runtime_data = WarmWelcomeData(forecast_coordinator, rooms)
 
     @callback
     def _forecast_updated() -> None:
@@ -204,21 +204,21 @@ async def async_setup_entry(
 
 
 async def _async_update_listener(
-    hass: HomeAssistant, entry: VacationHeatingConfigEntry
+    hass: HomeAssistant, entry: WarmWelcomeConfigEntry
 ) -> None:
     """Reload the entry when its options or subentries change."""
     await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(
-    hass: HomeAssistant, entry: VacationHeatingConfigEntry
+    hass: HomeAssistant, entry: WarmWelcomeConfigEntry
 ) -> bool:
     """Unload a config entry."""
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
 async def async_remove_entry(
-    hass: HomeAssistant, entry: VacationHeatingConfigEntry
+    hass: HomeAssistant, entry: WarmWelcomeConfigEntry
 ) -> None:
     """Clean up persisted state when the entry is removed."""
     await make_store(hass, entry).async_remove()

@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Aquecimento de férias",
+        "title": "Boas-vindas calorosas",
         "description": "Prevê quando o teu piso radiante deve arrancar para que cada divisão esteja quente quando regressares de férias. Escolhe as entidades partilhadas por todas as divisões; depois adiciona cada divisão através de 'Adicionar divisão' na página da integração.",
         "data": {
           "weather_entity": "Entidade meteorológica",
@@ -18,7 +18,7 @@
   "options": {
     "step": {
       "init": {
-        "title": "Opções do Aquecimento de férias",
+        "title": "Opções de Boas-vindas calorosas",
         "data": {
           "weather_entity": "Entidade meteorológica",
           "end_date_entity": "Entidade de data de fim das férias"

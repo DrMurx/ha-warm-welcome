@@ -9,15 +9,15 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import slugify
 
 from .const import DOMAIN
-from .coordinator import VacationHeatingCoordinator
+from .coordinator import WarmWelcomeCoordinator
 
 
-class VacationHeatingRoomEntity(CoordinatorEntity[VacationHeatingCoordinator]):
+class WarmWelcomeRoomEntity(CoordinatorEntity[WarmWelcomeCoordinator]):
     """An entity on the device of one room."""
 
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator: VacationHeatingCoordinator, key: str) -> None:
+    def __init__(self, coordinator: WarmWelcomeCoordinator, key: str) -> None:
         """Initialize the entity on the room's device."""
         super().__init__(coordinator)
         subentry = coordinator.subentry
@@ -29,13 +29,13 @@ class VacationHeatingRoomEntity(CoordinatorEntity[VacationHeatingCoordinator]):
         )
 
     def _suggest_object_id(self, entity_id_format: str, suffix: str) -> None:
-        """Suggest ``<room>_vacation_heating_<suffix>`` as the entity id.
+        """Suggest ``<room>_warm_welcome_<suffix>`` as the entity id.
 
         Only a suggestion for the initial registration: entities already
         in the registry keep their id (the unique id is unchanged).
         """
         self.entity_id = entity_id_format.format(
-            f"{slugify(self.coordinator.subentry.title)}_vacation_heating_{suffix}"
+            f"{slugify(self.coordinator.subentry.title)}_warm_welcome_{suffix}"
         )
 
     def _update_setting(self, key: str, value: Any) -> None:

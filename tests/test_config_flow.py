@@ -9,8 +9,8 @@ from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.util.unit_system import US_CUSTOMARY_SYSTEM
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.vacation_heating.config_flow import settings_schema
-from custom_components.vacation_heating.const import (
+from custom_components.warm_welcome.config_flow import settings_schema
+from custom_components.warm_welcome.const import (
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
@@ -67,13 +67,13 @@ ROOM_DATA = {
 
 def patch_setup():
     return patch(
-        "custom_components.vacation_heating.async_setup_entry", return_value=True
+        "custom_components.warm_welcome.async_setup_entry", return_value=True
     )
 
 
 def patch_unload():
     return patch(
-        "custom_components.vacation_heating.async_unload_entry", return_value=True
+        "custom_components.warm_welcome.async_unload_entry", return_value=True
     )
 
 
@@ -93,7 +93,7 @@ async def make_entry(hass: HomeAssistant, with_room: bool = False) -> MockConfig
     )
     entry = MockConfigEntry(
         domain=DOMAIN,
-        title="Vacation Heating",
+        title="Warm Welcome",
         data={},
         options=SHARED_INPUT,
         subentries_data=subentries,
@@ -119,7 +119,7 @@ async def test_user_flow_creates_entry(hass: HomeAssistant) -> None:
         await hass.async_block_till_done()
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
-    assert result["title"] == "Vacation Heating"
+    assert result["title"] == "Warm Welcome"
     assert result["data"] == {}
     assert result["options"] == SHARED_INPUT
 

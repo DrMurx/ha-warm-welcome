@@ -1,4 +1,4 @@
-# Vacation Heating
+# Warm Welcome
 
 A Home Assistant custom integration for slow heating systems (e.g. floor
 heating). While you are away, your heating is turned down. Based on the
@@ -59,7 +59,7 @@ temperature is covered. That point in time is the heating start:
 
 The entry itself provides one shared sensor:
 
-- `sensor.vacation_heating_outdoor_forecast` — the outdoor temperature
+- `sensor.warm_welcome_outdoor_forecast` — the outdoor temperature
   forecast the predictions are based on: the state is the forecast for the
   current interval, the `forecast` attribute holds the full series.
 
@@ -82,17 +82,17 @@ Requires Home Assistant 2026.1 or newer.
 
 1. In HACS, add this repository as a **custom repository** of type
    *Integration*.
-2. Install **Vacation Heating** and restart Home Assistant.
+2. Install **Warm Welcome** and restart Home Assistant.
 
 ### Manual
 
-Copy `custom_components/vacation_heating` into the `custom_components`
+Copy `custom_components/warm_welcome` into the `custom_components`
 folder of your Home Assistant configuration directory and restart.
 
 ## Configuration
 
 Everything is configured in the UI: **Settings → Devices & services →
-Add integration → Vacation Heating**. The integration is added once,
+Add integration → Warm Welcome**. The integration is added once,
 asking for the shared weather and vacation end entities. Then add each
 room via **Add room** on the integration's page. Adding a room has two
 steps: first the name and climate entity, then the heat rates and the
@@ -112,7 +112,7 @@ For quick adjustments (and for use in automations), each room's device
 also exposes its main settings as configuration entities — a **target
 temperature** number, switches for **set preset** and **set temperature**
 at the heating start, and a select for the **target preset** (their entity
-ids follow `<room>_vacation_heating_use_preset`, `..._target_preset`,
+ids follow `<room>_warm_welcome_use_preset`, `..._target_preset`,
 `..._use_temperature`, and `..._target_temperature`). Changing them writes
 straight back into the room's configuration, and the prediction updates
 immediately. While a switch is off, its dependent entity (the preset
@@ -127,7 +127,7 @@ and **hard-refresh the browser** (Cmd/Ctrl+Shift+R) — the frontend's
 service worker caches the page that loads the card:
 
 ```yaml
-type: custom:vacation-heating-card
+type: custom:warm-welcome-card
 title: Vacation re-heat   # optional
 ```
 
@@ -184,7 +184,7 @@ series:
     data_generator: |
       return (entity.attributes.predicted_temperatures || [])
         .map((p) => [new Date(p.datetime), p.temperature]);
-  - entity: sensor.vacation_heating_outdoor_forecast
+  - entity: sensor.warm_welcome_outdoor_forecast
     name: Outside
     type: area
     opacity: 0.2
@@ -219,5 +219,5 @@ uv run pytest tests/ -v
 ## Releasing
 
 Publish a GitHub release with a tag like `v0.1.1`. The release workflow
-stamps the version into the manifest and uploads `vacation_heating.zip`,
+stamps the version into the manifest and uploads `warm_welcome.zip`,
 which HACS installs.

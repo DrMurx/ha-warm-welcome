@@ -1,4 +1,4 @@
-"""Common fixtures for the Vacation Heating tests."""
+"""Common fixtures for the Warm Welcome tests."""
 
 from datetime import timedelta
 
@@ -22,7 +22,7 @@ def no_settle_delay(monkeypatch: pytest.MonkeyPatch) -> None:
     sleep(0) yields without arming a timer.
     """
     monkeypatch.setattr(
-        "custom_components.vacation_heating.coordinator.TRIGGER_SETTLE_DELAY", 0
+        "custom_components.warm_welcome.coordinator.TRIGGER_SETTLE_DELAY", 0
     )
 
 

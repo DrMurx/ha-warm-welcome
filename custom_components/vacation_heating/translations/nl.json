@@ -63,7 +63,7 @@
           "data": {
             "heat_rates": "Verwarmingssnelheden",
             "set_preset": "Preset instellen bij start van de verwarming",
-            "preset_mode": "In te stellen preset",
+            "target_preset": "Doelpreset",
             "preset_temperatures": "Preset-temperaturen",
             "set_temperature": "Temperatuur instellen bij start van de verwarming",
             "target_temperature": "Doeltemperatuur"
@@ -71,7 +71,7 @@
           "data_description": {
             "heat_rates": "De bekende maximale verwarmingssnelheden van de kamer: één punt per meting — bij welke buitentemperatuur de kamer hoogstens hoeveel graden in hoeveel uur won. De winst kan negatief zijn als de verwarming het bij die buitentemperatuur niet kan bijhouden. Waarden tussen de punten worden lineair geïnterpoleerd.",
             "set_preset": "De klimaatentiteit naar de gekozen preset schakelen wanneer de berekende starttijd is bereikt.",
-            "preset_mode": "De presets van de klimaatentiteit worden weergegeven; alleen gebruikt wanneer 'Preset instellen bij start van de verwarming' is ingeschakeld.",
+            "target_preset": "De presets van de klimaatentiteit worden weergegeven; alleen gebruikt wanneer 'Preset instellen bij start van de verwarming' is ingeschakeld.",
             "preset_temperatures": "Optioneel. Vertelt de voorspelling alleen welke insteltemperatuur elke preset probeert te bereiken — er wordt niets uit deze lijst naar de klimaatentiteit gestuurd. Dient als voorspellingsdoel wanneer alleen de preset wordt ingesteld.",
             "set_temperature": "De doeltemperatuur naar de klimaatentiteit sturen wanneer de berekende starttijd is bereikt.",
             "target_temperature": "Kamertemperatuur die bereikt moet zijn tegen de tijd dat je aankomt. Wordt bij de start van de verwarming als insteltemperatuur naar de klimaatentiteit gestuurd en overschrijft daarmee wat de gekozen preset instelt."
@@ -81,8 +81,8 @@
       "error": {
         "invalid_heat_rates": "Elk punt van de verwarmingssnelheid heeft een buitentemperatuur, een temperatuurwinst en een positieve duur nodig. De buitentemperaturen moeten uniek zijn en minstens één punt moet een positieve winst hebben.",
         "invalid_preset_temperatures": "Elke preset-temperatuur heeft een presetnaam en een temperatuur nodig; presets moeten uniek zijn.",
-        "preset_mode_required": "Selecteer een preset wanneer 'Preset instellen bij start van de verwarming' is ingeschakeld.",
-        "no_action": "Schakel minstens één actie in die bij de start van de verwarming wordt uitgevoerd."
+        "no_action": "Schakel minstens één actie in die bij de start van de verwarming wordt uitgevoerd.",
+        "target_preset_required": "Selecteer een preset wanneer 'Preset instellen bij start van de verwarming' is ingeschakeld."
       },
       "abort": {
         "reconfigure_successful": "Opnieuw configureren is gelukt."
@@ -96,8 +96,8 @@
       }
     },
     "select": {
-      "preset_mode": {
-        "name": "In te stellen preset"
+      "target_preset": {
+        "name": "Doelpreset"
       }
     },
     "switch": {

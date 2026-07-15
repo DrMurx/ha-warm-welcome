@@ -17,7 +17,7 @@ CONF_TARGET_TEMPERATURE = "target_temperature"
 CONF_HEAT_RATES = "heat_rates"
 CONF_SET_PRESET = "set_preset"
 CONF_SET_TEMPERATURE = "set_temperature"
-CONF_PRESET_MODE = "preset_mode"
+CONF_TARGET_PRESET = "target_preset"
 CONF_PRESET_TEMPERATURES = "preset_temperatures"
 
 # Legacy action select, replaced by the two booleans above; only read by
@@ -25,6 +25,10 @@ CONF_PRESET_TEMPERATURES = "preset_temperatures"
 CONF_ACTION = "action"
 ACTION_SET_PRESET = "set_preset"
 ACTION_SET_TEMPERATURE = "set_temperature"
+
+# Legacy name of the target preset key; only read by the entry migration
+# to minor version 3.
+CONF_LEGACY_PRESET_MODE = "preset_mode"
 
 DEFAULT_TARGET_TEMPERATURE = 21.0
 DEFAULT_TARGET_TEMPERATURE_F = 70.0
@@ -46,6 +50,8 @@ STORAGE_VERSION = 1
 
 ATTR_PREHEAT_HOURS = "required_preheat_hours"
 ATTR_DEFICIT = "temperature_deficit"
+ATTR_CURRENT_TEMPERATURE = "current_temperature"
+ATTR_TARGET_TEMPERATURE = "target_temperature"
 ATTR_BEYOND_FORECAST = "beyond_forecast"
 ATTR_FORECAST_TYPE = "forecast_type"
 ATTR_ARRIVAL = "arrival"

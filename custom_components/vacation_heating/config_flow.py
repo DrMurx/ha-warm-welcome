@@ -36,10 +36,10 @@ from .const import (
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
-    CONF_PRESET_MODE,
     CONF_PRESET_TEMPERATURES,
     CONF_SET_PRESET,
     CONF_SET_TEMPERATURE,
+    CONF_TARGET_PRESET,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DEFAULT_TARGET_TEMPERATURE,
@@ -156,7 +156,7 @@ def settings_schema(hass: HomeAssistant, climate_entity_id: str) -> vol.Schema:
                 )
             ),
             vol.Required(CONF_SET_PRESET, default=True): BooleanSelector(),
-            vol.Optional(CONF_PRESET_MODE): SelectSelector(
+            vol.Optional(CONF_TARGET_PRESET): SelectSelector(
                 SelectSelectorConfig(
                     options=presets,
                     custom_value=True,
@@ -202,8 +202,8 @@ def _validate_and_normalize(user_input: dict[str, Any]) -> dict[str, str]:
         user_input.setdefault(CONF_PRESET_TEMPERATURES, [])
     if not user_input.get(CONF_SET_PRESET) and not user_input.get(CONF_SET_TEMPERATURE):
         errors["base"] = "no_action"
-    if user_input.get(CONF_SET_PRESET) and not user_input.get(CONF_PRESET_MODE):
-        errors[CONF_PRESET_MODE] = "preset_mode_required"
+    if user_input.get(CONF_SET_PRESET) and not user_input.get(CONF_TARGET_PRESET):
+        errors[CONF_TARGET_PRESET] = "target_preset_required"
     return errors
 
 
@@ -212,8 +212,9 @@ class VacationHeatingConfigFlow(ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
     # Minor version 2: room action select replaced by the set_preset and
-    # set_temperature booleans (migrated in async_migrate_entry).
-    MINOR_VERSION = 2
+    # set_temperature booleans; minor version 3: the preset_mode key
+    # renamed to target_preset (both migrated in async_migrate_entry).
+    MINOR_VERSION = 3
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None

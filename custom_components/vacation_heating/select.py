@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import VacationHeatingConfigEntry
-from .const import CONF_CLIMATE_ENTITY, CONF_PRESET_MODE, CONF_SET_PRESET
+from .const import CONF_CLIMATE_ENTITY, CONF_SET_PRESET, CONF_TARGET_PRESET
 from .coordinator import VacationHeatingCoordinator
 from .entity import VacationHeatingRoomEntity
 
@@ -21,19 +21,19 @@ async def async_setup_entry(
     """Set up the preset select of every room."""
     for subentry_id, coordinator in entry.runtime_data.rooms.items():
         async_add_entities(
-            [PresetModeSelect(coordinator)], config_subentry_id=subentry_id
+            [TargetPresetSelect(coordinator)], config_subentry_id=subentry_id
         )
 
 
-class PresetModeSelect(VacationHeatingRoomEntity, SelectEntity):
+class TargetPresetSelect(VacationHeatingRoomEntity, SelectEntity):
     """The preset to set at the heating start."""
 
-    _attr_translation_key = "preset_mode"
+    _attr_translation_key = "target_preset"
     _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(self, coordinator: VacationHeatingCoordinator) -> None:
         """Initialize the preset select."""
-        super().__init__(coordinator, CONF_PRESET_MODE)
+        super().__init__(coordinator, CONF_TARGET_PRESET)
         self._suggest_object_id(ENTITY_ID_FORMAT, "target_preset")
 
     @property
@@ -65,8 +65,8 @@ class PresetModeSelect(VacationHeatingRoomEntity, SelectEntity):
     @property
     def current_option(self) -> str | None:
         """The configured preset."""
-        return self.coordinator.settings.get(CONF_PRESET_MODE)
+        return self.coordinator.settings.get(CONF_TARGET_PRESET)
 
     async def async_select_option(self, option: str) -> None:
         """Store the new preset in the room subentry."""
-        self._update_setting(CONF_PRESET_MODE, option)
+        self._update_setting(CONF_TARGET_PRESET, option)

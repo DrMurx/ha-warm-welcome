@@ -19,10 +19,10 @@ from .const import (
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
-    CONF_PRESET_MODE,
     CONF_PRESET_TEMPERATURES,
     CONF_SET_PRESET,
     CONF_SET_TEMPERATURE,
+    CONF_TARGET_PRESET,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DOMAIN,
@@ -139,6 +139,10 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
         self._store = store
         self._triggered = triggered
         self.arrival: datetime | None = None
+        self.current_temperature: float | None = None
+        # Effective prediction target, derived from the set temperature
+        # and the set preset (see _prediction_target).
+        self.target_temperature: float | None = None
         self.triggered_for: str | None = triggered.get(subentry.subentry_id)
         self._unsub_trigger: CALLBACK_TYPE | None = None
 
@@ -159,6 +163,8 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
         self.arrival = arrival = self._compute_arrival()
         if arrival is None or arrival <= dt_util.utcnow():
             # No (future) vacation end configured: idle.
+            self.current_temperature = None
+            self.target_temperature = None
             self.cancel_trigger()
             return None
 
@@ -167,6 +173,8 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
             raise UpdateFailed(
                 f"No current temperature available from {options[CONF_CLIMATE_ENTITY]}"
             )
+        self.current_temperature = current_temp
+        self.target_temperature = target_temp = self._prediction_target()
 
         forecast = self.forecast_coordinator.data
         if not forecast:
@@ -176,7 +184,7 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
         result = compute_start(
             arrival,
             current_temp,
-            self._prediction_target(),
+            target_temp,
             forecast,
             rates,
             max_lookback=MAX_LOOKBACK,
@@ -198,7 +206,7 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
             presets = parse_preset_temperatures(
                 options.get(CONF_PRESET_TEMPERATURES) or []
             )
-            target = presets.get(options.get(CONF_PRESET_MODE, ""))
+            target = presets.get(options.get(CONF_TARGET_PRESET, ""))
             if target is not None:
                 return target
         return float(options[CONF_TARGET_TEMPERATURE])
@@ -273,7 +281,7 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
             if set_preset:
                 # The preset can be missing if set_preset was enabled via
                 # the config entity without one configured.
-                if preset := options.get(CONF_PRESET_MODE):
+                if preset := options.get(CONF_TARGET_PRESET):
                     await self.hass.services.async_call(
                         "climate",
                         "set_preset_mode",

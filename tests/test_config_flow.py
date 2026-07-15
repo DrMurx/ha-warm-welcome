@@ -14,10 +14,10 @@ from custom_components.vacation_heating.const import (
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
-    CONF_PRESET_MODE,
     CONF_PRESET_TEMPERATURES,
     CONF_SET_PRESET,
     CONF_SET_TEMPERATURE,
+    CONF_TARGET_PRESET,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DOMAIN,
@@ -49,7 +49,7 @@ SETTINGS_INPUT = {
     CONF_HEAT_RATES: HEAT_RATES_INPUT,
     CONF_SET_PRESET: True,
     CONF_SET_TEMPERATURE: True,
-    CONF_PRESET_MODE: "comfort",
+    CONF_TARGET_PRESET: "comfort",
     CONF_PRESET_TEMPERATURES: PRESET_TEMPERATURES_INPUT,
 }
 
@@ -60,7 +60,7 @@ ROOM_DATA = {
     CONF_HEAT_RATES: [HEAT_RATES_INPUT[1], HEAT_RATES_INPUT[0]],
     CONF_SET_PRESET: True,
     CONF_SET_TEMPERATURE: True,
-    CONF_PRESET_MODE: "comfort",
+    CONF_TARGET_PRESET: "comfort",
     CONF_PRESET_TEMPERATURES: PRESET_TEMPERATURES_INPUT,
 }
 
@@ -171,13 +171,13 @@ async def test_settings_schema_offers_entity_presets(hass: HomeAssistant) -> Non
         "climate.living_room", "heat", {"preset_modes": ["eco", "comfort", "boost"]}
     )
     schema = settings_schema(hass, "climate.living_room")
-    preset_selector = schema.schema[CONF_PRESET_MODE]
+    preset_selector = schema.schema[CONF_TARGET_PRESET]
     assert preset_selector.config["options"] == ["eco", "comfort", "boost"]
     assert preset_selector.config["custom_value"] is True
 
     # Unknown entity: empty dropdown, custom values still allowed.
     schema = settings_schema(hass, "climate.missing")
-    assert schema.schema[CONF_PRESET_MODE].config["options"] == []
+    assert schema.schema[CONF_TARGET_PRESET].config["options"] == []
 
 
 async def test_settings_schema_follows_unit_system(hass: HomeAssistant) -> None:
@@ -218,7 +218,7 @@ async def test_room_flow_rejects_invalid_settings(hass: HomeAssistant) -> None:
             ],
             CONF_SET_TEMPERATURE: False,
         }
-        del settings[CONF_PRESET_MODE]
+        del settings[CONF_TARGET_PRESET]
         result = await hass.config_entries.subentries.async_configure(
             result["flow_id"], settings
         )
@@ -228,7 +228,7 @@ async def test_room_flow_rejects_invalid_settings(hass: HomeAssistant) -> None:
     assert result["errors"] == {
         CONF_HEAT_RATES: "invalid_heat_rates",
         CONF_PRESET_TEMPERATURES: "invalid_preset_temperatures",
-        CONF_PRESET_MODE: "preset_mode_required",
+        CONF_TARGET_PRESET: "target_preset_required",
     }
 
 
@@ -271,7 +271,7 @@ async def test_reconfigure_room(hass: HomeAssistant) -> None:
         assert result["step_id"] == "settings"
 
         result = await hass.config_entries.subentries.async_configure(
-            result["flow_id"], {**SETTINGS_INPUT, CONF_PRESET_MODE: "eco"}
+            result["flow_id"], {**SETTINGS_INPUT, CONF_TARGET_PRESET: "eco"}
         )
         await hass.async_block_till_done()
 
@@ -280,7 +280,7 @@ async def test_reconfigure_room(hass: HomeAssistant) -> None:
     subentry = entry.subentries[subentry_id]
     assert subentry.title == "Bedroom"
     assert subentry.data[CONF_CLIMATE_ENTITY] == "climate.bedroom"
-    assert subentry.data[CONF_PRESET_MODE] == "eco"
+    assert subentry.data[CONF_TARGET_PRESET] == "eco"
 
 
 async def test_options_flow_updates_shared_entities(hass: HomeAssistant) -> None:

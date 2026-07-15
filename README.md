@@ -111,7 +111,7 @@ Everything can be changed later: the shared entities via the entry's
 For quick adjustments (and for use in automations), each room's device
 also exposes its main settings as configuration entities — a **target
 temperature** number, switches for **set preset** and **set temperature**
-at the heating start, and a select for the **preset to set** (their entity
+at the heating start, and a select for the **target preset** (their entity
 ids follow `<room>_vacation_heating_use_preset`, `..._target_preset`,
 `..._use_temperature`, and `..._target_temperature`). Changing them writes
 straight back into the room's configuration, and the prediction updates

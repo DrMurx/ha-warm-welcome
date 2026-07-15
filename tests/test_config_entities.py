@@ -11,9 +11,9 @@ from custom_components.vacation_heating.const import (
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
-    CONF_PRESET_MODE,
     CONF_SET_PRESET,
     CONF_SET_TEMPERATURE,
+    CONF_TARGET_PRESET,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DOMAIN,
@@ -30,7 +30,7 @@ ROOM_DATA = {
     CONF_HEAT_RATES: [{"outdoor_temp": 0, "gain": 1, "hours": 2}],
     CONF_SET_PRESET: True,
     CONF_SET_TEMPERATURE: True,
-    CONF_PRESET_MODE: "comfort",
+    CONF_TARGET_PRESET: "comfort",
 }
 
 
@@ -173,7 +173,7 @@ async def test_preset_select_updates_room(hass, freezer, forecast_calls) -> None
     )
     await hass.async_block_till_done()
 
-    assert room_data(entry)[CONF_PRESET_MODE] == "eco"
+    assert room_data(entry)[CONF_TARGET_PRESET] == "eco"
     state = hass.states.get("select.living_room_vacation_heating_target_preset")
     assert state.state == "eco"
 

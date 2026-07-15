@@ -20,11 +20,13 @@ from . import VacationHeatingConfigEntry
 from .const import (
     ATTR_ARRIVAL,
     ATTR_BEYOND_FORECAST,
+    ATTR_CURRENT_TEMPERATURE,
     ATTR_DEFICIT,
     ATTR_FORECAST,
     ATTR_FORECAST_TYPE,
     ATTR_PREDICTED_TEMPERATURES,
     ATTR_PREHEAT_HOURS,
+    ATTR_TARGET_TEMPERATURE,
     ATTR_TRIGGERED_FOR,
     DOMAIN,
 )
@@ -159,6 +161,8 @@ class HeatingStartSensor(VacationHeatingSensor):
                 {
                     ATTR_PREHEAT_HOURS: round(data.preheat_hours, 2),
                     ATTR_DEFICIT: round(data.deficit, 2),
+                    ATTR_CURRENT_TEMPERATURE: coordinator.current_temperature,
+                    ATTR_TARGET_TEMPERATURE: coordinator.target_temperature,
                     ATTR_BEYOND_FORECAST: data.beyond_forecast,
                     ATTR_FORECAST_TYPE: coordinator.forecast_type,
                     ATTR_ARRIVAL: coordinator.arrival,

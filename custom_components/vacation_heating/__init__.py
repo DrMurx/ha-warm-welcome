@@ -23,8 +23,10 @@ from .const import (
     CONF_ACTION,
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
+    CONF_LEGACY_PRESET_MODE,
     CONF_SET_PRESET,
     CONF_SET_TEMPERATURE,
+    CONF_TARGET_PRESET,
     CONF_WEATHER_ENTITY,
     DOMAIN,
     SIGNAL_UPDATE,
@@ -91,6 +93,27 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             ):
                 registry.async_remove(entity_id)
         hass.config_entries.async_update_entry(entry, minor_version=2)
+
+    if entry.minor_version < 3:
+        # The preset_mode key became target_preset; rename it in the room
+        # data and in the unique id of the preset select.
+        registry = er.async_get(hass)
+        for subentry_id, subentry in entry.subentries.items():
+            if (
+                subentry.subentry_type != SUBENTRY_TYPE_ROOM
+                or CONF_LEGACY_PRESET_MODE not in subentry.data
+            ):
+                continue
+            data = dict(subentry.data)
+            data[CONF_TARGET_PRESET] = data.pop(CONF_LEGACY_PRESET_MODE)
+            hass.config_entries.async_update_subentry(entry, subentry, data=data)
+            if entity_id := registry.async_get_entity_id(
+                "select", DOMAIN, f"{subentry_id}_{CONF_LEGACY_PRESET_MODE}"
+            ):
+                registry.async_update_entity(
+                    entity_id, new_unique_id=f"{subentry_id}_{CONF_TARGET_PRESET}"
+                )
+        hass.config_entries.async_update_entry(entry, minor_version=3)
 
     return True
 

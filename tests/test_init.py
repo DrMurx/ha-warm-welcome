@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta
 
 from homeassistant.config_entries import ConfigSubentryData
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
@@ -16,10 +17,11 @@ from custom_components.vacation_heating.const import (
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
     CONF_HEAT_RATES,
-    CONF_PRESET_MODE,
+    CONF_LEGACY_PRESET_MODE,
     CONF_PRESET_TEMPERATURES,
     CONF_SET_PRESET,
     CONF_SET_TEMPERATURE,
+    CONF_TARGET_PRESET,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DOMAIN,
@@ -42,7 +44,7 @@ ROOM_DATA = {
     CONF_HEAT_RATES: [{"outdoor_temp": 0, "gain": 1, "hours": 2}],
     CONF_SET_PRESET: True,
     CONF_SET_TEMPERATURE: True,
-    CONF_PRESET_MODE: "comfort",
+    CONF_TARGET_PRESET: "comfort",
 }
 
 EXPECTED_START = ARRIVAL - timedelta(hours=12)
@@ -91,6 +93,8 @@ async def test_sensors_expose_prediction(hass, freezer, forecast_calls) -> None:
     assert dt_util.parse_datetime(state.state) == EXPECTED_START
     assert state.attributes["required_preheat_hours"] == 12.0
     assert state.attributes["temperature_deficit"] == 6.0
+    assert state.attributes["current_temperature"] == 15.0
+    assert state.attributes["target_temperature"] == 21.0
     assert state.attributes["forecast_type"] == "hourly"
     assert state.attributes["beyond_forecast"] is False
 
@@ -163,6 +167,9 @@ async def test_preset_only_action_targets_preset_temperature(
     state = hass.states.get("sensor.living_room_heating_start")
     assert dt_util.parse_datetime(state.state) == ARRIVAL - timedelta(hours=6)
     assert state.attributes["temperature_deficit"] == 3.0
+    # The target follows the mapped temperature of the selected preset.
+    assert state.attributes["current_temperature"] == 15.0
+    assert state.attributes["target_temperature"] == 18.0
 
 
 async def test_trigger_fires_configured_action_once(hass, freezer, forecast_calls) -> None:
@@ -252,7 +259,7 @@ async def test_idle_when_end_date_in_past(hass, freezer, forecast_calls) -> None
 
 
 async def test_migrates_action_to_booleans(hass, freezer, forecast_calls) -> None:
-    """A minor version 1 entry gets its room action select migrated."""
+    """A minor version 1 entry gets its action select and preset key migrated."""
     freezer.move_to(NOW)
     await hass.config.async_set_time_zone("UTC")
     hass.states.async_set("climate.living_room", "off", {"current_temperature": 15.0})
@@ -261,8 +268,9 @@ async def test_migrates_action_to_booleans(hass, freezer, forecast_calls) -> Non
     legacy = {
         k: v
         for k, v in ROOM_DATA.items()
-        if k not in (CONF_SET_PRESET, CONF_SET_TEMPERATURE)
+        if k not in (CONF_SET_PRESET, CONF_SET_TEMPERATURE, CONF_TARGET_PRESET)
     }
+    legacy[CONF_LEGACY_PRESET_MODE] = "comfort"
     entry = MockConfigEntry(
         domain=DOMAIN,
         title="Vacation Heating",
@@ -273,14 +281,28 @@ async def test_migrates_action_to_booleans(hass, freezer, forecast_calls) -> Non
         minor_version=1,
     )
     entry.add_to_hass(hass)
+    subentry_id = next(iter(entry.subentries))
+    # The preset select of a pre-rename install; its unique id must move.
+    registry = er.async_get(hass)
+    old_select = registry.async_get_or_create(
+        "select",
+        DOMAIN,
+        f"{subentry_id}_{CONF_LEGACY_PRESET_MODE}",
+        config_entry=entry,
+        config_subentry_id=subentry_id,
+    )
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    assert entry.minor_version == 2
+    assert entry.minor_version == 3
     data = next(iter(entry.subentries.values())).data
     assert CONF_ACTION not in data
     assert data[CONF_SET_PRESET] is True
     assert data[CONF_SET_TEMPERATURE] is False
+    assert CONF_LEGACY_PRESET_MODE not in data
+    assert data[CONF_TARGET_PRESET] == "comfort"
+    migrated = registry.async_get(old_select.entity_id)
+    assert migrated.unique_id == f"{subentry_id}_{CONF_TARGET_PRESET}"
 
 
 async def test_refreshes_on_end_date_change(hass, freezer, forecast_calls) -> None:

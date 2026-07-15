@@ -63,7 +63,7 @@
           "data": {
             "heat_rates": "Heizraten",
             "set_preset": "Voreinstellung beim Heizstart setzen",
-            "preset_mode": "Zu setzende Voreinstellung",
+            "target_preset": "Ziel-Voreinstellung",
             "preset_temperatures": "Temperaturen der Voreinstellungen",
             "set_temperature": "Temperatur beim Heizstart setzen",
             "target_temperature": "Zieltemperatur"
@@ -71,7 +71,7 @@
           "data_description": {
             "heat_rates": "Die bekannten maximalen Heizraten des Raums: ein Punkt pro Messung — bei welcher Außentemperatur der Raum höchstens wie viele Grad in wie vielen Stunden gewonnen hat. Der Gewinn kann negativ sein, wenn die Heizung bei dieser Außentemperatur nicht mithalten kann. Werte zwischen den Punkten werden linear interpoliert.",
             "set_preset": "Die Klima-Entität auf die gewählte Voreinstellung umschalten, wenn die berechnete Startzeit erreicht ist.",
-            "preset_mode": "Aufgeführt sind die Voreinstellungen der Klima-Entität; wird nur verwendet, wenn 'Voreinstellung beim Heizstart setzen' aktiviert ist.",
+            "target_preset": "Aufgeführt sind die Voreinstellungen der Klima-Entität; wird nur verwendet, wenn 'Voreinstellung beim Heizstart setzen' aktiviert ist.",
             "preset_temperatures": "Optional. Teilt der Vorhersage nur mit, welche Solltemperatur jede Voreinstellung zu erreichen versucht — aus dieser Zuordnung wird nichts an die Klima-Entität gesendet. Dient als Vorhersageziel, wenn nur die Voreinstellung gesetzt wird.",
             "set_temperature": "Die Zieltemperatur an die Klima-Entität senden, wenn die berechnete Startzeit erreicht ist.",
             "target_temperature": "Raumtemperatur, die bis zu deiner Ankunft erreicht sein soll. Wird beim Heizstart als Solltemperatur an die Klima-Entität gesendet und überschreibt damit, was die gewählte Voreinstellung einstellt."
@@ -81,8 +81,8 @@
       "error": {
         "invalid_heat_rates": "Jeder Heizraten-Punkt benötigt eine Außentemperatur, einen Temperaturgewinn und eine positive Dauer. Die Außentemperaturen müssen eindeutig sein und mindestens ein Punkt muss einen positiven Gewinn haben.",
         "invalid_preset_temperatures": "Jede Voreinstellungs-Temperatur benötigt einen Namen der Voreinstellung und eine Temperatur; Voreinstellungen müssen eindeutig sein.",
-        "preset_mode_required": "Wähle eine Voreinstellung, wenn 'Voreinstellung beim Heizstart setzen' aktiviert ist.",
-        "no_action": "Aktiviere mindestens eine Aktion, die beim Heizstart ausgeführt wird."
+        "no_action": "Aktiviere mindestens eine Aktion, die beim Heizstart ausgeführt wird.",
+        "target_preset_required": "Wähle eine Voreinstellung, wenn 'Voreinstellung beim Heizstart setzen' aktiviert ist."
       },
       "abort": {
         "reconfigure_successful": "Die Neukonfiguration war erfolgreich."
@@ -96,8 +96,8 @@
       }
     },
     "select": {
-      "preset_mode": {
-        "name": "Zu setzende Voreinstellung"
+      "target_preset": {
+        "name": "Ziel-Voreinstellung"
       }
     },
     "switch": {

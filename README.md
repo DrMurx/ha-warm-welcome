@@ -78,7 +78,7 @@ the sensors show `unknown`.
 
 ## Installation
 
-Requires Home Assistant 2026.1 or newer.
+Requires Home Assistant 2026.3 or newer.
 
 ### HACS (recommended)
 

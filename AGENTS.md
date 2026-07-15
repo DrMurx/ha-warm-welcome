@@ -22,7 +22,7 @@ entity change. See `README.md` for the full user-facing behavior.
 ## Layout
 
 - `custom_components/warm_welcome/` — the integration (Python 3.13+,
-  Home Assistant 2026.1+). Key modules:
+  Home Assistant 2026.3+). Key modules:
   - `heating_model.py` — pure prediction logic (backward walk, rate
     interpolation); no HA dependencies, easiest to unit-test.
   - `coordinator.py` — recomputation scheduling, source-entity listeners,

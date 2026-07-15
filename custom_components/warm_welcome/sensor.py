@@ -26,6 +26,8 @@ from .const import (
     ATTR_FORECAST_TYPE,
     ATTR_PREDICTED_TEMPERATURES,
     ATTR_PREHEAT_HOURS,
+    ATTR_TARGET_AT_RISK,
+    ATTR_TARGET_REACHED,
     ATTR_TARGET_TEMPERATURE,
     ATTR_TRIGGERED_FOR,
     DOMAIN,
@@ -157,13 +159,16 @@ class HeatingStartSensor(WarmWelcomeSensor):
         coordinator = self.coordinator
         attrs: dict[str, Any] = {ATTR_TRIGGERED_FOR: coordinator.triggered_for}
         if (data := coordinator.data) is not None:
+            unit = self.hass.config.units.temperature_unit
             attrs.update(
                 {
                     ATTR_PREHEAT_HOURS: round(data.preheat_hours, 2),
-                    ATTR_DEFICIT: round(data.deficit, 2),
+                    ATTR_DEFICIT: f"{round(data.deficit, 2)} {unit}",
                     ATTR_CURRENT_TEMPERATURE: coordinator.current_temperature,
                     ATTR_TARGET_TEMPERATURE: coordinator.target_temperature,
                     ATTR_BEYOND_FORECAST: data.beyond_forecast,
+                    ATTR_TARGET_AT_RISK: coordinator.target_at_risk,
+                    ATTR_TARGET_REACHED: coordinator.target_reached,
                     ATTR_FORECAST_TYPE: coordinator.forecast_type,
                     ATTR_ARRIVAL: coordinator.arrival,
                     ATTR_PREDICTED_TEMPERATURES: _predicted_temperatures(data.curve),

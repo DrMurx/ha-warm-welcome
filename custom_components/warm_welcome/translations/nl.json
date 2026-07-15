@@ -90,6 +90,11 @@
     }
   },
   "entity": {
+    "binary_sensor": {
+      "target_at_risk": {
+        "name": "Doeltemperatuur in gevaar"
+      }
+    },
     "number": {
       "target_temperature": {
         "name": "Doeltemperatuur"

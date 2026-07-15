@@ -7,6 +7,7 @@ import pytest
 
 from custom_components.warm_welcome.heating_model import (
     ForecastPoint,
+    compute_reach,
     compute_start,
     parse_heat_rates,
     parse_preset_temperatures,
@@ -219,3 +220,71 @@ class TestComputeStart:
         result = compute_start(ARRIVAL, 19.0, 21.0, [], self.RATES)
         assert result.start == ARRIVAL
         assert result.beyond_forecast
+
+
+class TestComputeReach:
+    RATES: ClassVar = [(0.0, 0.4)]
+    START = ARRIVAL - timedelta(hours=12)
+
+    def test_no_deficit_reaches_immediately(self):
+        forecast = hourly_forecast(self.START, 120, 0.0)
+        assert compute_reach(self.START, 21.0, 21.0, forecast, self.RATES) == self.START
+
+    def test_constant_temperature(self):
+        # 2°C deficit at 0.4°C/h -> reached after 5 hours.
+        forecast = hourly_forecast(self.START, 120, 0.0)
+        reached = compute_reach(self.START, 19.0, 21.0, forecast, self.RATES)
+        assert reached == self.START + timedelta(hours=5)
+
+    def test_mirrors_compute_start(self):
+        # Walking forward from the computed start must land on the arrival.
+        forecast = hourly_forecast(ARRIVAL - timedelta(hours=48), 120, 0.0)
+        result = compute_start(ARRIVAL, 19.0, 21.0, forecast, self.RATES)
+        reached = compute_reach(result.start, 19.0, 21.0, forecast, self.RATES)
+        assert reached == ARRIVAL
+
+    def test_varying_temperature(self):
+        # Rates: 0.2 at -10°C, 0.4 at 0°C. Forecast: -10°C for the first
+        # 2 hours, 0°C afterwards. Deficit 1°C: the cold hours heat
+        # 2*0.2=0.4°C, remaining 0.6°C at 0.4°C/h takes 1.5h -> 3.5h total.
+        rates = [(-10.0, 0.2), (0.0, 0.4)]
+        forecast = [
+            ForecastPoint(self.START + timedelta(hours=i), -10.0 if i < 2 else 0.0)
+            for i in range(49)
+        ]
+        reached = compute_reach(self.START, 20.0, 21.0, forecast, rates)
+        assert reached == self.START + timedelta(hours=3, minutes=30)
+
+    def test_negative_rate_delays_reach(self):
+        # The heating loses 0.25°C/h during the first two -10°C hours;
+        # deficit 1°C grows to 1.5°C, then 0.5°C/h -> 3h -> 5h total.
+        rates = [(-10.0, -0.25), (0.0, 0.5)]
+        forecast = [
+            ForecastPoint(self.START + timedelta(hours=i), -10.0 if i < 2 else 0.0)
+            for i in range(49)
+        ]
+        reached = compute_reach(self.START, 20.0, 21.0, forecast, rates)
+        assert reached == self.START + timedelta(hours=5)
+
+    def test_extrapolates_past_forecast_end(self):
+        # Only 2 hours of forecast; the remaining deficit is covered by
+        # extrapolating the latest value. 2°C at 0.4°C/h -> 5 hours.
+        forecast = hourly_forecast(self.START, 2, 0.0)
+        reached = compute_reach(self.START, 19.0, 21.0, forecast, self.RATES)
+        assert reached == self.START + timedelta(hours=5)
+
+    def test_unreachable_within_lookahead_returns_none(self):
+        # 10°C outside everywhere maps to a negative rate: never reached.
+        forecast = hourly_forecast(self.START, 120, 10.0)
+        reached = compute_reach(
+            self.START,
+            20.0,
+            21.0,
+            forecast,
+            [(0.0, 0.5), (10.0, -0.1)],
+            max_lookahead=timedelta(hours=10),
+        )
+        assert reached is None
+
+    def test_empty_forecast_returns_none(self):
+        assert compute_reach(self.START, 19.0, 21.0, [], self.RATES) is None

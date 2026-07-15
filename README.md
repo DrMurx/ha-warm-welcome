@@ -56,8 +56,16 @@ temperature is covered. That point in time is the heating start:
 - `sensor.<name>_heating_start` — timestamp of the computed start (with
   diagnostic attributes: required pre-heat hours, temperature deficit,
   forecast type used, whether the prediction had to extrapolate beyond the
-  forecast, plus the predicted temperature curve described below),
-- `sensor.<name>_required_preheat` — required pre-heat duration in hours.
+  forecast, whether the target is at risk and when the room is predicted
+  to actually reach it, plus the predicted temperature curve described
+  below),
+- `sensor.<name>_required_preheat` — required pre-heat duration in hours,
+- `binary_sensor.<name>_target_temperature_at_risk` — on when the room is
+  predicted to miss the target temperature at the arrival, e.g. because
+  the forecast worsened after the heating start had passed or the heating
+  cannot keep up with the forecasted cold. Its `target_reached_at`
+  attribute (also on the heating start sensor) shows when the room is
+  predicted to actually reach the target instead.
 
 The entry itself provides one shared sensor:
 

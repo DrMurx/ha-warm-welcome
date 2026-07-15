@@ -34,7 +34,13 @@ from .const import (
 )
 from .coordinator import ForecastCoordinator, WarmWelcomeCoordinator, make_store
 
-PLATFORMS = [Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
+PLATFORMS = [
+    Platform.BINARY_SENSOR,
+    Platform.NUMBER,
+    Platform.SELECT,
+    Platform.SENSOR,
+    Platform.SWITCH,
+]
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 CARD_FILENAME = "warm-welcome-card.js"

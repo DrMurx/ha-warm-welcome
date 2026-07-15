@@ -26,6 +26,7 @@ from .const import (
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
     DOMAIN,
+    LATE_TOLERANCE,
     MAX_LOOKBACK,
     STORAGE_VERSION,
     TRIGGER_SETTLE_DELAY,
@@ -34,6 +35,7 @@ from .const import (
 from .heating_model import (
     ForecastPoint,
     PredictionResult,
+    compute_reach,
     compute_start,
     parse_heat_rates,
     parse_preset_temperatures,
@@ -143,6 +145,10 @@ class WarmWelcomeCoordinator(DataUpdateCoordinator[PredictionResult | None]):
         # Effective prediction target, derived from the set temperature
         # and the set preset (see _prediction_target).
         self.target_temperature: float | None = None
+        # When the room is predicted to actually reach the target, and
+        # whether that misses the arrival (see _async_update_data).
+        self.target_reached: datetime | None = None
+        self.target_at_risk: bool = False
         self.triggered_for: str | None = triggered.get(subentry.subentry_id)
         self._unsub_trigger: CALLBACK_TYPE | None = None
 
@@ -165,6 +171,8 @@ class WarmWelcomeCoordinator(DataUpdateCoordinator[PredictionResult | None]):
             # No (future) vacation end configured: idle.
             self.current_temperature = None
             self.target_temperature = None
+            self.target_reached = None
+            self.target_at_risk = False
             self.cancel_trigger()
             return None
 
@@ -189,6 +197,19 @@ class WarmWelcomeCoordinator(DataUpdateCoordinator[PredictionResult | None]):
             rates,
             max_lookback=MAX_LOOKBACK,
         )
+        # When the required start is already in the past (the forecast
+        # worsened, or the heating runs behind the model), the heating
+        # can only run from now on — predict when the target is actually
+        # reached and flag the room if that misses the arrival.
+        self.target_reached = reached = compute_reach(
+            max(result.start, dt_util.utcnow()),
+            current_temp,
+            target_temp,
+            forecast,
+            rates,
+            max_lookahead=MAX_LOOKBACK,
+        )
+        self.target_at_risk = reached is None or reached > arrival + LATE_TOLERANCE
         self._schedule_trigger(result.start, arrival)
         return result
 

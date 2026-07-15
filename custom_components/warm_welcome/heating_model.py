@@ -138,6 +138,24 @@ def _temperature_before(
     raise AssertionError("unreachable: covered above")
 
 
+def _temperature_after(
+    points: list[ForecastPoint], moment: datetime
+) -> tuple[float, datetime]:
+    """Outdoor temperature for the interval starting at ``moment``.
+
+    Returns (temperature, interval_end). ``points`` must be sorted
+    ascending by time and non-empty.
+    """
+    if moment < points[0].time:
+        # Before forecast coverage: extrapolate with the earliest value.
+        return points[0].temperature, min(points[0].time, moment + FALLBACK_STEP)
+    for point, successor in pairwise(points):
+        if point.time <= moment < successor.time:
+            return point.temperature, successor.time
+    # At or after the last point: extrapolate with the latest value.
+    return points[-1].temperature, moment + FALLBACK_STEP
+
+
 def _typical_step(points: list[ForecastPoint]) -> timedelta:
     if len(points) < 2:
         return FALLBACK_STEP
@@ -201,3 +219,40 @@ def compute_start(
     curve.reverse()
     preheat_hours = (arrival - moment).total_seconds() / 3600
     return PredictionResult(moment, preheat_hours, deficit, beyond, curve)
+
+
+def compute_reach(
+    start: datetime,
+    current_temp: float,
+    target_temp: float,
+    forecast: list[ForecastPoint],
+    rates: list[tuple[float, float]],
+    max_lookahead: timedelta = DEFAULT_MAX_LOOKBACK,
+) -> datetime | None:
+    """Compute when the room reaches target_temp if heating runs from ``start``.
+
+    The forward counterpart of compute_start: walks forward from ``start``
+    through the forecast, accumulating degrees heated per interval at the
+    interpolated heat rate, until the temperature deficit is covered.
+    Returns None if the target is not reached within ``max_lookahead``
+    (e.g. the heating cannot keep up at the forecasted temperatures) or
+    when there is no forecast to walk through.
+    """
+    remaining = target_temp - current_temp
+    if remaining <= 0:
+        return start
+    if not forecast:
+        return None
+
+    points = sorted(forecast, key=lambda p: p.time)
+    moment = start
+    while moment - start < max_lookahead:
+        temperature, interval_end = _temperature_after(points, moment)
+        rate = rate_at(rates, temperature)
+        interval_hours = (interval_end - moment).total_seconds() / 3600
+        gain = rate * interval_hours
+        if gain >= remaining:
+            return moment + timedelta(hours=remaining / rate)
+        remaining -= gain
+        moment = interval_end
+    return None

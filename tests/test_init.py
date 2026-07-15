@@ -92,15 +92,24 @@ async def test_sensors_expose_prediction(hass, freezer, forecast_calls) -> None:
     assert state is not None
     assert dt_util.parse_datetime(state.state) == EXPECTED_START
     assert state.attributes["required_preheat_hours"] == 12.0
-    assert state.attributes["temperature_deficit"] == 6.0
+    assert state.attributes["temperature_deficit"] == "6.0 °C"
     assert state.attributes["current_temperature"] == 15.0
     assert state.attributes["target_temperature"] == 21.0
     assert state.attributes["forecast_type"] == "hourly"
     assert state.attributes["beyond_forecast"] is False
+    # The start is still ahead, so the target is reached exactly at arrival.
+    assert state.attributes["target_at_risk"] is False
+    assert state.attributes["target_reached_at"] == ARRIVAL
 
     preheat = hass.states.get("sensor.living_room_required_pre_heat_time")
     assert preheat is not None
     assert float(preheat.state) == 12.0
+
+    alert = hass.states.get("binary_sensor.living_room_target_temperature_at_risk")
+    assert alert is not None
+    assert alert.state == "off"
+    assert alert.attributes["target_reached_at"] == ARRIVAL
+    assert alert.attributes["arrival"] == ARRIVAL
 
 
 async def test_multiple_rooms_predict_independently(hass, freezer, forecast_calls) -> None:
@@ -166,10 +175,36 @@ async def test_preset_only_action_targets_preset_temperature(
     # Deficit 18 - 15 = 3°C at 0.5°C/h -> 6 h instead of 12 h.
     state = hass.states.get("sensor.living_room_heating_start")
     assert dt_util.parse_datetime(state.state) == ARRIVAL - timedelta(hours=6)
-    assert state.attributes["temperature_deficit"] == 3.0
+    assert state.attributes["temperature_deficit"] == "3.0 °C"
     # The target follows the mapped temperature of the selected preset.
     assert state.attributes["current_temperature"] == 15.0
     assert state.attributes["target_temperature"] == 18.0
+
+
+async def test_alert_when_target_unreachable_in_time(
+    hass, freezer, forecast_calls
+) -> None:
+    """A too-close arrival raises the alert and predicts the late reach."""
+    freezer.move_to(NOW)
+    await setup_entry(hass)
+    async_mock_service(hass, "climate", "set_preset_mode")
+    async_mock_service(hass, "climate", "set_temperature")
+
+    # 12 h of pre-heat needed, but the vacation now ends in 6 h.
+    hass.states.async_set("input_datetime.vacation_end", "2026-07-18 16:00:00")
+    freezer.tick(timedelta(seconds=15))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+
+    alert = hass.states.get("binary_sensor.living_room_target_temperature_at_risk")
+    assert alert.state == "on"
+    # Heating from now on: target reached 12 h after the recompute.
+    reached = dt_util.utcnow() + timedelta(hours=12)
+    assert alert.attributes["target_reached_at"] == reached
+
+    state = hass.states.get("sensor.living_room_heating_start")
+    assert state.attributes["target_at_risk"] is True
+    assert state.attributes["target_reached_at"] == reached
 
 
 async def test_trigger_fires_configured_action_once(hass, freezer, forecast_calls) -> None:
@@ -256,6 +291,11 @@ async def test_idle_when_end_date_in_past(hass, freezer, forecast_calls) -> None
 
     state = hass.states.get("sensor.living_room_heating_start")
     assert state.state == "unknown"
+
+    # No upcoming arrival means nothing is at risk.
+    alert = hass.states.get("binary_sensor.living_room_target_temperature_at_risk")
+    assert alert.state == "off"
+    assert "target_reached_at" not in alert.attributes
 
 
 async def test_migrates_action_to_booleans(hass, freezer, forecast_calls) -> None:

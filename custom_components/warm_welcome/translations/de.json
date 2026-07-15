@@ -90,6 +90,11 @@
     }
   },
   "entity": {
+    "binary_sensor": {
+      "target_at_risk": {
+        "name": "Zieltemperatur gefährdet"
+      }
+    },
     "number": {
       "target_temperature": {
         "name": "Zieltemperatur"

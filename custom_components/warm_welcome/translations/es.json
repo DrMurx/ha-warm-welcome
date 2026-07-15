@@ -90,6 +90,11 @@
     }
   },
   "entity": {
+    "binary_sensor": {
+      "target_at_risk": {
+        "name": "Temperatura objetivo en riesgo"
+      }
+    },
     "number": {
       "target_temperature": {
         "name": "Temperatura objetivo"

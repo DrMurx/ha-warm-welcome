@@ -2030,7 +2030,7 @@ wheels = [
 
 [[package]]
 name = "ha-warm-welcome"
-version = "0.1.15"
+version = "0.1.18"
 source = { virtual = "." }
 
 [package.dev-dependencies]

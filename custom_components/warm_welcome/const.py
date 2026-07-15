@@ -46,6 +46,11 @@ TRIGGER_SETTLE_DELAY = 0.1
 # giving up and starting the heating immediately.
 MAX_LOOKBACK = timedelta(days=14)
 
+# Grace period before a predicted late target arrival raises the
+# "target at risk" alert; absorbs thermostat and recompute jitter while
+# the heating is running.
+LATE_TOLERANCE = timedelta(minutes=15)
+
 STORAGE_VERSION = 1
 
 ATTR_PREHEAT_HOURS = "required_preheat_hours"
@@ -55,6 +60,8 @@ ATTR_TARGET_TEMPERATURE = "target_temperature"
 ATTR_BEYOND_FORECAST = "beyond_forecast"
 ATTR_FORECAST_TYPE = "forecast_type"
 ATTR_ARRIVAL = "arrival"
+ATTR_TARGET_AT_RISK = "target_at_risk"
+ATTR_TARGET_REACHED = "target_reached_at"
 ATTR_TRIGGERED_FOR = "triggered_for"
 ATTR_PREDICTED_TEMPERATURES = "predicted_temperatures"
 ATTR_FORECAST = "forecast"

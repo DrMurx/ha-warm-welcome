@@ -63,18 +63,18 @@
           "data": {
             "heat_rates": "Taxas de aquecimento",
             "set_preset": "Aplicar predefinição no início do aquecimento",
-            "set_temperature": "Definir temperatura no início do aquecimento",
             "preset_mode": "Predefinição a aplicar",
             "preset_temperatures": "Temperaturas das predefinições",
+            "set_temperature": "Definir temperatura no início do aquecimento",
             "target_temperature": "Temperatura alvo"
           },
           "data_description": {
-            "heat_rates": "Um ponto por medição: a que temperatura exterior a divisão ganhou quantos graus em quantas horas. O ganho pode ser negativo se o aquecimento não conseguir acompanhar a essa temperatura exterior. Os valores entre os pontos são interpolados linearmente.",
+            "heat_rates": "As taxas máximas de aquecimento conhecidas da divisão: um ponto por medição — a que temperatura exterior a divisão ganhou no máximo quantos graus em quantas horas. O ganho pode ser negativo se o aquecimento não conseguir acompanhar a essa temperatura exterior. Os valores entre os pontos são interpolados linearmente.",
             "set_preset": "Mudar a entidade de climatização para a predefinição selecionada quando a hora de início calculada for atingida.",
-            "set_temperature": "Definir a temperatura alvo na entidade de climatização quando a hora de início calculada for atingida.",
             "preset_mode": "São listadas as predefinições da entidade de climatização; usado apenas quando 'Aplicar predefinição no início do aquecimento' está ativado.",
-            "preset_temperatures": "Opcional. A temperatura para a qual cada predefinição aquece. Se apenas a predefinição for aplicada, a previsão visa a temperatura da predefinição selecionada em vez da temperatura alvo.",
-            "target_temperature": "Temperatura da divisão a atingir até à tua chegada."
+            "preset_temperatures": "Opcional. Apenas indica à previsão que temperatura de referência cada predefinição tentará atingir — nada desta lista é enviado à entidade de climatização. Serve como alvo da previsão quando apenas a predefinição é aplicada.",
+            "set_temperature": "Enviar a temperatura alvo à entidade de climatização quando a hora de início calculada for atingida.",
+            "target_temperature": "Temperatura da divisão a atingir até à tua chegada. É enviada à entidade de climatização como temperatura de referência no início do aquecimento, substituindo assim o que a predefinição selecionada definir."
           }
         }
       },

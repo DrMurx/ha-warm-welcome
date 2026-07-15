@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
-from homeassistant.components.switch import SwitchEntity
+from homeassistant.components.switch import ENTITY_ID_FORMAT, SwitchEntity
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
@@ -36,9 +36,15 @@ class ActionSwitch(VacationHeatingRoomEntity, SwitchEntity):
 
     _attr_entity_category = EntityCategory.CONFIG
 
+    OBJECT_ID_SUFFIXES: ClassVar[dict[str, str]] = {
+        CONF_SET_PRESET: "use_preset",
+        CONF_SET_TEMPERATURE: "use_temperature",
+    }
+
     def __init__(self, coordinator: VacationHeatingCoordinator, key: str) -> None:
         """Initialize the switch for one action flag."""
         super().__init__(coordinator, key)
+        self._suggest_object_id(ENTITY_ID_FORMAT, self.OBJECT_ID_SUFFIXES[key])
         self._attr_translation_key = key
         self._key = key
 

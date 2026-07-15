@@ -6,6 +6,7 @@ from typing import Any
 
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import slugify
 
 from .const import DOMAIN
 from .coordinator import VacationHeatingCoordinator
@@ -25,6 +26,16 @@ class VacationHeatingRoomEntity(CoordinatorEntity[VacationHeatingCoordinator]):
             identifiers={(DOMAIN, subentry.subentry_id)},
             name=subentry.title,
             entry_type=DeviceEntryType.SERVICE,
+        )
+
+    def _suggest_object_id(self, entity_id_format: str, suffix: str) -> None:
+        """Suggest ``<room>_vacation_heating_<suffix>`` as the entity id.
+
+        Only a suggestion for the initial registration: entities already
+        in the registry keep their id (the unique id is unchanged).
+        """
+        self.entity_id = entity_id_format.format(
+            f"{slugify(self.coordinator.subentry.title)}_vacation_heating_{suffix}"
         )
 
     def _update_setting(self, key: str, value: Any) -> None:

@@ -63,18 +63,18 @@
           "data": {
             "heat_rates": "Velocidades de calentamiento",
             "set_preset": "Establecer preajuste al inicio de la calefacción",
-            "set_temperature": "Establecer temperatura al inicio de la calefacción",
             "preset_mode": "Preajuste a establecer",
             "preset_temperatures": "Temperaturas de los preajustes",
+            "set_temperature": "Establecer temperatura al inicio de la calefacción",
             "target_temperature": "Temperatura objetivo"
           },
           "data_description": {
-            "heat_rates": "Un punto por medición: a qué temperatura exterior la habitación ganó cuántos grados en cuántas horas. La ganancia puede ser negativa si la calefacción no puede seguir el ritmo a esa temperatura exterior. Los valores entre los puntos se interpolan linealmente.",
+            "heat_rates": "Las velocidades máximas de calentamiento conocidas de la habitación: un punto por medición — a qué temperatura exterior la habitación ganó como máximo cuántos grados en cuántas horas. La ganancia puede ser negativa si la calefacción no puede seguir el ritmo a esa temperatura exterior. Los valores entre los puntos se interpolan linealmente.",
             "set_preset": "Cambiar la entidad de climatización al preajuste seleccionado cuando se alcance la hora de inicio calculada.",
-            "set_temperature": "Establecer la temperatura objetivo en la entidad de climatización cuando se alcance la hora de inicio calculada.",
             "preset_mode": "Se listan los preajustes de la entidad de climatización; solo se usa cuando 'Establecer preajuste al inicio de la calefacción' está activado.",
-            "preset_temperatures": "Opcional. La temperatura a la que calienta cada preajuste. Si solo se establece el preajuste, la predicción apunta a la temperatura del preajuste seleccionado en lugar de a la temperatura objetivo.",
-            "target_temperature": "Temperatura de la habitación que debe alcanzarse para cuando llegues."
+            "preset_temperatures": "Opcional. Solo indica a la predicción qué temperatura de consigna intentará alcanzar cada preajuste — nada de esta lista se envía a la entidad de climatización. Sirve como objetivo de la predicción cuando solo se establece el preajuste.",
+            "set_temperature": "Enviar la temperatura objetivo a la entidad de climatización cuando se alcance la hora de inicio calculada.",
+            "target_temperature": "Temperatura de la habitación que debe alcanzarse para cuando llegues. Se envía a la entidad de climatización como su temperatura de consigna al inicio de la calefacción, anulando así la consigna que aplique el preajuste seleccionado."
           }
         }
       },

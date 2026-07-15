@@ -156,7 +156,6 @@ def settings_schema(hass: HomeAssistant, climate_entity_id: str) -> vol.Schema:
                 )
             ),
             vol.Required(CONF_SET_PRESET, default=True): BooleanSelector(),
-            vol.Required(CONF_SET_TEMPERATURE, default=True): BooleanSelector(),
             vol.Optional(CONF_PRESET_MODE): SelectSelector(
                 SelectSelectorConfig(
                     options=presets,
@@ -172,6 +171,7 @@ def settings_schema(hass: HomeAssistant, climate_entity_id: str) -> vol.Schema:
                     fields=preset_temperature_fields,
                 )
             ),
+            vol.Required(CONF_SET_TEMPERATURE, default=True): BooleanSelector(),
             vol.Required(
                 CONF_TARGET_TEMPERATURE, default=target_default
             ): _temperature_number(unit, target_min, target_max),

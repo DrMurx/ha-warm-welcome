@@ -36,11 +36,14 @@ Then you add each **room** to it, configuring:
   be enabled). The preset dropdown offers the presets advertised by the
   selected climate entity (e.g. `comfort`, `eco`, `boost`),
 - optional **preset temperatures** — the temperature each preset heats to,
-  e.g. `comfort: 21`, `eco: 17`. Presets switch the thermostat to a setpoint
-  configured inside the climate device, which this integration cannot read;
-  when only the preset is set, the prediction targets the mapped temperature
-  of the selected preset (falling back to the target temperature if the
-  preset is not mapped).
+  e.g. `comfort: 21`, `eco: 17`. This map is informational only — nothing
+  from it is ever sent to the climate entity. Presets switch the thermostat
+  to a setpoint configured inside the climate device, which this integration
+  cannot read; when only the preset is set, the prediction targets the mapped
+  temperature of the selected preset (falling back to the target temperature
+  if the preset is not mapped). When setting the temperature is enabled, the
+  prediction always targets the target temperature, since it is sent after
+  the preset and overrides its setpoint.
 
 Every 30 minutes (and whenever one of the source entities changes) the
 integration walks backward per room from your arrival time through the forecast,
@@ -61,9 +64,12 @@ The entry itself provides one shared sensor:
   current interval, the `forecast` attribute holds the full series.
 
 When the start moment arrives (and the end date is still in the future),
-the enabled actions are executed once per vacation. The "already
-triggered" flag survives Home Assistant restarts. If Home Assistant was
-down at the computed moment, the actions fire immediately after startup.
+the enabled actions are executed once per vacation: first the preset is
+set (if enabled), then — after a short pause so the preset's setpoint is
+applied first — the target temperature (if enabled), overriding the
+preset's setpoint. The "already triggered" flag survives Home Assistant
+restarts. If Home Assistant was down at the computed moment, the actions
+fire immediately after startup.
 
 If the end date entity is unset or in the past, the integration idles and
 the sensors show `unknown`.
@@ -105,9 +111,12 @@ Everything can be changed later: the shared entities via the entry's
 For quick adjustments (and for use in automations), each room's device
 also exposes its main settings as configuration entities — a **target
 temperature** number, switches for **set preset** and **set temperature**
-at the heating start, and a select for the **preset to set**. Changing
-them writes straight back into the room's configuration, and the
-prediction updates immediately.
+at the heating start, and a select for the **preset to set** (their entity
+ids follow `<room>_vacation_heating_use_preset`, `..._target_preset`,
+`..._use_temperature`, and `..._target_temperature`). Changing them writes
+straight back into the room's configuration, and the prediction updates
+immediately. While a switch is off, its dependent entity (the preset
+select or the temperature number) shows as unavailable.
 
 ## Dashboard card
 

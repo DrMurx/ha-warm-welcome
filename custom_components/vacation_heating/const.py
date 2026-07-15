@@ -33,6 +33,11 @@ TARGET_TEMPERATURE_RANGE_F = (40.0, 95.0)
 
 UPDATE_INTERVAL = timedelta(minutes=30)
 
+# Pause between setting the preset and the explicit temperature at the
+# heating start, so the preset's setpoint is applied first and the
+# temperature reliably overrides it.
+TRIGGER_SETTLE_DELAY = 0.1
+
 # How far back from the arrival time we are willing to extrapolate before
 # giving up and starting the heating immediately.
 MAX_LOOKBACK = timedelta(days=14)

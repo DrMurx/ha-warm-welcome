@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from homeassistant.components.select import SelectEntity
+from homeassistant.components.select import ENTITY_ID_FORMAT, SelectEntity
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import VacationHeatingConfigEntry
-from .const import CONF_CLIMATE_ENTITY, CONF_PRESET_MODE
+from .const import CONF_CLIMATE_ENTITY, CONF_PRESET_MODE, CONF_SET_PRESET
 from .coordinator import VacationHeatingCoordinator
 from .entity import VacationHeatingRoomEntity
 
@@ -34,6 +34,14 @@ class PresetModeSelect(VacationHeatingRoomEntity, SelectEntity):
     def __init__(self, coordinator: VacationHeatingCoordinator) -> None:
         """Initialize the preset select."""
         super().__init__(coordinator, CONF_PRESET_MODE)
+        self._suggest_object_id(ENTITY_ID_FORMAT, "target_preset")
+
+    @property
+    def available(self) -> bool:
+        """Grayed out while 'Set preset at heating start' is off."""
+        return super().available and bool(
+            self.coordinator.settings.get(CONF_SET_PRESET)
+        )
 
     @property
     def options(self) -> list[str]:

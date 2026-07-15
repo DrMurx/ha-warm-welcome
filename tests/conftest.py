@@ -14,6 +14,18 @@ def auto_enable_custom_integrations(enable_custom_integrations):
     return
 
 
+@pytest.fixture(autouse=True)
+def no_settle_delay(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Zero the preset-to-temperature settle delay.
+
+    Under the frozen test clock a real asyncio.sleep never wakes up;
+    sleep(0) yields without arming a timer.
+    """
+    monkeypatch.setattr(
+        "custom_components.vacation_heating.coordinator.TRIGGER_SETTLE_DELAY", 0
+    )
+
+
 @pytest.fixture
 async def forecast_calls(hass: HomeAssistant) -> list[ServiceCall]:
     """Register a mock weather.get_forecasts returning a constant 0°C hourly forecast.

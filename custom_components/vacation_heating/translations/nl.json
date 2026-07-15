@@ -63,18 +63,18 @@
           "data": {
             "heat_rates": "Verwarmingssnelheden",
             "set_preset": "Preset instellen bij start van de verwarming",
-            "set_temperature": "Temperatuur instellen bij start van de verwarming",
             "preset_mode": "In te stellen preset",
             "preset_temperatures": "Preset-temperaturen",
+            "set_temperature": "Temperatuur instellen bij start van de verwarming",
             "target_temperature": "Doeltemperatuur"
           },
           "data_description": {
-            "heat_rates": "Eén punt per meting: bij welke buitentemperatuur de kamer hoeveel graden in hoeveel uur won. De winst kan negatief zijn als de verwarming het bij die buitentemperatuur niet kan bijhouden. Waarden tussen de punten worden lineair geïnterpoleerd.",
+            "heat_rates": "De bekende maximale verwarmingssnelheden van de kamer: één punt per meting — bij welke buitentemperatuur de kamer hoogstens hoeveel graden in hoeveel uur won. De winst kan negatief zijn als de verwarming het bij die buitentemperatuur niet kan bijhouden. Waarden tussen de punten worden lineair geïnterpoleerd.",
             "set_preset": "De klimaatentiteit naar de gekozen preset schakelen wanneer de berekende starttijd is bereikt.",
-            "set_temperature": "De doeltemperatuur op de klimaatentiteit instellen wanneer de berekende starttijd is bereikt.",
             "preset_mode": "De presets van de klimaatentiteit worden weergegeven; alleen gebruikt wanneer 'Preset instellen bij start van de verwarming' is ingeschakeld.",
-            "preset_temperatures": "Optioneel. De temperatuur waarnaar elke preset verwarmt. Als alleen de preset wordt ingesteld, richt de voorspelling zich op de temperatuur van de gekozen preset in plaats van op de doeltemperatuur.",
-            "target_temperature": "Kamertemperatuur die bereikt moet zijn tegen de tijd dat je aankomt."
+            "preset_temperatures": "Optioneel. Vertelt de voorspelling alleen welke insteltemperatuur elke preset probeert te bereiken — er wordt niets uit deze lijst naar de klimaatentiteit gestuurd. Dient als voorspellingsdoel wanneer alleen de preset wordt ingesteld.",
+            "set_temperature": "De doeltemperatuur naar de klimaatentiteit sturen wanneer de berekende starttijd is bereikt.",
+            "target_temperature": "Kamertemperatuur die bereikt moet zijn tegen de tijd dat je aankomt. Wordt bij de start van de verwarming als insteltemperatuur naar de klimaatentiteit gestuurd en overschrijft daarmee wat de gekozen preset instelt."
           }
         }
       },

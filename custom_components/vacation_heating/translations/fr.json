@@ -63,18 +63,18 @@
           "data": {
             "heat_rates": "Vitesses de chauffe",
             "set_preset": "Appliquer le préréglage au démarrage du chauffage",
-            "set_temperature": "Régler la température au démarrage du chauffage",
             "preset_mode": "Préréglage à appliquer",
             "preset_temperatures": "Températures des préréglages",
+            "set_temperature": "Régler la température au démarrage du chauffage",
             "target_temperature": "Température cible"
           },
           "data_description": {
-            "heat_rates": "Un point par mesure : à quelle température extérieure la pièce a gagné combien de degrés en combien d'heures. Le gain peut être négatif si le chauffage ne suit pas à cette température extérieure. Les valeurs entre les points sont interpolées linéairement.",
+            "heat_rates": "Les vitesses de chauffe maximales connues de la pièce : un point par mesure — à quelle température extérieure la pièce a gagné au plus combien de degrés en combien d'heures. Le gain peut être négatif si le chauffage ne suit pas à cette température extérieure. Les valeurs entre les points sont interpolées linéairement.",
             "set_preset": "Basculer l'entité climatique sur le préréglage sélectionné lorsque l'heure de démarrage calculée est atteinte.",
-            "set_temperature": "Régler la température cible sur l'entité climatique lorsque l'heure de démarrage calculée est atteinte.",
             "preset_mode": "Les préréglages de l'entité climatique sont listés ; utilisé uniquement lorsque « Appliquer le préréglage au démarrage du chauffage » est activé.",
-            "preset_temperatures": "Facultatif. La température atteinte par chaque préréglage. Si seul le préréglage est appliqué, la prédiction vise la température du préréglage sélectionné au lieu de la température cible.",
-            "target_temperature": "Température de la pièce à atteindre pour votre arrivée."
+            "preset_temperatures": "Facultatif. Indique seulement à la prédiction quelle température de consigne chaque préréglage cherche à atteindre — rien de cette liste n'est envoyé à l'entité climatique. Sert de cible de prédiction lorsque seul le préréglage est appliqué.",
+            "set_temperature": "Envoyer la température cible à l'entité climatique lorsque l'heure de démarrage calculée est atteinte.",
+            "target_temperature": "Température de la pièce à atteindre pour votre arrivée. Envoyée à l'entité climatique comme température de consigne au démarrage du chauffage, remplaçant ainsi la consigne appliquée par le préréglage sélectionné."
           }
         }
       },

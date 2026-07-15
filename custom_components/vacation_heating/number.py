@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
-from homeassistant.components.number import NumberDeviceClass, NumberEntity, NumberMode
+from homeassistant.components.number import (
+    ENTITY_ID_FORMAT,
+    NumberDeviceClass,
+    NumberEntity,
+    NumberMode,
+)
 from homeassistant.const import EntityCategory, UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from . import VacationHeatingConfigEntry
 from .const import (
+    CONF_SET_TEMPERATURE,
     CONF_TARGET_TEMPERATURE,
     TARGET_TEMPERATURE_RANGE_C,
     TARGET_TEMPERATURE_RANGE_F,
@@ -41,12 +47,20 @@ class TargetTemperatureNumber(VacationHeatingRoomEntity, NumberEntity):
     def __init__(self, coordinator: VacationHeatingCoordinator) -> None:
         """Initialize with the bounds of the unit system."""
         super().__init__(coordinator, CONF_TARGET_TEMPERATURE)
+        self._suggest_object_id(ENTITY_ID_FORMAT, "target_temperature")
         unit = coordinator.hass.config.units.temperature_unit
         self._attr_native_unit_of_measurement = unit
         self._attr_native_min_value, self._attr_native_max_value = (
             TARGET_TEMPERATURE_RANGE_F
             if unit == UnitOfTemperature.FAHRENHEIT
             else TARGET_TEMPERATURE_RANGE_C
+        )
+
+    @property
+    def available(self) -> bool:
+        """Grayed out while 'Set temperature at heating start' is off."""
+        return super().available and bool(
+            self.coordinator.settings.get(CONF_SET_TEMPERATURE)
         )
 
     @property

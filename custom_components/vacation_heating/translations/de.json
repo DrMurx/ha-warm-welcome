@@ -63,18 +63,18 @@
           "data": {
             "heat_rates": "Heizraten",
             "set_preset": "Voreinstellung beim Heizstart setzen",
-            "set_temperature": "Temperatur beim Heizstart setzen",
             "preset_mode": "Zu setzende Voreinstellung",
             "preset_temperatures": "Temperaturen der Voreinstellungen",
+            "set_temperature": "Temperatur beim Heizstart setzen",
             "target_temperature": "Zieltemperatur"
           },
           "data_description": {
-            "heat_rates": "Ein Punkt pro Messung: bei welcher Außentemperatur der Raum wie viele Grad in wie vielen Stunden gewonnen hat. Der Gewinn kann negativ sein, wenn die Heizung bei dieser Außentemperatur nicht mithalten kann. Werte zwischen den Punkten werden linear interpoliert.",
+            "heat_rates": "Die bekannten maximalen Heizraten des Raums: ein Punkt pro Messung — bei welcher Außentemperatur der Raum höchstens wie viele Grad in wie vielen Stunden gewonnen hat. Der Gewinn kann negativ sein, wenn die Heizung bei dieser Außentemperatur nicht mithalten kann. Werte zwischen den Punkten werden linear interpoliert.",
             "set_preset": "Die Klima-Entität auf die gewählte Voreinstellung umschalten, wenn die berechnete Startzeit erreicht ist.",
-            "set_temperature": "Die Zieltemperatur auf der Klima-Entität setzen, wenn die berechnete Startzeit erreicht ist.",
             "preset_mode": "Aufgeführt sind die Voreinstellungen der Klima-Entität; wird nur verwendet, wenn 'Voreinstellung beim Heizstart setzen' aktiviert ist.",
-            "preset_temperatures": "Optional. Die Temperatur, auf die jede Voreinstellung heizt. Wird nur die Voreinstellung gesetzt, zielt die Vorhersage auf die Temperatur der gewählten Voreinstellung statt auf die Zieltemperatur.",
-            "target_temperature": "Raumtemperatur, die bis zu deiner Ankunft erreicht sein soll."
+            "preset_temperatures": "Optional. Teilt der Vorhersage nur mit, welche Solltemperatur jede Voreinstellung zu erreichen versucht — aus dieser Zuordnung wird nichts an die Klima-Entität gesendet. Dient als Vorhersageziel, wenn nur die Voreinstellung gesetzt wird.",
+            "set_temperature": "Die Zieltemperatur an die Klima-Entität senden, wenn die berechnete Startzeit erreicht ist.",
+            "target_temperature": "Raumtemperatur, die bis zu deiner Ankunft erreicht sein soll. Wird beim Heizstart als Solltemperatur an die Klima-Entität gesendet und überschreibt damit, was die gewählte Voreinstellung einstellt."
           }
         }
       },

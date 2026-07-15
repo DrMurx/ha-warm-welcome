@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timedelta
 import logging
 from typing import Any
@@ -27,6 +28,7 @@ from .const import (
     DOMAIN,
     MAX_LOOKBACK,
     STORAGE_VERSION,
+    TRIGGER_SETTLE_DELAY,
     UPDATE_INTERVAL,
 )
 from .heating_model import (
@@ -185,12 +187,14 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
     def _prediction_target(self) -> float:
         """Temperature the room is expected to reach.
 
-        A preset-only action heats to the preset's own setpoint, which
-        cannot be read from the climate entity; use the configured preset
-        temperature map and fall back to the target temperature.
+        When the temperature is set explicitly it wins (it is sent after
+        the preset and overrides its setpoint). A preset-only action heats
+        to the preset's own setpoint, which cannot be read from the climate
+        entity; use the configured preset temperature map and fall back to
+        the target temperature.
         """
         options = self.settings
-        if options.get(CONF_SET_PRESET) and not options.get(CONF_SET_TEMPERATURE):
+        if not options.get(CONF_SET_TEMPERATURE) and options.get(CONF_SET_PRESET):
             presets = parse_preset_temperatures(
                 options.get(CONF_PRESET_TEMPERATURES) or []
             )
@@ -265,6 +269,7 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
             set_temperature,
         )
         try:
+            preset_sent = False
             if set_preset:
                 # The preset can be missing if set_preset was enabled via
                 # the config entity without one configured.
@@ -275,12 +280,17 @@ class VacationHeatingCoordinator(DataUpdateCoordinator[PredictionResult | None])
                         {"entity_id": entity_id, "preset_mode": preset},
                         blocking=True,
                     )
+                    preset_sent = True
                 else:
                     _LOGGER.warning(
                         "No preset configured for %s; skipping set_preset_mode",
                         entity_id,
                     )
             if set_temperature:
+                if preset_sent:
+                    # Give the climate entity time to apply the preset so
+                    # the explicit temperature overrides its setpoint.
+                    await asyncio.sleep(TRIGGER_SETTLE_DELAY)
                 await self.hass.services.async_call(
                     "climate",
                     "set_temperature",

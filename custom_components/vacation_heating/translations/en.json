@@ -63,18 +63,18 @@
           "data": {
             "heat_rates": "Heat rates",
             "set_preset": "Set preset at heating start",
-            "set_temperature": "Set temperature at heating start",
             "preset_mode": "Preset to set",
             "preset_temperatures": "Preset temperatures",
+            "set_temperature": "Set temperature at heating start",
             "target_temperature": "Target temperature"
           },
           "data_description": {
-            "heat_rates": "One point per measurement: at which outdoor temperature the room gained how many degrees in how many hours. The gain may be negative if the heating cannot keep up at that outdoor temperature. Values between the points are interpolated linearly.",
+            "heat_rates": "The maximal heat rates known for the room: one point per measurement — at which outdoor temperature the room gained at most how many degrees in how many hours. The gain may be negative if the heating cannot keep up at that outdoor temperature. Values between the points are interpolated linearly.",
             "set_preset": "Switch the climate entity to the selected preset when the calculated start time is reached.",
-            "set_temperature": "Set the target temperature on the climate entity when the calculated start time is reached.",
             "preset_mode": "The climate entity's presets are listed; only used when 'Set preset at heating start' is enabled.",
-            "preset_temperatures": "Optional. The temperature each preset heats to. When only the preset is set, the prediction targets the selected preset's temperature instead of the target temperature.",
-            "target_temperature": "Room temperature to reach by the time you arrive."
+            "preset_temperatures": "Optional. Only tells the prediction which set temperature each preset will try to reach — nothing from this map is ever sent to the climate entity. Used as the prediction target when only the preset is set.",
+            "set_temperature": "Send the target temperature to the climate entity when the calculated start time is reached.",
+            "target_temperature": "Room temperature to reach by the time you arrive. Sent to the climate entity as its target temperature at the heating start, overriding whatever setpoint the selected preset applies."
           }
         }
       },

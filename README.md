@@ -1,5 +1,7 @@
 # Warm Welcome
 
+<img src="assets/logo.svg" alt="Warm Welcome logo" width="160" align="right"/>
+
 A Home Assistant custom integration for slow heating systems (e.g. floor
 heating). While you are away, your heating is turned down. Based on the
 weather forecast and the known heating rate of each room, this integration

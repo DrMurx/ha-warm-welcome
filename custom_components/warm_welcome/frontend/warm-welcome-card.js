@@ -7,7 +7,7 @@
  * the same temperature axis, and a marker at the vacation end.
  */
 
-const CARD_VERSION = "0.1.15";
+const CARD_VERSION = "0.1.16";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const WIDTH = 640;

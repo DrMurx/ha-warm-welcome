@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <!-- ground -->
+  <path d="M20 198 H222" stroke="#3A3026" stroke-width="12"/>
+  <!-- house -->
+  <path d="M108 198 V104 L162 58 L216 104 V198" stroke="#3A3026" stroke-width="13"/>
+  <!-- heat inside -->
+  <path d="M142 172 q-8 -12 0 -24 q8 -12 0 -24" stroke="#DE7E2B" stroke-width="10"/>
+  <path d="M162 178 q-8 -15 0 -30 q8 -15 0 -30" stroke="#DE7E2B" stroke-width="10"/>
+  <path d="M182 172 q-8 -12 0 -24 q8 -12 0 -24" stroke="#DE7E2B" stroke-width="10"/>
+  <!-- traveler, mid-stride toward the house -->
+  <circle cx="80" cy="112" r="10" fill="#3A3026"/>
+  <path d="M79 120 L70 152" stroke="#3A3026" stroke-width="8"/>
+  <path d="M77 128 L90 140" stroke="#3A3026" stroke-width="8"/>
+  <path d="M77 128 L62 144" stroke="#3A3026" stroke-width="8"/>
+  <path d="M70 152 L80 174 L84 196" stroke="#3A3026" stroke-width="8"/>
+  <path d="M70 152 L62 176 L56 194" stroke="#3A3026" stroke-width="8"/>
+  <!-- rolling suitcase, pulled behind -->
+  <path d="M62 144 L55 164" stroke="#3A3026" stroke-width="5"/>
+  <rect x="30" y="160" width="20" height="30" rx="5" transform="rotate(20 40 175)" fill="#3A3026" stroke="#3A3026" stroke-width="5"/>
+  <circle cx="44" cy="191" r="4" fill="#3A3026"/>
+  <!-- arrow home -->
+  <path d="M50 62 H90" stroke="#DE7E2B" stroke-width="10"/>
+  <path d="M78 50 L94 62 L78 74" stroke="#DE7E2B" stroke-width="10"/>
+</svg>

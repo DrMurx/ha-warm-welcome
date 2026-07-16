@@ -1,7 +1,7 @@
 {
   "domain": "warm_welcome",
   "name": "Warm Welcome",
-  "codeowners": [],
+  "codeowners": ["@DrMurx"],
   "config_flow": true,
   "dependencies": [
     "climate",
@@ -10,11 +10,11 @@
     "weather",
     "websocket_api"
   ],
-  "documentation": "https://github.com/YOUR_GITHUB_USERNAME/ha-warm-welcome",
+  "documentation": "https://github.com/DrMurx/ha-warm-welcome",
   "integration_type": "service",
   "iot_class": "calculated",
-  "issue_tracker": "https://github.com/YOUR_GITHUB_USERNAME/ha-warm-welcome/issues",
+  "issue_tracker": "https://github.com/DrMurx/ha-warm-welcome/issues",
   "requirements": [],
   "single_config_entry": true,
-  "version": "0.1.24"
+  "version": "0.1.25"
 }

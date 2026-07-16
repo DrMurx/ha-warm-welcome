@@ -68,6 +68,7 @@ class FloorWarmupNumber(NumberEntity):
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
             name=entry.title,
+            manufacturer="DrMurx",
             entry_type=DeviceEntryType.SERVICE,
         )
 

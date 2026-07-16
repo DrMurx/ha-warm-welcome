@@ -25,6 +25,7 @@ class WarmWelcomeRoomEntity(CoordinatorEntity[WarmWelcomeCoordinator]):
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, subentry.subentry_id)},
             name=subentry.title,
+            manufacturer="DrMurx",
             entry_type=DeviceEntryType.SERVICE,
         )
 

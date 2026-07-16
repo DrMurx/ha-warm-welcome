@@ -17,10 +17,11 @@
  *   y_min: 10                   # fix the temperature axis (default: auto)
  *   y_max: 25
  *   days: 7                     # fixed time axis of N days from now
- *                               # (default: auto-scale to the arrival)
+ *                               # (default: auto-scale to the arrival,
+ *                               # or to the forecast when none is set)
  */
 
-const CARD_VERSION = "0.1.21";
+const CARD_VERSION = "0.1.22";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const WIDTH = 640;
@@ -150,8 +151,6 @@ const EDITOR_STRINGS = {
     y_max: "Upper limit",
     auto: "Auto",
     x_axis: "Time axis",
-    x_auto: "Until arrival (automatic)",
-    x_fixed: "Fixed number of days",
     days: "Days",
   },
   de: {
@@ -172,8 +171,6 @@ const EDITOR_STRINGS = {
     y_max: "Obergrenze",
     auto: "Auto",
     x_axis: "Zeitachse",
-    x_auto: "Bis zur Ankunft (automatisch)",
-    x_fixed: "Feste Anzahl Tage",
     days: "Tage",
   },
   nl: {
@@ -194,8 +191,6 @@ const EDITOR_STRINGS = {
     y_max: "Bovengrens",
     auto: "Auto",
     x_axis: "Tijdas",
-    x_auto: "Tot aankomst (automatisch)",
-    x_fixed: "Vast aantal dagen",
     days: "Dagen",
   },
   fr: {
@@ -216,8 +211,6 @@ const EDITOR_STRINGS = {
     y_max: "Limite haute",
     auto: "Auto",
     x_axis: "Axe du temps",
-    x_auto: "Jusqu'à l'arrivée (automatique)",
-    x_fixed: "Nombre de jours fixe",
     days: "Jours",
   },
   es: {
@@ -238,8 +231,6 @@ const EDITOR_STRINGS = {
     y_max: "Límite superior",
     auto: "Auto",
     x_axis: "Eje de tiempo",
-    x_auto: "Hasta la llegada (automático)",
-    x_fixed: "Número fijo de días",
     days: "Días",
   },
   pt: {
@@ -260,8 +251,6 @@ const EDITOR_STRINGS = {
     y_max: "Limite superior",
     auto: "Auto",
     x_axis: "Eixo de tempo",
-    x_auto: "Até à chegada (automático)",
-    x_fixed: "Número fixo de dias",
     days: "Dias",
   },
 };
@@ -422,18 +411,25 @@ class WarmWelcomeCard extends HTMLElement {
       return;
     }
 
-    const arrival = this._data.arrival ? Date.parse(this._data.arrival) : null;
+    const rawArrival = this._data.arrival
+      ? Date.parse(this._data.arrival)
+      : null;
+    const arrival = rawArrival && rawArrival > Date.now() ? rawArrival : null;
     const rooms = this._selectRooms(this._data.rooms || []);
 
-    if (!arrival || arrival <= Date.now() || !rooms.length) {
+    // Without an upcoming re-heat the chart still shows the outdoor
+    // forecast, with the idle hint above it; the chart is only null
+    // when there is no data to plot at all.
+    const chart = this._chart(rooms, arrival);
+    if (!arrival || !rooms.length) {
       content.append(this._message(this._tr("idle")));
-      return;
     }
+    if (!chart) return;
 
     const showLegend = this._config.show_legend !== false;
     const legendTop = this._config.legend_position === "top";
     if (showLegend && legendTop) content.append(this._legend(rooms, true));
-    content.append(this._chart(rooms, arrival));
+    content.append(chart);
     if (showLegend && !legendTop) content.append(this._legend(rooms, false));
   }
 
@@ -472,13 +468,24 @@ class WarmWelcomeCard extends HTMLElement {
   _chart(rooms, arrival) {
     const now = Date.now();
     const days = this._number(this._config.days);
+    const forecastAll =
+      this._config.show_forecast === false
+        ? []
+        : (this._data.forecast || []).map((point) => ({
+            ts: Date.parse(point.datetime),
+            t: point.temperature,
+          }));
     let t0, t1;
     if (days !== null && days > 0) {
       t0 = now;
       t1 = now + days * 24 * HOUR;
     } else {
+      // Auto: from now (or the earliest heating start) to the arrival;
+      // without an upcoming arrival, span the outdoor forecast instead.
       t0 = Math.min(now, ...rooms.map((room) => room.startTs));
-      t1 = arrival;
+      t1 =
+        arrival ??
+        Math.max(now + 24 * HOUR, ...forecastAll.map((point) => point.ts));
       const pad = (t1 - t0) * 0.03;
       t0 -= pad;
       t1 += pad;
@@ -488,17 +495,7 @@ class WarmWelcomeCard extends HTMLElement {
       MARGIN.left +
       ((ts - t0) / (t1 - t0)) * (WIDTH - MARGIN.left - MARGIN.right);
 
-    const forecast =
-      this._config.show_forecast === false
-        ? []
-        : this._clip(
-            (this._data.forecast || []).map((point) => ({
-              ts: Date.parse(point.datetime),
-              t: point.temperature,
-            })),
-            t0,
-            t1
-          );
+    const forecast = this._clip(forecastAll, t0, t1);
 
     const inWindow = (ts) => ts >= t0 && ts <= t1;
     let temps = rooms
@@ -511,11 +508,12 @@ class WarmWelcomeCard extends HTMLElement {
         forecast.filter((point) => inWindow(point.ts)).map((point) => point.t)
       );
     if (!temps.length) {
-      // Nothing inside a fixed window: scale to the full curves instead.
-      temps = rooms.flatMap((room) =>
-        room.curve.map((point) => point.temperature)
-      );
+      // Nothing inside a fixed window: scale to the full data instead.
+      temps = rooms
+        .flatMap((room) => room.curve.map((point) => point.temperature))
+        .concat(forecastAll.map((point) => point.t));
     }
+    if (!temps.length) return null;
     const domain = this._domain(temps, 0.5);
     const y = (value) =>
       HEIGHT -
@@ -546,7 +544,7 @@ class WarmWelcomeCard extends HTMLElement {
       svg.append(layer);
       this._drawForecast(layer, forecast, x, y);
     }
-    if (inWindow(arrival)) this._drawArrival(svg, x(arrival));
+    if (arrival && inWindow(arrival)) this._drawArrival(svg, x(arrival));
     const roomLayer = svgEl("g", { "clip-path": "url(#plot)" });
     svg.append(roomLayer);
     for (const room of rooms) this._drawRoom(roomLayer, room, x, y);
@@ -1113,53 +1111,31 @@ class WarmWelcomeCardEditor extends HTMLElement {
     return group;
   }
 
+  // Like the temperature limits: a plain number field where empty
+  // means the automatic window (until arrival / forecast end).
   _xAxisGroup() {
     const group = this._group(this._tr("x_axis"));
-    const fixedDays = Number(this._config.days) > 0;
-
-    const modeRow = document.createElement("div");
-    modeRow.className = "row";
-    const select = document.createElement("select");
-    for (const [value, key] of [
-      ["auto", "x_auto"],
-      ["fixed", "x_fixed"],
-    ]) {
-      const option = document.createElement("option");
-      option.value = value;
-      option.textContent = this._tr(key);
-      select.append(option);
-    }
-    select.value = fixedDays ? "fixed" : "auto";
-    select.style.flex = "1";
-    modeRow.append(select);
-    group.append(modeRow);
-
-    const daysRow = document.createElement("div");
-    daysRow.className = "row";
-    const daysLabel = document.createElement("label");
-    daysLabel.textContent = this._tr("days");
-    const daysInput = document.createElement("input");
-    daysInput.type = "number";
-    daysInput.min = "1";
-    daysInput.step = "1";
-    daysInput.value = fixedDays ? this._config.days : 7;
-    daysInput.disabled = !fixedDays;
-    daysInput.addEventListener("input", () => {
-      const days = Number(daysInput.value);
+    const row = document.createElement("div");
+    row.className = "row";
+    const label = document.createElement("label");
+    label.textContent = this._tr("days");
+    const input = document.createElement("input");
+    input.type = "number";
+    input.min = "1";
+    input.step = "1";
+    input.placeholder = this._tr("auto");
+    if (Number(this._config.days) > 0) input.value = this._config.days;
+    input.addEventListener("input", () => {
+      const value = input.value.trim();
+      if (value === "") {
+        this._update({ days: undefined });
+        return;
+      }
+      const days = Number(value);
       if (Number.isFinite(days) && days > 0) this._update({ days });
     });
-    daysRow.append(daysLabel, daysInput);
-    group.append(daysRow);
-
-    select.addEventListener("change", () => {
-      if (select.value === "fixed") {
-        const days = Number(daysInput.value);
-        this._update({ days: Number.isFinite(days) && days > 0 ? days : 7 });
-      } else {
-        this._update({ days: undefined });
-      }
-      this._render(); // enable/disable the days input
-    });
+    row.append(label, input);
+    group.append(row);
     return group;
   }
 }

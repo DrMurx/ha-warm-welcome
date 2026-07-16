@@ -20,7 +20,7 @@
  *                               # (default: auto-scale to the arrival)
  */
 
-const CARD_VERSION = "0.1.20";
+const CARD_VERSION = "0.1.21";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const WIDTH = 640;

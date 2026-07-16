@@ -100,6 +100,8 @@ async def test_sensors_expose_prediction(hass, freezer, forecast_calls) -> None:
     # The start is still ahead, so the target is reached exactly at arrival.
     assert state.attributes["target_at_risk"] is False
     assert state.attributes["target_reached_at"] == ARRIVAL
+    # Nothing has been triggered yet.
+    assert state.attributes["preheat_active"] is False
 
     preheat = hass.states.get("sensor.living_room_required_pre_heat_time")
     assert preheat is not None
@@ -249,6 +251,71 @@ async def test_trigger_fires_configured_action_once(hass, freezer, forecast_call
     assert len(temp_calls) == 1
 
 
+async def test_preheat_active_lifecycle(hass, freezer, forecast_calls) -> None:
+    """preheat_active turns on at the trigger and off once the room is warm."""
+    freezer.move_to(NOW)
+    await setup_entry(hass)
+    async_mock_service(hass, "climate", "set_preset_mode")
+    async_mock_service(hass, "climate", "set_temperature")
+
+    state = hass.states.get("sensor.living_room_heating_start")
+    assert state.attributes["preheat_active"] is False
+
+    freezer.move_to(EXPECTED_START + timedelta(minutes=1))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    state = hass.states.get("sensor.living_room_heating_start")
+    assert state.attributes["preheat_active"] is True
+
+    # The room stays below the target while heating: still active.
+    hass.states.async_set(
+        "climate.living_room",
+        "heat",
+        {"current_temperature": 19.0, "preset_modes": ["eco", "comfort"]},
+    )
+    freezer.tick(timedelta(seconds=15))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    state = hass.states.get("sensor.living_room_heating_start")
+    assert state.attributes["preheat_active"] is True
+
+    # The room reaches the target: the flag clears.
+    hass.states.async_set(
+        "climate.living_room",
+        "heat",
+        {"current_temperature": 21.0, "preset_modes": ["eco", "comfort"]},
+    )
+    freezer.tick(timedelta(seconds=15))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    state = hass.states.get("sensor.living_room_heating_start")
+    assert state.attributes["preheat_active"] is False
+
+
+async def test_preheat_active_clears_after_arrival(
+    hass, freezer, forecast_calls
+) -> None:
+    """preheat_active clears when the arrival passes, even below the target."""
+    freezer.move_to(NOW)
+    await setup_entry(hass)
+    async_mock_service(hass, "climate", "set_preset_mode")
+    async_mock_service(hass, "climate", "set_temperature")
+
+    freezer.move_to(EXPECTED_START + timedelta(minutes=1))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    state = hass.states.get("sensor.living_room_heating_start")
+    assert state.attributes["preheat_active"] is True
+
+    # The heating ran behind and the arrival passed: the pre-heat is over.
+    freezer.move_to(ARRIVAL + timedelta(minutes=1))
+    async_fire_time_changed(hass)
+    await hass.async_block_till_done()
+    state = hass.states.get("sensor.living_room_heating_start")
+    assert state.state == "unknown"
+    assert state.attributes["preheat_active"] is False
+
+
 async def test_trigger_guard_survives_reload(hass, freezer, forecast_calls) -> None:
     """After a reload (simulating a restart) the action is not fired again."""
     freezer.move_to(NOW)
@@ -263,6 +330,10 @@ async def test_trigger_guard_survives_reload(hass, freezer, forecast_calls) -> N
 
     await hass.config_entries.async_reload(entry.entry_id)
     await hass.async_block_till_done()
+
+    # The running pre-heat is restored from the persisted trigger guard.
+    state = hass.states.get("sensor.living_room_heating_start")
+    assert state.attributes["preheat_active"] is True
 
     freezer.move_to(EXPECTED_START + timedelta(minutes=30))
     async_fire_time_changed(hass)

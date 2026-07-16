@@ -25,6 +25,7 @@ from .const import (
     ATTR_FORECAST,
     ATTR_FORECAST_TYPE,
     ATTR_PREDICTED_TEMPERATURES,
+    ATTR_PREHEAT_ACTIVE,
     ATTR_PREHEAT_HOURS,
     ATTR_TARGET_AT_RISK,
     ATTR_TARGET_REACHED,
@@ -157,7 +158,10 @@ class HeatingStartSensor(WarmWelcomeSensor):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Expose prediction details."""
         coordinator = self.coordinator
-        attrs: dict[str, Any] = {ATTR_TRIGGERED_FOR: coordinator.triggered_for}
+        attrs: dict[str, Any] = {
+            ATTR_TRIGGERED_FOR: coordinator.triggered_for,
+            ATTR_PREHEAT_ACTIVE: coordinator.preheat_active,
+        }
         if (data := coordinator.data) is not None:
             unit = self.hass.config.units.temperature_unit
             attrs.update(

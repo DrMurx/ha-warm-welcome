@@ -62,7 +62,9 @@ temperature is covered. That point in time is the heating start:
   forecast type used, whether the prediction had to extrapolate beyond the
   forecast, whether the target is at risk and when the room is predicted
   to actually reach it, plus the predicted temperature curve described
-  below),
+  below; its `preheat_active` attribute is true from the moment the
+  integration started the heating until the arrival has passed or the
+  room has reached the target temperature),
 - `sensor.<name>_required_preheat` — required pre-heat duration in hours,
 - `binary_sensor.<name>_target_temperature_at_risk` — on when the room is
   predicted to miss the target temperature at the arrival, e.g. because

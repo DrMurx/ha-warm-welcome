@@ -151,6 +151,12 @@ class WarmWelcomeCoordinator(DataUpdateCoordinator[PredictionResult | None]):
         self.target_reached: datetime | None = None
         self.target_at_risk: bool = False
         self.triggered_for: str | None = triggered.get(subentry.subentry_id)
+        # True while a pre-heat started by the integration is running:
+        # set when the trigger fires, cleared once the arrival has passed
+        # or the room has reached the target. After a restart the trigger
+        # guard restores it; the first refresh clears it again if the
+        # arrival moved on or the room is already warm.
+        self.preheat_active: bool = self.triggered_for is not None
         self._unsub_trigger: CALLBACK_TYPE | None = None
 
     @property
@@ -174,6 +180,7 @@ class WarmWelcomeCoordinator(DataUpdateCoordinator[PredictionResult | None]):
             self.target_temperature = None
             self.target_reached = None
             self.target_at_risk = False
+            self.preheat_active = False
             self.cancel_trigger()
             return None
 
@@ -184,6 +191,13 @@ class WarmWelcomeCoordinator(DataUpdateCoordinator[PredictionResult | None]):
             )
         self.current_temperature = current_temp
         self.target_temperature = target_temp = self._prediction_target()
+        if self.preheat_active and (
+            self.triggered_for != arrival.isoformat()
+            or current_temp >= target_temp
+        ):
+            # The pre-heat was fired for another arrival, or the room is
+            # warm: it is no longer running.
+            self.preheat_active = False
 
         forecast = self.forecast_coordinator.data
         if not forecast:
@@ -344,6 +358,7 @@ class WarmWelcomeCoordinator(DataUpdateCoordinator[PredictionResult | None]):
             return
 
         self.triggered_for = arrival.isoformat()
+        self.preheat_active = True
         self._triggered[self.subentry.subentry_id] = self.triggered_for
         await self._store.async_save({"triggered_for": self._triggered})
         self.async_update_listeners()

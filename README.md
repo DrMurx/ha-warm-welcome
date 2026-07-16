@@ -18,7 +18,11 @@ The integration is set up once with the entities shared by all rooms:
 - a **weather entity** — provides the outdoor temperature forecast (hourly
   preferred, falls back to twice-daily/daily),
 - a **vacation end entity** — an `input_datetime` (with time enabled) or
-  `datetime` entity holding the date and time you return.
+  `datetime` entity holding the date and time you return,
+- a **floor warm-up time** — how long the heating spends warming the
+  floor's thermal mass before the floor emits heat into the room, often
+  2–3 hours for floor heating (default 0). Every room's heating starts
+  this much earlier to compensate.
 
 Then you add each **room** to it, configuring:
 
@@ -126,7 +130,9 @@ ids follow `<room>_warm_welcome_use_preset`, `..._target_preset`,
 `..._use_temperature`, and `..._target_temperature`). Changing them writes
 straight back into the room's configuration, and the prediction updates
 immediately. While a switch is off, its dependent entity (the preset
-select or the temperature number) shows as unavailable.
+select or the temperature number) shows as unavailable. The shared
+**floor warm-up time** is likewise exposed as a number on the
+integration's own device (`number.warm_welcome_floor_warm_up_time`).
 
 ## Dashboard card
 
@@ -138,7 +144,6 @@ service worker caches the page that loads the card:
 
 ```yaml
 type: custom:warm-welcome-card
-title: Vacation re-heat   # optional
 ```
 
 The card subscribes to the integration over websocket and updates live.
@@ -148,6 +153,27 @@ the vacation end, and the outdoor forecast as a dashed blue line on the
 same temperature axis. The legend lists each room's start time; a ⚠ marks
 predictions that had to extrapolate beyond the forecast. While no future
 vacation end is set, the card shows an idle message.
+
+All options are optional and editable in the card's visual editor:
+
+```yaml
+type: custom:warm-welcome-card
+title: Vacation re-heat   # card header
+rooms:                    # subset of rooms and their line colors;
+  - name: Living room     # omit to show all rooms with default colors
+    color: "#e67e22"
+  - Bathroom              # plain names get a default color
+show_forecast: false      # hide the outdoor forecast (default: true)
+show_legend: false        # hide the legend (default: true)
+legend_position: top      # top | bottom (default: bottom)
+y_min: 10                 # fix the temperature axis (default: auto-scale
+y_max: 25                 # to the plotted curves; either bound alone works)
+days: 7                   # show a fixed window of N days from now instead
+                          # of auto-scaling the time axis to the arrival
+```
+
+Rooms are matched by their name in the integration; with a fixed `days`
+window, curves and the arrival marker outside the window are clipped.
 
 ## Charting with ApexCharts instead
 

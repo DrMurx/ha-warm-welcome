@@ -1,6 +1,6 @@
 [project]
 name = "ha-warm-welcome"
-version = "0.1.18"
+version = "0.1.20"
 description = "Home Assistant custom integration that predicts when to re-heat each room after a vacation"
 requires-python = ">=3.13"
 dependencies = []

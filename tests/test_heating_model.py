@@ -221,6 +221,28 @@ class TestComputeStart:
         assert result.start == ARRIVAL
         assert result.beyond_forecast
 
+    def test_warmup_shifts_start_earlier(self):
+        # 5 hours of heating plus 2 hours of floor warm-up.
+        forecast = hourly_forecast(ARRIVAL - timedelta(hours=48), 120, 0.0)
+        result = compute_start(
+            ARRIVAL, 19.0, 21.0, forecast, self.RATES, warmup=timedelta(hours=2)
+        )
+        assert result.start == ARRIVAL - timedelta(hours=7)
+        assert result.preheat_hours == pytest.approx(7.0)
+        # The curve begins with a flat segment while the floor warms up.
+        assert result.curve[0] == (result.start, 19.0)
+        assert result.curve[1] == (result.start + timedelta(hours=2), 19.0)
+        assert result.curve[-1] == (ARRIVAL, 21.0)
+
+    def test_warmup_with_no_deficit_starts_at_arrival(self):
+        # A warm room needs no heating, so no floor warm-up either.
+        forecast = hourly_forecast(ARRIVAL - timedelta(hours=48), 120, 0.0)
+        result = compute_start(
+            ARRIVAL, 21.0, 21.0, forecast, self.RATES, warmup=timedelta(hours=2)
+        )
+        assert result.start == ARRIVAL
+        assert result.preheat_hours == 0.0
+
 
 class TestComputeReach:
     RATES: ClassVar = [(0.0, 0.4)]
@@ -288,3 +310,21 @@ class TestComputeReach:
 
     def test_empty_forecast_returns_none(self):
         assert compute_reach(self.START, 19.0, 21.0, [], self.RATES) is None
+
+    def test_warmup_delays_reach(self):
+        # 2 hours of floor warm-up before the 5 hours of heating.
+        forecast = hourly_forecast(self.START, 120, 0.0)
+        reached = compute_reach(
+            self.START, 19.0, 21.0, forecast, self.RATES, warmup=timedelta(hours=2)
+        )
+        assert reached == self.START + timedelta(hours=7)
+
+    def test_warmup_mirrors_compute_start(self):
+        # Walking forward from the warmup-shifted start lands on the arrival.
+        forecast = hourly_forecast(ARRIVAL - timedelta(hours=48), 120, 0.0)
+        warmup = timedelta(hours=2)
+        result = compute_start(ARRIVAL, 19.0, 21.0, forecast, self.RATES, warmup=warmup)
+        reached = compute_reach(
+            result.start, 19.0, 21.0, forecast, self.RATES, warmup=warmup
+        )
+        assert reached == ARRIVAL

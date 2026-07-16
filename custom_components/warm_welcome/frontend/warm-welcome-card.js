@@ -1,13 +1,26 @@
 /**
  * Warm Welcome card, bundled with the warm_welcome integration.
  *
- * Zero configuration: the card subscribes to the integration's websocket
- * API and shows every room's predicted temperature curve from its
- * computed heating start to the arrival, the shared outdoor forecast on
- * the same temperature axis, and a marker at the vacation end.
+ * Works without configuration: the card subscribes to the integration's
+ * websocket API and shows every room's predicted temperature curve from
+ * its computed heating start to the arrival, the shared outdoor forecast
+ * on the same temperature axis, and a marker at the vacation end.
+ *
+ * Optional configuration (all editable in the visual editor):
+ *   title: Vacation re-heat     # card header
+ *   rooms:                      # subset + line colors (default: all rooms)
+ *     - name: Living room
+ *       color: "#e67e22"
+ *   show_forecast: false        # hide the outdoor forecast (default true)
+ *   show_legend: false          # hide the legend (default true)
+ *   legend_position: top        # top | bottom (default bottom)
+ *   y_min: 10                   # fix the temperature axis (default: auto)
+ *   y_max: 25
+ *   days: 7                     # fixed time axis of N days from now
+ *                               # (default: auto-scale to the arrival)
  */
 
-const CARD_VERSION = "0.1.18";
+const CARD_VERSION = "0.1.20";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const WIDTH = 640;
@@ -39,6 +52,7 @@ const CSS = `
     display: flex; flex-wrap: wrap; gap: 4px 18px;
     margin-top: 8px; font-size: 0.9em;
   }
+  .legend.top { margin-top: 0; margin-bottom: 8px; }
   .legend .item { display: flex; align-items: center; gap: 6px; }
   .legend .dot {
     width: 10px; height: 10px; border-radius: 50%; flex: none;
@@ -117,6 +131,141 @@ const STRINGS = {
   },
 };
 
+// Strings of the visual config editor, same fallback rules as STRINGS.
+const EDITOR_STRINGS = {
+  en: {
+    title: "Title",
+    rooms: "Rooms",
+    rooms_hint: "Choose which rooms to show and their line color.",
+    rooms_loading: "Loading rooms…",
+    no_rooms: "No rooms found. Set up the Warm Welcome integration first.",
+    missing: "(not found)",
+    forecast: "Show outdoor forecast",
+    legend: "Legend",
+    legend_hidden: "Hidden",
+    legend_top: "Above the chart",
+    legend_bottom: "Below the chart",
+    y_axis: "Temperature axis",
+    y_min: "Lower limit",
+    y_max: "Upper limit",
+    auto: "Auto",
+    x_axis: "Time axis",
+    x_auto: "Until arrival (automatic)",
+    x_fixed: "Fixed number of days",
+    days: "Days",
+  },
+  de: {
+    title: "Titel",
+    rooms: "Räume",
+    rooms_hint: "Wähle, welche Räume angezeigt werden und ihre Linienfarbe.",
+    rooms_loading: "Räume werden geladen…",
+    no_rooms:
+      "Keine Räume gefunden. Richte zuerst die Integration „Warmer Empfang“ ein.",
+    missing: "(nicht gefunden)",
+    forecast: "Außentemperatur-Vorhersage anzeigen",
+    legend: "Legende",
+    legend_hidden: "Ausgeblendet",
+    legend_top: "Über dem Diagramm",
+    legend_bottom: "Unter dem Diagramm",
+    y_axis: "Temperaturachse",
+    y_min: "Untergrenze",
+    y_max: "Obergrenze",
+    auto: "Auto",
+    x_axis: "Zeitachse",
+    x_auto: "Bis zur Ankunft (automatisch)",
+    x_fixed: "Feste Anzahl Tage",
+    days: "Tage",
+  },
+  nl: {
+    title: "Titel",
+    rooms: "Kamers",
+    rooms_hint: "Kies welke kamers worden getoond en hun lijnkleur.",
+    rooms_loading: "Kamers laden…",
+    no_rooms:
+      "Geen kamers gevonden. Stel eerst de integratie Warm welkom in.",
+    missing: "(niet gevonden)",
+    forecast: "Buitentemperatuurverwachting tonen",
+    legend: "Legenda",
+    legend_hidden: "Verborgen",
+    legend_top: "Boven de grafiek",
+    legend_bottom: "Onder de grafiek",
+    y_axis: "Temperatuuras",
+    y_min: "Ondergrens",
+    y_max: "Bovengrens",
+    auto: "Auto",
+    x_axis: "Tijdas",
+    x_auto: "Tot aankomst (automatisch)",
+    x_fixed: "Vast aantal dagen",
+    days: "Dagen",
+  },
+  fr: {
+    title: "Titre",
+    rooms: "Pièces",
+    rooms_hint: "Choisissez les pièces à afficher et la couleur de leur courbe.",
+    rooms_loading: "Chargement des pièces…",
+    no_rooms:
+      "Aucune pièce trouvée. Configurez d'abord l'intégration Accueil chaleureux.",
+    missing: "(introuvable)",
+    forecast: "Afficher les prévisions extérieures",
+    legend: "Légende",
+    legend_hidden: "Masquée",
+    legend_top: "Au-dessus du graphique",
+    legend_bottom: "Sous le graphique",
+    y_axis: "Axe des températures",
+    y_min: "Limite basse",
+    y_max: "Limite haute",
+    auto: "Auto",
+    x_axis: "Axe du temps",
+    x_auto: "Jusqu'à l'arrivée (automatique)",
+    x_fixed: "Nombre de jours fixe",
+    days: "Jours",
+  },
+  es: {
+    title: "Título",
+    rooms: "Habitaciones",
+    rooms_hint: "Elige qué habitaciones mostrar y el color de su línea.",
+    rooms_loading: "Cargando habitaciones…",
+    no_rooms:
+      "No se encontraron habitaciones. Configura primero la integración Bienvenida cálida.",
+    missing: "(no encontrada)",
+    forecast: "Mostrar previsión exterior",
+    legend: "Leyenda",
+    legend_hidden: "Oculta",
+    legend_top: "Encima del gráfico",
+    legend_bottom: "Debajo del gráfico",
+    y_axis: "Eje de temperatura",
+    y_min: "Límite inferior",
+    y_max: "Límite superior",
+    auto: "Auto",
+    x_axis: "Eje de tiempo",
+    x_auto: "Hasta la llegada (automático)",
+    x_fixed: "Número fijo de días",
+    days: "Días",
+  },
+  pt: {
+    title: "Título",
+    rooms: "Divisões",
+    rooms_hint: "Escolhe que divisões mostrar e a cor da sua linha.",
+    rooms_loading: "A carregar divisões…",
+    no_rooms:
+      "Nenhuma divisão encontrada. Configura primeiro a integração Boas-vindas calorosas.",
+    missing: "(não encontrada)",
+    forecast: "Mostrar previsão exterior",
+    legend: "Legenda",
+    legend_hidden: "Oculta",
+    legend_top: "Acima do gráfico",
+    legend_bottom: "Abaixo do gráfico",
+    y_axis: "Eixo de temperatura",
+    y_min: "Limite inferior",
+    y_max: "Limite superior",
+    auto: "Auto",
+    x_axis: "Eixo de tempo",
+    x_auto: "Até à chegada (automático)",
+    x_fixed: "Número fixo de dias",
+    days: "Dias",
+  },
+};
+
 // Paint properties must be set as CSS: var() references are invalid in
 // SVG presentation attributes (the stroke silently becomes 'none').
 const STYLE_PROPS = new Set([
@@ -184,6 +333,10 @@ class WarmWelcomeCard extends HTMLElement {
 
   static getStubConfig() {
     return {};
+  }
+
+  static getConfigElement() {
+    return document.createElement("warm-welcome-card-editor");
   }
 
   async _subscribe() {
@@ -270,21 +423,41 @@ class WarmWelcomeCard extends HTMLElement {
     }
 
     const arrival = this._data.arrival ? Date.parse(this._data.arrival) : null;
-    const rooms = (this._data.rooms || [])
-      .filter((room) => room.start && room.curve.length)
-      .map((room, index) => ({
-        ...room,
-        color: ROOM_COLORS[index % ROOM_COLORS.length],
-        startTs: Date.parse(room.start),
-      }));
+    const rooms = this._selectRooms(this._data.rooms || []);
 
     if (!arrival || arrival <= Date.now() || !rooms.length) {
       content.append(this._message(this._tr("idle")));
       return;
     }
 
+    const showLegend = this._config.show_legend !== false;
+    const legendTop = this._config.legend_position === "top";
+    if (showLegend && legendTop) content.append(this._legend(rooms, true));
     content.append(this._chart(rooms, arrival));
-    content.append(this._legend(rooms));
+    if (showLegend && !legendTop) content.append(this._legend(rooms, false));
+  }
+
+  // Apply the optional `rooms` config: subset, order and colors. Entries
+  // may be plain names or {name, color}; unlisted colors fall back to the
+  // palette by display index.
+  _selectRooms(available) {
+    const ready = available.filter((room) => room.start && room.curve.length);
+    let rooms = ready;
+    if (Array.isArray(this._config.rooms)) {
+      rooms = this._config.rooms
+        .map((entry) => (typeof entry === "string" ? { name: entry } : entry))
+        .filter((entry) => entry && entry.name)
+        .map((entry) => {
+          const room = ready.find((r) => r.name === entry.name);
+          return room ? { ...room, color: entry.color } : null;
+        })
+        .filter(Boolean);
+    }
+    return rooms.map((room, index) => ({
+      ...room,
+      color: room.color || ROOM_COLORS[index % ROOM_COLORS.length],
+      startTs: Date.parse(room.start),
+    }));
   }
 
   _message(text) {
@@ -298,23 +471,51 @@ class WarmWelcomeCard extends HTMLElement {
 
   _chart(rooms, arrival) {
     const now = Date.now();
-    let t0 = Math.min(now, ...rooms.map((room) => room.startTs));
-    let t1 = arrival;
-    const pad = (t1 - t0) * 0.03;
-    t0 -= pad;
-    t1 += pad;
+    const days = this._number(this._config.days);
+    let t0, t1;
+    if (days !== null && days > 0) {
+      t0 = now;
+      t1 = now + days * 24 * HOUR;
+    } else {
+      t0 = Math.min(now, ...rooms.map((room) => room.startTs));
+      t1 = arrival;
+      const pad = (t1 - t0) * 0.03;
+      t0 -= pad;
+      t1 += pad;
+    }
 
     const x = (ts) =>
       MARGIN.left +
       ((ts - t0) / (t1 - t0)) * (WIDTH - MARGIN.left - MARGIN.right);
 
-    const forecast = (this._data.forecast || [])
-      .map((point) => ({ ts: Date.parse(point.datetime), t: point.temperature }))
-      .filter((point) => point.ts >= t0 && point.ts <= t1);
+    const forecast =
+      this._config.show_forecast === false
+        ? []
+        : this._clip(
+            (this._data.forecast || []).map((point) => ({
+              ts: Date.parse(point.datetime),
+              t: point.temperature,
+            })),
+            t0,
+            t1
+          );
 
-    const temps = rooms
-      .flatMap((room) => room.curve.map((point) => point.temperature))
-      .concat(forecast.map((point) => point.t));
+    const inWindow = (ts) => ts >= t0 && ts <= t1;
+    let temps = rooms
+      .flatMap((room) =>
+        room.curve
+          .filter((point) => inWindow(Date.parse(point.datetime)))
+          .map((point) => point.temperature)
+      )
+      .concat(
+        forecast.filter((point) => inWindow(point.ts)).map((point) => point.t)
+      );
+    if (!temps.length) {
+      // Nothing inside a fixed window: scale to the full curves instead.
+      temps = rooms.flatMap((room) =>
+        room.curve.map((point) => point.temperature)
+      );
+    }
     const domain = this._domain(temps, 0.5);
     const y = (value) =>
       HEIGHT -
@@ -324,19 +525,67 @@ class WarmWelcomeCard extends HTMLElement {
 
     const svg = svgEl("svg", { viewBox: `0 0 ${WIDTH} ${HEIGHT}` });
 
+    // With a fixed time axis or fixed temperature limits the curves can
+    // extend beyond the plot area; clip them to it.
+    const clip = svgEl("clipPath", { id: "plot" });
+    clip.append(
+      svgEl("rect", {
+        x: MARGIN.left,
+        y: MARGIN.top,
+        width: WIDTH - MARGIN.left - MARGIN.right,
+        height: HEIGHT - MARGIN.top - MARGIN.bottom,
+      })
+    );
+    const defs = svgEl("defs");
+    defs.append(clip);
+    svg.append(defs);
+
     this._drawGridAndAxes(svg, x, y, domain, t0, t1);
-    if (forecast.length) this._drawForecast(svg, forecast, x, y);
-    this._drawArrival(svg, x(arrival));
-    for (const room of rooms) this._drawRoom(svg, room, x, y);
+    if (forecast.length) {
+      const layer = svgEl("g", { "clip-path": "url(#plot)" });
+      svg.append(layer);
+      this._drawForecast(layer, forecast, x, y);
+    }
+    if (inWindow(arrival)) this._drawArrival(svg, x(arrival));
+    const roomLayer = svgEl("g", { "clip-path": "url(#plot)" });
+    svg.append(roomLayer);
+    for (const room of rooms) this._drawRoom(roomLayer, room, x, y);
 
     return svg;
+  }
+
+  // Keep the points inside [t0, t1] plus one neighbor on each side, so
+  // the (clipped) line still reaches the plot edges.
+  _clip(points, t0, t1) {
+    return points.filter((point, index) => {
+      if (point.ts >= t0 && point.ts <= t1) return true;
+      const prev = points[index - 1];
+      const next = points[index + 1];
+      return (
+        (point.ts < t0 && next && next.ts >= t0) ||
+        (point.ts > t1 && prev && prev.ts <= t1)
+      );
+    });
+  }
+
+  _number(value) {
+    if (value === undefined || value === null || value === "") return null;
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
   }
 
   _domain(values, minPad) {
     let lo = Math.min(...values);
     let hi = Math.max(...values);
     const pad = Math.max(minPad, (hi - lo) * 0.1);
-    return { lo: lo - pad, hi: hi + pad };
+    lo -= pad;
+    hi += pad;
+    const yMin = this._number(this._config.y_min);
+    const yMax = this._number(this._config.y_max);
+    if (yMin !== null) lo = yMin;
+    if (yMax !== null) hi = yMax;
+    if (hi <= lo) hi = lo + 1;
+    return { lo, hi };
   }
 
   _drawGridAndAxes(svg, x, y, domain, t0, t1) {
@@ -415,14 +664,14 @@ class WarmWelcomeCard extends HTMLElement {
     return { ticks, daily: stepHours >= 24 };
   }
 
-  _drawForecast(svg, forecast, x, y) {
+  _drawForecast(parent, forecast, x, y) {
     const line = forecast
       .map((point) => `${x(point.ts)},${y(point.t)}`)
       .join(" ");
     const baseline = HEIGHT - MARGIN.bottom;
     const first = forecast[0];
     const last = forecast[forecast.length - 1];
-    svg.append(
+    parent.append(
       svgEl("polygon", {
         points: `${x(first.ts)},${baseline} ${line} ${x(last.ts)},${baseline}`,
         fill: OUTDOOR_COLOR, opacity: "0.08",
@@ -447,12 +696,12 @@ class WarmWelcomeCard extends HTMLElement {
     );
   }
 
-  _drawRoom(svg, room, x, y) {
+  _drawRoom(parent, room, x, y) {
     const points = room.curve.map(
       (point) => `${x(Date.parse(point.datetime))},${y(point.temperature)}`
     );
     if (points.length > 1) {
-      svg.append(
+      parent.append(
         svgEl("polyline", {
           points: points.join(" "), fill: "none", stroke: room.color,
           "stroke-width": "2.5", "stroke-linejoin": "round",
@@ -461,7 +710,7 @@ class WarmWelcomeCard extends HTMLElement {
     }
     // Start marker.
     const [startX, startY] = points[0].split(",");
-    svg.append(
+    parent.append(
       svgEl("circle", {
         cx: startX, cy: startY, r: "4.5", fill: room.color,
         stroke: "var(--card-background-color, #fff)", "stroke-width": "1.5",
@@ -471,9 +720,9 @@ class WarmWelcomeCard extends HTMLElement {
 
   /* ---------- legend ---------- */
 
-  _legend(rooms) {
+  _legend(rooms, top) {
     const legend = document.createElement("div");
-    legend.className = "legend";
+    legend.className = top ? "legend top" : "legend";
     for (const room of rooms) {
       const item = document.createElement("div");
       item.className = "item";
@@ -495,18 +744,423 @@ class WarmWelcomeCard extends HTMLElement {
       item.append(dot, name, when);
       legend.append(item);
     }
-    const outdoor = document.createElement("div");
-    outdoor.className = "item";
-    const dash = document.createElement("span");
-    dash.className = "dot";
-    dash.style.background = OUTDOOR_COLOR;
-    dash.style.opacity = "0.7";
-    const label = document.createElement("span");
-    label.className = "when";
-    label.textContent = this._tr("outdoor");
-    outdoor.append(dash, label);
-    legend.append(outdoor);
+    if (this._config.show_forecast !== false) {
+      const outdoor = document.createElement("div");
+      outdoor.className = "item";
+      const dash = document.createElement("span");
+      dash.className = "dot";
+      dash.style.background = OUTDOOR_COLOR;
+      dash.style.opacity = "0.7";
+      const label = document.createElement("span");
+      label.className = "when";
+      label.textContent = this._tr("outdoor");
+      outdoor.append(dash, label);
+      legend.append(outdoor);
+    }
     return legend;
+  }
+}
+
+/* ---------- config editor ---------- */
+
+const EDITOR_CSS = `
+  :host { display: block; }
+  .group { margin: 0 0 20px; }
+  .head {
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--primary-text-color, #212121);
+  }
+  .hint {
+    color: var(--secondary-text-color, #727272);
+    font-size: 0.85em;
+    margin-top: 4px;
+  }
+  .row { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+  .row > label { flex: 1; }
+  input[type="text"], input[type="number"], select {
+    box-sizing: border-box;
+    padding: 8px 10px;
+    color: var(--primary-text-color, #212121);
+    background: var(
+      --mdc-text-field-fill-color,
+      var(--secondary-background-color, #f5f5f5)
+    );
+    border: none;
+    border-bottom: 1px solid var(--divider-color, #e0e0e0);
+    border-radius: 4px 4px 0 0;
+    font: inherit;
+  }
+  input[type="text"] { width: 100%; }
+  input[type="number"] { width: 96px; }
+  input[type="color"] {
+    width: 32px; height: 24px; padding: 0; border: none;
+    background: none; cursor: pointer; flex: none;
+  }
+  input[type="color"]:disabled { opacity: 0.3; cursor: default; }
+  .room { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+  .room > label {
+    flex: 1; display: flex; align-items: center; gap: 10px;
+    cursor: pointer;
+  }
+  .missing { color: var(--error-color, #db4437); font-size: 0.85em; }
+`;
+
+class WarmWelcomeCardEditor extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._config = {};
+    this._rooms = null; // available room names; null while loading
+    this._unsub = null;
+  }
+
+  setConfig(config) {
+    this._config = { ...(config || {}) };
+    // Skip the re-render when HA echoes our own config-changed event
+    // back, so text inputs keep their focus while typing.
+    if (JSON.stringify(this._config) === this._emitted) return;
+    this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    this._loadRooms();
+  }
+
+  disconnectedCallback() {
+    this._stopLoading();
+  }
+
+  // One-shot fetch of the room names through the card's subscription:
+  // take the first push, then unsubscribe.
+  async _loadRooms() {
+    if (!this._hass || this._rooms !== null || this._loading) return;
+    this._loading = true;
+    try {
+      this._unsub = await this._hass.connection.subscribeMessage(
+        (data) => {
+          this._rooms = (data.rooms || []).map((room) => room.name);
+          this._stopLoading();
+          this._render();
+        },
+        { type: "warm_welcome/subscribe" }
+      );
+      if (this._rooms !== null || !this.isConnected) this._stopLoading();
+    } catch (err) {
+      console.error("warm_welcome: editor subscription failed:", err);
+      this._rooms = [];
+      this._render();
+    }
+  }
+
+  _stopLoading() {
+    if (this._unsub) {
+      this._unsub();
+      this._unsub = null;
+    }
+  }
+
+  _tr(key) {
+    const lang = (this._hass?.locale?.language || navigator.language || "en")
+      .split("-")[0]
+      .toLowerCase();
+    return (EDITOR_STRINGS[lang] || EDITOR_STRINGS.en)[key] ?? EDITOR_STRINGS.en[key];
+  }
+
+  // Merge a patch into the config and notify HA; `undefined` deletes the
+  // key, keeping the stored YAML free of defaults.
+  _update(patch) {
+    const config = { ...this._config };
+    for (const [key, value] of Object.entries(patch)) {
+      if (value === undefined) delete config[key];
+      else config[key] = value;
+    }
+    this._config = config;
+    this._emitted = JSON.stringify(config);
+    this.dispatchEvent(
+      new CustomEvent("config-changed", {
+        detail: { config },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  /* rendering */
+
+  _render() {
+    const root = this.shadowRoot;
+    root.innerHTML = "";
+    const style = document.createElement("style");
+    style.textContent = EDITOR_CSS;
+    root.append(style);
+    root.append(
+      this._titleGroup(),
+      this._roomsGroup(),
+      this._displayGroup(),
+      this._yAxisGroup(),
+      this._xAxisGroup()
+    );
+  }
+
+  _group(title) {
+    const group = document.createElement("div");
+    group.className = "group";
+    if (title) {
+      const head = document.createElement("div");
+      head.className = "head";
+      head.textContent = title;
+      group.append(head);
+    }
+    return group;
+  }
+
+  _hint(text) {
+    const hint = document.createElement("div");
+    hint.className = "hint";
+    hint.textContent = text;
+    return hint;
+  }
+
+  _titleGroup() {
+    const group = this._group(this._tr("title"));
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = this._config.title || "";
+    input.addEventListener("input", () => {
+      this._update({ title: input.value || undefined });
+    });
+    group.append(input);
+    return group;
+  }
+
+  /* rooms */
+
+  // The configured rooms normalized to [{name, color?}], or null when
+  // the config shows all rooms (no `rooms` key).
+  _configuredRooms() {
+    if (!Array.isArray(this._config.rooms)) return null;
+    return this._config.rooms
+      .map((entry) => (typeof entry === "string" ? { name: entry } : entry))
+      .filter((entry) => entry && entry.name);
+  }
+
+  _roomsGroup() {
+    const group = this._group(this._tr("rooms"));
+    if (this._rooms === null) {
+      group.append(this._hint(this._tr("rooms_loading")));
+      return group;
+    }
+    const configured = this._configuredRooms();
+    // Also list configured rooms that no longer exist (e.g. renamed), so
+    // they can be unchecked.
+    const names = [...this._rooms];
+    for (const entry of configured || []) {
+      if (!names.includes(entry.name)) names.push(entry.name);
+    }
+    if (!names.length) {
+      group.append(this._hint(this._tr("no_rooms")));
+      return group;
+    }
+    names.forEach((name, index) => {
+      const entry = configured?.find((e) => e.name === name);
+      const checked = configured ? !!entry : true;
+      group.append(
+        this._roomRow(
+          name,
+          checked,
+          entry?.color || ROOM_COLORS[index % ROOM_COLORS.length],
+          !this._rooms.includes(name)
+        )
+      );
+    });
+    group.append(this._hint(this._tr("rooms_hint")));
+    return group;
+  }
+
+  _roomRow(name, checked, color, missing) {
+    const row = document.createElement("div");
+    row.className = "room";
+    const label = document.createElement("label");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = checked;
+    checkbox.addEventListener("change", () => {
+      this._changeRoom(name, { checked: checkbox.checked });
+      this._render(); // color input enabled state may change
+    });
+    const text = document.createElement("span");
+    text.textContent = name;
+    label.append(checkbox, text);
+    if (missing) {
+      const note = document.createElement("span");
+      note.className = "missing";
+      note.textContent = this._tr("missing");
+      label.append(note);
+    }
+    const colorInput = document.createElement("input");
+    colorInput.type = "color";
+    colorInput.value = color;
+    colorInput.disabled = !checked;
+    colorInput.addEventListener("change", () => {
+      this._changeRoom(name, { color: colorInput.value });
+    });
+    row.append(label, colorInput);
+    return row;
+  }
+
+  // Any change in the rooms section materializes an explicit `rooms`
+  // list (names + colors), so later integration-side room changes no
+  // longer reshuffle the selection or the colors.
+  _changeRoom(name, patch) {
+    const configured = this._configuredRooms();
+    let entries = (configured || (this._rooms || []).map((n) => ({ name: n })))
+      .map((entry, index) => ({
+        name: entry.name,
+        color: entry.color || ROOM_COLORS[index % ROOM_COLORS.length],
+      }));
+    if (patch.checked === false) {
+      entries = entries.filter((entry) => entry.name !== name);
+    } else if (patch.checked && !entries.some((entry) => entry.name === name)) {
+      entries.push({
+        name,
+        color: ROOM_COLORS[entries.length % ROOM_COLORS.length],
+      });
+    }
+    if (patch.color) {
+      const entry = entries.find((e) => e.name === name);
+      if (entry) entry.color = patch.color;
+    }
+    this._update({ rooms: entries });
+  }
+
+  /* forecast + legend */
+
+  _displayGroup() {
+    const group = this._group();
+
+    const row = document.createElement("div");
+    row.className = "row";
+    const label = document.createElement("label");
+    label.style.cursor = "pointer";
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = this._config.show_forecast !== false;
+    checkbox.addEventListener("change", () => {
+      this._update({ show_forecast: checkbox.checked ? undefined : false });
+    });
+    label.append(checkbox, document.createTextNode(` ${this._tr("forecast")}`));
+    row.append(label);
+    group.append(row);
+
+    const legendRow = document.createElement("div");
+    legendRow.className = "row";
+    const legendLabel = document.createElement("label");
+    legendLabel.textContent = this._tr("legend");
+    const select = document.createElement("select");
+    for (const [value, key] of [
+      ["bottom", "legend_bottom"],
+      ["top", "legend_top"],
+      ["hidden", "legend_hidden"],
+    ]) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = this._tr(key);
+      select.append(option);
+    }
+    select.value =
+      this._config.show_legend === false
+        ? "hidden"
+        : this._config.legend_position === "top"
+          ? "top"
+          : "bottom";
+    select.addEventListener("change", () => {
+      this._update({
+        show_legend: select.value === "hidden" ? false : undefined,
+        legend_position: select.value === "top" ? "top" : undefined,
+      });
+    });
+    legendRow.append(legendLabel, select);
+    group.append(legendRow);
+    return group;
+  }
+
+  /* axes */
+
+  _yAxisGroup() {
+    const group = this._group(this._tr("y_axis"));
+    for (const key of ["y_min", "y_max"]) {
+      const row = document.createElement("div");
+      row.className = "row";
+      const label = document.createElement("label");
+      label.textContent = this._tr(key);
+      const input = document.createElement("input");
+      input.type = "number";
+      input.step = "0.5";
+      input.placeholder = this._tr("auto");
+      if (this._config[key] !== undefined && this._config[key] !== null) {
+        input.value = this._config[key];
+      }
+      input.addEventListener("input", () => {
+        const value = input.value.trim();
+        if (value !== "" && !Number.isFinite(Number(value))) return;
+        this._update({ [key]: value === "" ? undefined : Number(value) });
+      });
+      row.append(label, input);
+      group.append(row);
+    }
+    return group;
+  }
+
+  _xAxisGroup() {
+    const group = this._group(this._tr("x_axis"));
+    const fixedDays = Number(this._config.days) > 0;
+
+    const modeRow = document.createElement("div");
+    modeRow.className = "row";
+    const select = document.createElement("select");
+    for (const [value, key] of [
+      ["auto", "x_auto"],
+      ["fixed", "x_fixed"],
+    ]) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = this._tr(key);
+      select.append(option);
+    }
+    select.value = fixedDays ? "fixed" : "auto";
+    select.style.flex = "1";
+    modeRow.append(select);
+    group.append(modeRow);
+
+    const daysRow = document.createElement("div");
+    daysRow.className = "row";
+    const daysLabel = document.createElement("label");
+    daysLabel.textContent = this._tr("days");
+    const daysInput = document.createElement("input");
+    daysInput.type = "number";
+    daysInput.min = "1";
+    daysInput.step = "1";
+    daysInput.value = fixedDays ? this._config.days : 7;
+    daysInput.disabled = !fixedDays;
+    daysInput.addEventListener("input", () => {
+      const days = Number(daysInput.value);
+      if (Number.isFinite(days) && days > 0) this._update({ days });
+    });
+    daysRow.append(daysLabel, daysInput);
+    group.append(daysRow);
+
+    select.addEventListener("change", () => {
+      if (select.value === "fixed") {
+        const days = Number(daysInput.value);
+        this._update({ days: Number.isFinite(days) && days > 0 ? days : 7 });
+      } else {
+        this._update({ days: undefined });
+      }
+      this._render(); // enable/disable the days input
+    });
+    return group;
   }
 }
 
@@ -521,6 +1175,7 @@ class WarmWelcomeCard extends HTMLElement {
  * is in place; look up window.customElements freshly on every attempt.
  */
 const CARD_TAG = "warm-welcome-card";
+const EDITOR_TAG = "warm-welcome-card-editor";
 const defineStarted = Date.now();
 
 function tryDefineCard() {
@@ -529,6 +1184,7 @@ function tryDefineCard() {
   // Fall back to defining anyway after 15s (e.g. non-HA pages).
   if (!haReady && Date.now() - defineStarted < 15000) return false;
   window.customElements.define(CARD_TAG, WarmWelcomeCard);
+  window.customElements.define(EDITOR_TAG, WarmWelcomeCardEditor);
   return true;
 }
 

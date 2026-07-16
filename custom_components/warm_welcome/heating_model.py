@@ -169,6 +169,7 @@ def compute_start(
     forecast: list[ForecastPoint],
     rates: list[tuple[float, float]],
     max_lookback: timedelta = DEFAULT_MAX_LOOKBACK,
+    warmup: timedelta = timedelta(0),
 ) -> PredictionResult:
     """Compute when heating must start to reach target_temp by ``arrival``.
 
@@ -179,6 +180,10 @@ def compute_start(
     even earlier positive intervals to compensate. If the required lead
     time extends past forecast coverage (or ``max_lookback``), the result
     is flagged ``beyond_forecast``.
+
+    ``warmup`` is the time the heating spends warming the floor's thermal
+    mass before the room gains any heat; it shifts the start that much
+    earlier and prepends a flat segment to the curve.
     """
     deficit = target_temp - current_temp
     if deficit <= 0 or not forecast:
@@ -216,6 +221,10 @@ def compute_start(
             moment = interval_start
         curve.append((moment, current_temp + remaining))
 
+    if warmup > timedelta(0):
+        moment -= warmup
+        curve.append((moment, current_temp + remaining))
+
     curve.reverse()
     preheat_hours = (arrival - moment).total_seconds() / 3600
     return PredictionResult(moment, preheat_hours, deficit, beyond, curve)
@@ -228,15 +237,18 @@ def compute_reach(
     forecast: list[ForecastPoint],
     rates: list[tuple[float, float]],
     max_lookahead: timedelta = DEFAULT_MAX_LOOKBACK,
+    warmup: timedelta = timedelta(0),
 ) -> datetime | None:
     """Compute when the room reaches target_temp if heating runs from ``start``.
 
     The forward counterpart of compute_start: walks forward from ``start``
     through the forecast, accumulating degrees heated per interval at the
     interpolated heat rate, until the temperature deficit is covered.
-    Returns None if the target is not reached within ``max_lookahead``
-    (e.g. the heating cannot keep up at the forecasted temperatures) or
-    when there is no forecast to walk through.
+    The room only starts gaining heat once the floor's thermal mass is
+    warm, ``warmup`` after the start. Returns None if the target is not
+    reached within ``max_lookahead`` (e.g. the heating cannot keep up at
+    the forecasted temperatures) or when there is no forecast to walk
+    through.
     """
     remaining = target_temp - current_temp
     if remaining <= 0:
@@ -245,7 +257,7 @@ def compute_reach(
         return None
 
     points = sorted(forecast, key=lambda p: p.time)
-    moment = start
+    moment = start + warmup
     while moment - start < max_lookahead:
         temperature, interval_end = _temperature_after(points, moment)
         rate = rate_at(rates, temperature)

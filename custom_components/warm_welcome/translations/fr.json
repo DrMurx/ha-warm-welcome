@@ -6,11 +6,13 @@
         "description": "Prédit quand votre chauffage au sol doit démarrer pour que chaque pièce soit chaude à votre retour de vacances. Choisissez les entités partagées par toutes les pièces ; ajoutez ensuite chaque pièce via « Ajouter une pièce » sur la page de l'intégration.",
         "data": {
           "weather_entity": "Entité météo",
-          "end_date_entity": "Entité de date de fin de vacances"
+          "end_date_entity": "Entité de date de fin de vacances",
+          "floor_warmup_hours": "Temps de chauffe du sol"
         },
         "data_description": {
           "weather_entity": "Fournit les prévisions de température extérieure.",
-          "end_date_entity": "Entité contenant la date et l'heure de la fin de vos vacances (votre arrivée). Doit être un input_datetime avec l'heure activée ou une entité datetime."
+          "end_date_entity": "Entité contenant la date et l'heure de la fin de vos vacances (votre arrivée). Doit être un input_datetime avec l'heure activée ou une entité datetime.",
+          "floor_warmup_hours": "Durée pendant laquelle le chauffage réchauffe la masse thermique du sol avant que celui-ci n'émette de la chaleur dans la pièce — souvent 2-3 heures pour un chauffage au sol. Chaque pièce démarre d'autant plus tôt."
         }
       }
     }
@@ -21,11 +23,13 @@
         "title": "Options d'Accueil chaleureux",
         "data": {
           "weather_entity": "Entité météo",
-          "end_date_entity": "Entité de date de fin de vacances"
+          "end_date_entity": "Entité de date de fin de vacances",
+          "floor_warmup_hours": "Temps de chauffe du sol"
         },
         "data_description": {
           "weather_entity": "Fournit les prévisions de température extérieure.",
-          "end_date_entity": "Entité contenant la date et l'heure de la fin de vos vacances (votre arrivée). Doit être un input_datetime avec l'heure activée ou une entité datetime."
+          "end_date_entity": "Entité contenant la date et l'heure de la fin de vos vacances (votre arrivée). Doit être un input_datetime avec l'heure activée ou une entité datetime.",
+          "floor_warmup_hours": "Durée pendant laquelle le chauffage réchauffe la masse thermique du sol avant que celui-ci n'émette de la chaleur dans la pièce — souvent 2-3 heures pour un chauffage au sol. Chaque pièce démarre d'autant plus tôt."
         }
       }
     }
@@ -98,6 +102,9 @@
     "number": {
       "target_temperature": {
         "name": "Température cible"
+      },
+      "floor_warmup_hours": {
+        "name": "Temps de chauffe du sol"
       }
     },
     "select": {

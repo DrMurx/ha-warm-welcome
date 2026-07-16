@@ -6,11 +6,13 @@
         "description": "Berechnet, wann deine Fußbodenheizung starten muss, damit jeder Raum warm ist, wenn du aus dem Urlaub zurückkehrst. Wähle die von allen Räumen gemeinsam genutzten Entitäten; danach fügst du jeden Raum über 'Raum hinzufügen' auf der Seite der Integration hinzu.",
         "data": {
           "weather_entity": "Wetter-Entität",
-          "end_date_entity": "Entität für das Urlaubsende"
+          "end_date_entity": "Entität für das Urlaubsende",
+          "floor_warmup_hours": "Aufwärmzeit des Fußbodens"
         },
         "data_description": {
           "weather_entity": "Liefert die Vorhersage der Außentemperatur.",
-          "end_date_entity": "Entität mit Datum und Uhrzeit deiner Rückkehr (Urlaubsende). Muss ein input_datetime mit aktivierter Uhrzeit oder eine datetime-Entität sein."
+          "end_date_entity": "Entität mit Datum und Uhrzeit deiner Rückkehr (Urlaubsende). Muss ein input_datetime mit aktivierter Uhrzeit oder eine datetime-Entität sein.",
+          "floor_warmup_hours": "Wie lange die Heizung die thermische Masse des Bodens aufwärmt, bevor der Boden Wärme an den Raum abgibt — bei Fußbodenheizungen oft 2-3 Stunden. Jeder Raum startet um diese Zeit früher."
         }
       }
     }
@@ -21,11 +23,13 @@
         "title": "Optionen für „Warmer Empfang“",
         "data": {
           "weather_entity": "Wetter-Entität",
-          "end_date_entity": "Entität für das Urlaubsende"
+          "end_date_entity": "Entität für das Urlaubsende",
+          "floor_warmup_hours": "Aufwärmzeit des Fußbodens"
         },
         "data_description": {
           "weather_entity": "Liefert die Vorhersage der Außentemperatur.",
-          "end_date_entity": "Entität mit Datum und Uhrzeit deiner Rückkehr (Urlaubsende). Muss ein input_datetime mit aktivierter Uhrzeit oder eine datetime-Entität sein."
+          "end_date_entity": "Entität mit Datum und Uhrzeit deiner Rückkehr (Urlaubsende). Muss ein input_datetime mit aktivierter Uhrzeit oder eine datetime-Entität sein.",
+          "floor_warmup_hours": "Wie lange die Heizung die thermische Masse des Bodens aufwärmt, bevor der Boden Wärme an den Raum abgibt — bei Fußbodenheizungen oft 2-3 Stunden. Jeder Raum startet um diese Zeit früher."
         }
       }
     }
@@ -98,6 +102,9 @@
     "number": {
       "target_temperature": {
         "name": "Zieltemperatur"
+      },
+      "floor_warmup_hours": {
+        "name": "Aufwärmzeit des Fußbodens"
       }
     },
     "select": {

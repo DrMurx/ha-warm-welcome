@@ -6,11 +6,13 @@
         "description": "Predice cuándo debe arrancar tu suelo radiante para que cada habitación esté caliente cuando vuelvas de vacaciones. Elige las entidades compartidas por todas las habitaciones; después añade cada habitación mediante 'Añadir habitación' en la página de la integración.",
         "data": {
           "weather_entity": "Entidad meteorológica",
-          "end_date_entity": "Entidad de fecha de fin de vacaciones"
+          "end_date_entity": "Entidad de fecha de fin de vacaciones",
+          "floor_warmup_hours": "Tiempo de calentamiento del suelo"
         },
         "data_description": {
           "weather_entity": "Proporciona la previsión de temperatura exterior.",
-          "end_date_entity": "Entidad que contiene la fecha y hora en que terminan tus vacaciones (tu llegada). Debe ser un input_datetime con hora habilitada o una entidad datetime."
+          "end_date_entity": "Entidad que contiene la fecha y hora en que terminan tus vacaciones (tu llegada). Debe ser un input_datetime con hora habilitada o una entidad datetime.",
+          "floor_warmup_hours": "Cuánto tiempo calienta la calefacción la masa térmica del suelo antes de que este emita calor a la habitación — a menudo 2-3 horas con suelo radiante. Cada habitación arranca ese tiempo antes."
         }
       }
     }
@@ -21,11 +23,13 @@
         "title": "Opciones de Bienvenida cálida",
         "data": {
           "weather_entity": "Entidad meteorológica",
-          "end_date_entity": "Entidad de fecha de fin de vacaciones"
+          "end_date_entity": "Entidad de fecha de fin de vacaciones",
+          "floor_warmup_hours": "Tiempo de calentamiento del suelo"
         },
         "data_description": {
           "weather_entity": "Proporciona la previsión de temperatura exterior.",
-          "end_date_entity": "Entidad que contiene la fecha y hora en que terminan tus vacaciones (tu llegada). Debe ser un input_datetime con hora habilitada o una entidad datetime."
+          "end_date_entity": "Entidad que contiene la fecha y hora en que terminan tus vacaciones (tu llegada). Debe ser un input_datetime con hora habilitada o una entidad datetime.",
+          "floor_warmup_hours": "Cuánto tiempo calienta la calefacción la masa térmica del suelo antes de que este emita calor a la habitación — a menudo 2-3 horas con suelo radiante. Cada habitación arranca ese tiempo antes."
         }
       }
     }
@@ -98,6 +102,9 @@
     "number": {
       "target_temperature": {
         "name": "Temperatura objetivo"
+      },
+      "floor_warmup_hours": {
+        "name": "Tiempo de calentamiento del suelo"
       }
     },
     "select": {

@@ -35,6 +35,7 @@ import voluptuous as vol
 from .const import (
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
+    CONF_FLOOR_WARMUP_HOURS,
     CONF_HEAT_RATES,
     CONF_PRESET_TEMPERATURES,
     CONF_SET_PRESET,
@@ -42,9 +43,11 @@ from .const import (
     CONF_TARGET_PRESET,
     CONF_TARGET_TEMPERATURE,
     CONF_WEATHER_ENTITY,
+    DEFAULT_FLOOR_WARMUP_HOURS,
     DEFAULT_TARGET_TEMPERATURE,
     DEFAULT_TARGET_TEMPERATURE_F,
     DOMAIN,
+    FLOOR_WARMUP_RANGE,
     SUBENTRY_TYPE_ROOM,
     TARGET_TEMPERATURE_RANGE_C,
     TARGET_TEMPERATURE_RANGE_F,
@@ -58,6 +61,17 @@ SHARED_SCHEMA = vol.Schema(
         ),
         vol.Required(CONF_END_DATE_ENTITY): EntitySelector(
             EntitySelectorConfig(domain=["input_datetime", "datetime"])
+        ),
+        vol.Required(
+            CONF_FLOOR_WARMUP_HOURS, default=DEFAULT_FLOOR_WARMUP_HOURS
+        ): NumberSelector(
+            NumberSelectorConfig(
+                min=FLOOR_WARMUP_RANGE[0],
+                max=FLOOR_WARMUP_RANGE[1],
+                step=0.25,
+                unit_of_measurement="h",
+                mode=NumberSelectorMode.BOX,
+            )
         ),
     }
 )

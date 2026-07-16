@@ -18,6 +18,7 @@ from homeassistant.util import dt as dt_util
 from .const import (
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
+    CONF_FLOOR_WARMUP_HOURS,
     CONF_HEAT_RATES,
     CONF_PRESET_TEMPERATURES,
     CONF_SET_PRESET,
@@ -189,6 +190,10 @@ class WarmWelcomeCoordinator(DataUpdateCoordinator[PredictionResult | None]):
             raise UpdateFailed("No outdoor forecast available yet")
 
         rates = parse_heat_rates(options[CONF_HEAT_RATES])
+        # Shared floor thermal mass warm-up: the room gains nothing until
+        # the floor itself is warm, so every pre-heat starts that much
+        # earlier.
+        warmup = timedelta(hours=float(options.get(CONF_FLOOR_WARMUP_HOURS) or 0.0))
         result = compute_start(
             arrival,
             current_temp,
@@ -196,6 +201,7 @@ class WarmWelcomeCoordinator(DataUpdateCoordinator[PredictionResult | None]):
             forecast,
             rates,
             max_lookback=MAX_LOOKBACK,
+            warmup=warmup,
         )
         # When the required start is already in the past (the forecast
         # worsened, or the heating runs behind the model), the heating
@@ -208,6 +214,7 @@ class WarmWelcomeCoordinator(DataUpdateCoordinator[PredictionResult | None]):
             forecast,
             rates,
             max_lookahead=MAX_LOOKBACK,
+            warmup=warmup,
         )
         self.target_at_risk = reached is None or reached > arrival + LATE_TOLERANCE
         self._schedule_trigger(result.start, arrival)

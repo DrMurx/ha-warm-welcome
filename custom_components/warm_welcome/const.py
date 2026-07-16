@@ -13,6 +13,7 @@ SIGNAL_UPDATE = f"{DOMAIN}_updated"
 CONF_CLIMATE_ENTITY = "climate_entity"
 CONF_WEATHER_ENTITY = "weather_entity"
 CONF_END_DATE_ENTITY = "end_date_entity"
+CONF_FLOOR_WARMUP_HOURS = "floor_warmup_hours"
 CONF_TARGET_TEMPERATURE = "target_temperature"
 CONF_HEAT_RATES = "heat_rates"
 CONF_SET_PRESET = "set_preset"
@@ -29,6 +30,11 @@ ACTION_SET_TEMPERATURE = "set_temperature"
 # Legacy name of the target preset key; only read by the entry migration
 # to minor version 3.
 CONF_LEGACY_PRESET_MODE = "preset_mode"
+
+# Hours the floor's thermal mass absorbs heat before the room gains any;
+# shared by all rooms of an entry and prepended to every pre-heat.
+DEFAULT_FLOOR_WARMUP_HOURS = 0.0
+FLOOR_WARMUP_RANGE = (0.0, 12.0)
 
 DEFAULT_TARGET_TEMPERATURE = 21.0
 DEFAULT_TARGET_TEMPERATURE_F = 70.0

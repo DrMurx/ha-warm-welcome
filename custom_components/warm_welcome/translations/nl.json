@@ -6,11 +6,13 @@
         "description": "Voorspelt wanneer je vloerverwarming moet starten zodat elke kamer warm is wanneer je terugkomt van vakantie. Kies de entiteiten die alle kamers delen; voeg daarna elke kamer toe via 'Kamer toevoegen' op de pagina van de integratie.",
         "data": {
           "weather_entity": "Weer-entiteit",
-          "end_date_entity": "Entiteit einde vakantie"
+          "end_date_entity": "Entiteit einde vakantie",
+          "floor_warmup_hours": "Opwarmtijd van de vloer"
         },
         "data_description": {
           "weather_entity": "Levert de verwachting van de buitentemperatuur.",
-          "end_date_entity": "Entiteit met de datum en tijd waarop je vakantie eindigt (je aankomst). Moet een input_datetime met tijd ingeschakeld of een datetime-entiteit zijn."
+          "end_date_entity": "Entiteit met de datum en tijd waarop je vakantie eindigt (je aankomst). Moet een input_datetime met tijd ingeschakeld of een datetime-entiteit zijn.",
+          "floor_warmup_hours": "Hoe lang de verwarming de thermische massa van de vloer opwarmt voordat de vloer warmte aan de kamer afgeeft — bij vloerverwarming vaak 2-3 uur. Elke kamer start zoveel eerder."
         }
       }
     }
@@ -21,11 +23,13 @@
         "title": "Opties voor Warm welkom",
         "data": {
           "weather_entity": "Weer-entiteit",
-          "end_date_entity": "Entiteit einde vakantie"
+          "end_date_entity": "Entiteit einde vakantie",
+          "floor_warmup_hours": "Opwarmtijd van de vloer"
         },
         "data_description": {
           "weather_entity": "Levert de verwachting van de buitentemperatuur.",
-          "end_date_entity": "Entiteit met de datum en tijd waarop je vakantie eindigt (je aankomst). Moet een input_datetime met tijd ingeschakeld of een datetime-entiteit zijn."
+          "end_date_entity": "Entiteit met de datum en tijd waarop je vakantie eindigt (je aankomst). Moet een input_datetime met tijd ingeschakeld of een datetime-entiteit zijn.",
+          "floor_warmup_hours": "Hoe lang de verwarming de thermische massa van de vloer opwarmt voordat de vloer warmte aan de kamer afgeeft — bij vloerverwarming vaak 2-3 uur. Elke kamer start zoveel eerder."
         }
       }
     }
@@ -98,6 +102,9 @@
     "number": {
       "target_temperature": {
         "name": "Doeltemperatuur"
+      },
+      "floor_warmup_hours": {
+        "name": "Opwarmtijd van de vloer"
       }
     },
     "select": {

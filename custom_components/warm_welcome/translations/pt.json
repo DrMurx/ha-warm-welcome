@@ -6,11 +6,13 @@
         "description": "Prevê quando o teu piso radiante deve arrancar para que cada divisão esteja quente quando regressares de férias. Escolhe as entidades partilhadas por todas as divisões; depois adiciona cada divisão através de 'Adicionar divisão' na página da integração.",
         "data": {
           "weather_entity": "Entidade meteorológica",
-          "end_date_entity": "Entidade de data de fim das férias"
+          "end_date_entity": "Entidade de data de fim das férias",
+          "floor_warmup_hours": "Tempo de aquecimento do piso"
         },
         "data_description": {
           "weather_entity": "Fornece a previsão da temperatura exterior.",
-          "end_date_entity": "Entidade com a data e hora em que as tuas férias terminam (a tua chegada). Tem de ser um input_datetime com hora ativada ou uma entidade datetime."
+          "end_date_entity": "Entidade com a data e hora em que as tuas férias terminam (a tua chegada). Tem de ser um input_datetime com hora ativada ou uma entidade datetime.",
+          "floor_warmup_hours": "Quanto tempo o aquecimento aquece a massa térmica do piso antes de este emitir calor para a divisão — muitas vezes 2-3 horas com piso radiante. Cada divisão arranca esse tempo mais cedo."
         }
       }
     }
@@ -21,11 +23,13 @@
         "title": "Opções de Boas-vindas calorosas",
         "data": {
           "weather_entity": "Entidade meteorológica",
-          "end_date_entity": "Entidade de data de fim das férias"
+          "end_date_entity": "Entidade de data de fim das férias",
+          "floor_warmup_hours": "Tempo de aquecimento do piso"
         },
         "data_description": {
           "weather_entity": "Fornece a previsão da temperatura exterior.",
-          "end_date_entity": "Entidade com a data e hora em que as tuas férias terminam (a tua chegada). Tem de ser um input_datetime com hora ativada ou uma entidade datetime."
+          "end_date_entity": "Entidade com a data e hora em que as tuas férias terminam (a tua chegada). Tem de ser um input_datetime com hora ativada ou uma entidade datetime.",
+          "floor_warmup_hours": "Quanto tempo o aquecimento aquece a massa térmica do piso antes de este emitir calor para a divisão — muitas vezes 2-3 horas com piso radiante. Cada divisão arranca esse tempo mais cedo."
         }
       }
     }
@@ -98,6 +102,9 @@
     "number": {
       "target_temperature": {
         "name": "Temperatura alvo"
+      },
+      "floor_warmup_hours": {
+        "name": "Tempo de aquecimento do piso"
       }
     },
     "select": {

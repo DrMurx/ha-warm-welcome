@@ -10,6 +10,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.warm_welcome.const import (
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
+    CONF_FLOOR_WARMUP_HOURS,
     CONF_HEAT_RATES,
     CONF_SET_PRESET,
     CONF_SET_TEMPERATURE,
@@ -88,6 +89,30 @@ async def test_config_entities_expose_settings(hass, freezer, forecast_calls) ->
     preset = hass.states.get("select.living_room_warm_welcome_target_preset")
     assert preset.state == "comfort"
     assert preset.attributes["options"] == ["eco", "comfort"]
+
+
+async def test_floor_warmup_updates_entry_and_prediction(
+    hass, freezer, forecast_calls
+) -> None:
+    """The global warm-up number persists into the entry options and shifts the start."""
+    freezer.move_to(NOW)
+    entry = await setup_entry(hass)
+
+    warmup = hass.states.get("number.warm_welcome_floor_warm_up_time")
+    assert float(warmup.state) == 0.0
+
+    await hass.services.async_call(
+        "number",
+        "set_value",
+        {"entity_id": "number.warm_welcome_floor_warm_up_time", "value": 2.0},
+        blocking=True,
+    )
+    await hass.async_block_till_done()
+
+    assert entry.options[CONF_FLOOR_WARMUP_HOURS] == 2.0
+    # Deficit 21 - 15 = 6°C at 0.5°C/h -> 12 h heating + 2 h floor warm-up.
+    state = hass.states.get("sensor.living_room_heating_start")
+    assert dt_util.parse_datetime(state.state) == ARRIVAL - timedelta(hours=14)
 
 
 async def test_target_temperature_updates_room_and_prediction(

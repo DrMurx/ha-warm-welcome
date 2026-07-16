@@ -13,6 +13,7 @@ from custom_components.warm_welcome.config_flow import settings_schema
 from custom_components.warm_welcome.const import (
     CONF_CLIMATE_ENTITY,
     CONF_END_DATE_ENTITY,
+    CONF_FLOOR_WARMUP_HOURS,
     CONF_HEAT_RATES,
     CONF_PRESET_TEMPERATURES,
     CONF_SET_PRESET,
@@ -27,6 +28,7 @@ from custom_components.warm_welcome.const import (
 SHARED_INPUT = {
     CONF_WEATHER_ENTITY: "weather.home",
     CONF_END_DATE_ENTITY: "input_datetime.vacation_end",
+    CONF_FLOOR_WARMUP_HOURS: 0.0,
 }
 
 ROOM_INPUT = {
@@ -301,3 +303,18 @@ async def test_options_flow_updates_shared_entities(hass: HomeAssistant) -> None
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert entry.options[CONF_WEATHER_ENTITY] == "weather.forecast_home"
     assert entry.options[CONF_END_DATE_ENTITY] == "input_datetime.vacation_end"
+
+
+async def test_options_flow_updates_floor_warmup(hass: HomeAssistant) -> None:
+    """The options flow edits the shared floor warm-up time."""
+    with patch_setup(), patch_unload():
+        entry = await make_entry(hass)
+
+        result = await hass.config_entries.options.async_init(entry.entry_id)
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"], {**SHARED_INPUT, CONF_FLOOR_WARMUP_HOURS: 2.5}
+        )
+        await hass.async_block_till_done()
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert entry.options[CONF_FLOOR_WARMUP_HOURS] == 2.5

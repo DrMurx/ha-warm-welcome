@@ -6,11 +6,13 @@
         "description": "Predicts when your floor heating must start so each room is warm when you return from vacation. Pick the entities shared by all rooms; afterwards, add each room via 'Add room' on the integration page.",
         "data": {
           "weather_entity": "Weather entity",
-          "end_date_entity": "Vacation end date entity"
+          "end_date_entity": "Vacation end date entity",
+          "floor_warmup_hours": "Floor warm-up time"
         },
         "data_description": {
           "weather_entity": "Provides the outdoor temperature forecast.",
-          "end_date_entity": "Entity holding the date and time your vacation ends (your arrival). Must be an input_datetime with time enabled or a datetime entity."
+          "end_date_entity": "Entity holding the date and time your vacation ends (your arrival). Must be an input_datetime with time enabled or a datetime entity.",
+          "floor_warmup_hours": "How long the heating warms the floor's thermal mass before the floor emits heat into the room — often 2-3 hours for floor heating. Every room starts this much earlier."
         }
       }
     }
@@ -21,11 +23,13 @@
         "title": "Warm Welcome options",
         "data": {
           "weather_entity": "Weather entity",
-          "end_date_entity": "Vacation end date entity"
+          "end_date_entity": "Vacation end date entity",
+          "floor_warmup_hours": "Floor warm-up time"
         },
         "data_description": {
           "weather_entity": "Provides the outdoor temperature forecast.",
-          "end_date_entity": "Entity holding the date and time your vacation ends (your arrival). Must be an input_datetime with time enabled or a datetime entity."
+          "end_date_entity": "Entity holding the date and time your vacation ends (your arrival). Must be an input_datetime with time enabled or a datetime entity.",
+          "floor_warmup_hours": "How long the heating warms the floor's thermal mass before the floor emits heat into the room — often 2-3 hours for floor heating. Every room starts this much earlier."
         }
       }
     }
@@ -98,6 +102,9 @@
     "number": {
       "target_temperature": {
         "name": "Target temperature"
+      },
+      "floor_warmup_hours": {
+        "name": "Floor warm-up time"
       }
     },
     "select": {

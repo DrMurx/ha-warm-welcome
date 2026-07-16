@@ -76,7 +76,7 @@
             "heat_rates": "Die bekannten maximalen Heizraten des Raums: ein Punkt pro Messung — bei welcher Außentemperatur der Raum höchstens wie viele Grad in wie vielen Stunden gewonnen hat. Der Gewinn kann negativ sein, wenn die Heizung bei dieser Außentemperatur nicht mithalten kann. Werte zwischen den Punkten werden linear interpoliert.",
             "set_preset": "Die Klima-Entität auf die gewählte Voreinstellung umschalten, wenn die berechnete Startzeit erreicht ist.",
             "target_preset": "Aufgeführt sind die Voreinstellungen der Klima-Entität; wird nur verwendet, wenn 'Voreinstellung beim Heizstart setzen' aktiviert ist.",
-            "preset_temperatures": "Optional. Teilt der Vorhersage nur mit, welche Solltemperatur jede Voreinstellung zu erreichen versucht — aus dieser Zuordnung wird nichts an die Klima-Entität gesendet. Dient als Vorhersageziel, wenn nur die Voreinstellung gesetzt wird.",
+            "preset_temperatures": "Optional. Wird nur für die Berechnung verwendet: teilt der Vorhersage mit, welche Solltemperatur jede Voreinstellung zu erreichen versucht — aus dieser Zuordnung wird nichts an die Klima-Entität gesendet. Ist 'Temperatur beim Heizstart setzen' aktiviert, hat stattdessen die Zieltemperatur darunter als Vorhersageziel Vorrang.",
             "set_temperature": "Die Zieltemperatur an die Klima-Entität senden, wenn die berechnete Startzeit erreicht ist.",
             "target_temperature": "Raumtemperatur, die bis zu deiner Ankunft erreicht sein soll. Wird beim Heizstart als Solltemperatur an die Klima-Entität gesendet und überschreibt damit, was die gewählte Voreinstellung einstellt."
           }

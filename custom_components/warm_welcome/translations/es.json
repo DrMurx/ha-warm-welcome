@@ -76,7 +76,7 @@
             "heat_rates": "Las velocidades máximas de calentamiento conocidas de la habitación: un punto por medición — a qué temperatura exterior la habitación ganó como máximo cuántos grados en cuántas horas. La ganancia puede ser negativa si la calefacción no puede seguir el ritmo a esa temperatura exterior. Los valores entre los puntos se interpolan linealmente.",
             "set_preset": "Cambiar la entidad de climatización al preajuste seleccionado cuando se alcance la hora de inicio calculada.",
             "target_preset": "Se listan los preajustes de la entidad de climatización; solo se usa cuando 'Establecer preajuste al inicio de la calefacción' está activado.",
-            "preset_temperatures": "Opcional. Solo indica a la predicción qué temperatura de consigna intentará alcanzar cada preajuste — nada de esta lista se envía a la entidad de climatización. Sirve como objetivo de la predicción cuando solo se establece el preajuste.",
+            "preset_temperatures": "Opcional. Solo se usa para el cálculo: indica a la predicción qué temperatura de consigna intentará alcanzar cada preajuste — nada de esta lista se envía a la entidad de climatización. Si 'Establecer temperatura al inicio de la calefacción' está activado, la temperatura objetivo de abajo tiene prioridad como objetivo de la predicción.",
             "set_temperature": "Enviar la temperatura objetivo a la entidad de climatización cuando se alcance la hora de inicio calculada.",
             "target_temperature": "Temperatura de la habitación que debe alcanzarse para cuando llegues. Se envía a la entidad de climatización como su temperatura de consigna al inicio de la calefacción, anulando así la consigna que aplique el preajuste seleccionado."
           }

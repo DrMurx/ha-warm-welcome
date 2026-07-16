@@ -76,7 +76,7 @@
             "heat_rates": "The maximal heat rates known for the room: one point per measurement — at which outdoor temperature the room gained at most how many degrees in how many hours. The gain may be negative if the heating cannot keep up at that outdoor temperature. Values between the points are interpolated linearly.",
             "set_preset": "Switch the climate entity to the selected preset when the calculated start time is reached.",
             "target_preset": "The climate entity's presets are listed; only used when 'Set preset at heating start' is enabled.",
-            "preset_temperatures": "Optional. Only tells the prediction which set temperature each preset will try to reach — nothing from this map is ever sent to the climate entity. Used as the prediction target when only the preset is set.",
+            "preset_temperatures": "Optional. Only used for the computation: tells the prediction which set temperature each preset will try to reach — nothing from this map is ever sent to the climate entity. When 'Set temperature at heating start' is enabled, the target temperature below overrides it as the prediction target.",
             "set_temperature": "Send the target temperature to the climate entity when the calculated start time is reached.",
             "target_temperature": "Room temperature to reach by the time you arrive. Sent to the climate entity as its target temperature at the heating start, overriding whatever setpoint the selected preset applies."
           }

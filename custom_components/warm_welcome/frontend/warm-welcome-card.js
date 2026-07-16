@@ -21,7 +21,7 @@
  *                               # or to the forecast when none is set)
  */
 
-const CARD_VERSION = "0.1.23";
+const CARD_VERSION = "0.1.24";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const WIDTH = 640;

@@ -73,7 +73,6 @@ the climate entity you picked in the first.
 
 - **Climate entity** — the room's thermostat (provides the current room
   temperature and receives the re-heat command).
-- **Target temperature** — what the room should be when you arrive.
 - **Heat rate map** — measurements of how fast the room heats up at
   specific outdoor temperatures, e.g. "at -10° outside the room gained 1°
   in 5 hours". Rates between the mapped points are interpolated linearly
@@ -87,6 +86,11 @@ the climate entity you picked in the first.
 - **Preset temperatures** (optional) — the temperature each preset heats
   to, e.g. `comfort: 21`, `eco: 17`. Informational only — nothing from it
   is ever sent to the climate entity (see below).
+- **Target temperature** — what the room should be when you arrive.
+
+The action toggles, target preset, and target temperature can also be
+adjusted on the fly without reopening this dialog — see
+[Configuration entities](#configuration-entities).
 
 <details>
 <summary><b>Which temperature does the prediction aim for?</b></summary>

@@ -76,7 +76,7 @@
             "heat_rates": "Les vitesses de chauffe maximales connues de la pièce : un point par mesure — à quelle température extérieure la pièce a gagné au plus combien de degrés en combien d'heures. Le gain peut être négatif si le chauffage ne suit pas à cette température extérieure. Les valeurs entre les points sont interpolées linéairement.",
             "set_preset": "Basculer l'entité climatique sur le préréglage sélectionné lorsque l'heure de démarrage calculée est atteinte.",
             "target_preset": "Les préréglages de l'entité climatique sont listés ; utilisé uniquement lorsque « Appliquer le préréglage au démarrage du chauffage » est activé.",
-            "preset_temperatures": "Facultatif. Indique seulement à la prédiction quelle température de consigne chaque préréglage cherche à atteindre — rien de cette liste n'est envoyé à l'entité climatique. Sert de cible de prédiction lorsque seul le préréglage est appliqué.",
+            "preset_temperatures": "Facultatif. Utilisé uniquement pour le calcul : indique à la prédiction quelle température de consigne chaque préréglage cherche à atteindre — rien de cette liste n'est envoyé à l'entité climatique. Si « Régler la température au démarrage du chauffage » est activé, la température cible ci-dessous prévaut comme cible de prédiction.",
             "set_temperature": "Envoyer la température cible à l'entité climatique lorsque l'heure de démarrage calculée est atteinte.",
             "target_temperature": "Température de la pièce à atteindre pour votre arrivée. Envoyée à l'entité climatique comme température de consigne au démarrage du chauffage, remplaçant ainsi la consigne appliquée par le préréglage sélectionné."
           }

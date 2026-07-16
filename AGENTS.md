@@ -56,11 +56,18 @@ uv run pytest tests/ -v  # run the test suite
 
 ## Conventions
 
-- **Version bump on every change**: bump the patch level in
-  `custom_components/warm_welcome/manifest.json`, `pyproject.toml`, and
-  `CARD_VERSION` in `frontend/warm-welcome-card.js` — all three must stay
-  identical. The card version is appended to the resource URL for cache
-  busting, so stale-card bugs appear if it is forgotten.
+- **Version bump on every component change**: whenever anything under
+  `custom_components/warm_welcome/` changes — or a dependency changes
+  (manifest `requirements`, `pyproject.toml`/`uv.lock`) — bump the patch
+  level in `pyproject.toml`, `custom_components/warm_welcome/manifest.json`,
+  and `CARD_VERSION` in `frontend/warm-welcome-card.js` — all three must
+  stay identical.
+  The card version is appended to the resource URL for cache busting, so
+  stale-card bugs appear if it is forgotten. Changes outside the component
+  (docs, tests, tooling) need no bump.
+- **Keep the README updated**: whenever a change adds, removes, or alters
+  user-facing behavior (config flow, entities, attributes, card options),
+  update `README.md` in the same commit.
 - **Commit per working milestone**: no commits for intermediate debug steps;
   commit subjects mention the new version, e.g. `Fix forecast fallback (0.1.11)`.
 - All user-facing temperatures follow the HA unit system (°C or °F) — never

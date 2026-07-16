@@ -13,60 +13,136 @@ automation); this integration handles the predictive re-heat.
 
 ## How it works
 
-The integration is set up once with the entities shared by all rooms:
+Every 30 minutes (and whenever a source entity changes) the integration
+walks backward per room from your arrival time through the outdoor
+temperature forecast, accumulating the degrees the room gains per hour at
+the forecasted outdoor temperature, until the gap between the current and
+the target room temperature is covered. That point in time — moved earlier
+by the configured floor warm-up time — is the heating start.
 
-- a **weather entity** — provides the outdoor temperature forecast (hourly
-  preferred, falls back to twice-daily/daily),
-- a **vacation end entity** — an `input_datetime` (with time enabled) or
-  `datetime` entity holding the date and time you return,
-- a **floor warm-up time** — how long the heating spends warming the
-  floor's thermal mass before the floor emits heat into the room, often
-  2–3 hours for floor heating (default 0). Every room's heating starts
-  this much earlier to compensate.
+When the start moment arrives (and the vacation end is still in the
+future), the enabled actions are executed once per vacation: first the
+preset is set (if enabled), then — after a short pause so the preset's
+setpoint is applied first — the target temperature (if enabled), overriding
+the preset's setpoint. The "already triggered" flag survives Home Assistant
+restarts; if Home Assistant was down at the computed moment, the actions
+fire immediately after startup.
 
-Then you add each **room** to it, configuring:
+If the vacation end entity is unset or in the past, the integration idles
+and the sensors show `unknown`.
 
-- a **climate entity** — the room's thermostat (provides the current room
-  temperature and receives the re-heat command),
-- a **target temperature** — what the room should be when you arrive,
-- a **heat rate map** — measurements of how fast the room heats up at
-  specific outdoor temperatures. Each point records the outdoor
-  temperature, how many degrees the room gained, and over how many hours —
-  e.g. "at -10° outside the room gained 1° in 5 hours". The gain may be
-  negative if your heating cannot keep up at very low outdoor
-  temperatures; the prediction then starts correspondingly earlier so
-  warmer hours compensate. Rates between the mapped points are
-  interpolated linearly and clamped outside the range,
-- the **actions** — whether to set a preset and/or a temperature when the
-  calculated start time is reached, one checkbox each (at least one must
-  be enabled). The preset dropdown offers the presets advertised by the
-  selected climate entity (e.g. `comfort`, `eco`, `boost`),
-- optional **preset temperatures** — the temperature each preset heats to,
-  e.g. `comfort: 21`, `eco: 17`. This map is informational only — nothing
-  from it is ever sent to the climate entity. Presets switch the thermostat
-  to a setpoint configured inside the climate device, which this integration
-  cannot read; when only the preset is set, the prediction targets the mapped
-  temperature of the selected preset (falling back to the target temperature
-  if the preset is not mapped). When setting the temperature is enabled, the
-  prediction always targets the target temperature, since it is sent after
-  the preset and overrides its setpoint.
+## Installation
 
-Every 30 minutes (and whenever one of the source entities changes) the
-integration walks backward per room from your arrival time through the forecast,
-accumulating the degrees the room gains per hour at the forecasted outdoor
-temperature, until the gap between the current and the target room
-temperature is covered. That point in time is the heating start:
+Requires Home Assistant 2026.3 or newer.
 
-- `sensor.<name>_heating_start` — timestamp of the computed start (with
+- **HACS (recommended):** add this repository as a **custom repository** of
+  type *Integration*, install **Warm Welcome**, and restart Home Assistant.
+- **Manual:** copy `custom_components/warm_welcome` into the
+  `custom_components` folder of your Home Assistant configuration directory
+  and restart.
+
+## Configuration
+
+Everything is configured in the UI: **Settings → Devices & services →
+Add integration → Warm Welcome**. The integration is added once with the
+shared settings; then add each room via **Add room** on the integration's
+page.
+
+All temperature fields follow your Home Assistant unit system (°C or °F);
+if you ever switch the unit system, re-enter the configured temperatures in
+the new unit. Everything can be changed later: the shared settings via the
+entry's **Configure** menu, each room (including its name) via the room's
+**Reconfigure** menu.
+
+### Shared settings
+
+- **Weather entity** — provides the outdoor temperature forecast (hourly
+  preferred, falls back to twice-daily/daily).
+- **Vacation end entity** — an `input_datetime` (with time enabled) or
+  `datetime` entity holding the date and time you return.
+- **Floor warm-up time** — how long the heating spends warming the floor's
+  thermal mass before the floor emits heat into the room, often 2–3 hours
+  for floor heating (default 0). Every room's heating starts this much
+  earlier to compensate.
+
+### Per room
+
+Adding a room has two steps: first the name and climate entity, then the
+heat rates and actions — the preset choices in the second step come from
+the climate entity you picked in the first.
+
+- **Climate entity** — the room's thermostat (provides the current room
+  temperature and receives the re-heat command).
+- **Target temperature** — what the room should be when you arrive.
+- **Heat rate map** — measurements of how fast the room heats up at
+  specific outdoor temperatures, e.g. "at -10° outside the room gained 1°
+  in 5 hours". Rates between the mapped points are interpolated linearly
+  and clamped outside the range. The gain may be negative if your heating
+  cannot keep up at very low outdoor temperatures; the prediction then
+  starts correspondingly earlier so warmer hours compensate.
+- **Actions** — whether to set a preset and/or a temperature at the
+  heating start, one checkbox each (at least one must be enabled). The
+  preset dropdown offers the presets advertised by the climate entity
+  (e.g. `comfort`, `eco`, `boost`).
+- **Preset temperatures** (optional) — the temperature each preset heats
+  to, e.g. `comfort: 21`, `eco: 17`. Informational only — nothing from it
+  is ever sent to the climate entity (see below).
+
+<details>
+<summary><b>Which temperature does the prediction aim for?</b></summary>
+
+Presets switch the thermostat to a setpoint configured inside the climate
+device, which this integration cannot read — the preset temperature map
+fills that gap. When only the preset action is enabled, the prediction
+targets the mapped temperature of the selected preset (falling back to the
+target temperature if the preset is not mapped). When setting the
+temperature is enabled, the prediction always targets the target
+temperature, since it is sent after the preset and overrides its setpoint.
+
+</details>
+
+### Determining your heat rates
+
+Turn the heating on from a cooled-down state on days with different outdoor
+temperatures and note how many degrees the room gained over how many hours —
+that measurement is entered directly, no conversion to an hourly rate
+needed. One or two points are enough to start; add more points for better
+predictions. If the room *loses* temperature despite full heating on very
+cold days, enter that as a negative gain.
+
+### Configuration entities
+
+For quick adjustments (and for use in automations), each room's device also
+exposes its main settings as configuration entities. Changing them writes
+straight back into the room's configuration, and the prediction updates
+immediately:
+
+| Entity | Setting |
+| --- | --- |
+| `number.<room>_warm_welcome_target_temperature` | target temperature |
+| `switch.<room>_warm_welcome_use_preset` | set the preset at the heating start |
+| `select.<room>_warm_welcome_target_preset` | which preset to set |
+| `switch.<room>_warm_welcome_use_temperature` | set the temperature at the heating start |
+
+While a switch is off, its dependent entity (the preset select or the
+temperature number) shows as unavailable. The shared **floor warm-up time**
+is likewise exposed as a number on the integration's own device
+(`number.warm_welcome_floor_warm_up_time`).
+
+## Sensors
+
+Each room provides:
+
+- `sensor.<room>_heating_start` — timestamp of the computed start, with
   diagnostic attributes: required pre-heat hours, temperature deficit,
-  forecast type used, whether the prediction had to extrapolate beyond the
-  forecast, whether the target is at risk and when the room is predicted
-  to actually reach it, plus the predicted temperature curve described
-  below; its `preheat_active` attribute is true from the moment the
-  integration started the heating until the arrival has passed or the
-  room has reached the target temperature),
-- `sensor.<name>_required_preheat` — required pre-heat duration in hours,
-- `binary_sensor.<name>_target_temperature_at_risk` — on when the room is
+  the room's current temperature (also kept while idle), forecast type
+  used, whether the prediction had to extrapolate beyond the forecast,
+  the `predicted_temperatures` chart series (see below), and
+  `preheat_active` — true from the moment the integration started the
+  heating until the arrival has passed or the room has reached the target
+  temperature.
+- `sensor.<room>_required_preheat` — required pre-heat duration in hours.
+- `binary_sensor.<room>_target_temperature_at_risk` — on when the room is
   predicted to miss the target temperature at the arrival, e.g. because
   the forecast worsened after the heating start had passed or the heating
   cannot keep up with the forecasted cold. Its `target_reached_at`
@@ -78,63 +154,6 @@ The entry itself provides one shared sensor:
 - `sensor.warm_welcome_outdoor_forecast` — the outdoor temperature
   forecast the predictions are based on: the state is the forecast for the
   current interval, the `forecast` attribute holds the full series.
-
-When the start moment arrives (and the end date is still in the future),
-the enabled actions are executed once per vacation: first the preset is
-set (if enabled), then — after a short pause so the preset's setpoint is
-applied first — the target temperature (if enabled), overriding the
-preset's setpoint. The "already triggered" flag survives Home Assistant
-restarts. If Home Assistant was down at the computed moment, the actions
-fire immediately after startup.
-
-If the end date entity is unset or in the past, the integration idles and
-the sensors show `unknown`.
-
-## Installation
-
-Requires Home Assistant 2026.3 or newer.
-
-### HACS (recommended)
-
-1. In HACS, add this repository as a **custom repository** of type
-   *Integration*.
-2. Install **Warm Welcome** and restart Home Assistant.
-
-### Manual
-
-Copy `custom_components/warm_welcome` into the `custom_components`
-folder of your Home Assistant configuration directory and restart.
-
-## Configuration
-
-Everything is configured in the UI: **Settings → Devices & services →
-Add integration → Warm Welcome**. The integration is added once,
-asking for the shared weather and vacation end entities. Then add each
-room via **Add room** on the integration's page. Adding a room has two
-steps: first the name and climate entity, then the heat rates and the
-actions — the preset choices in the second step come from the climate
-entity you picked in the first.
-
-Heat rate points and preset temperatures are entered as structured list
-entries with one small form per point. All temperature fields follow your
-Home Assistant unit system (°C or °F); if you ever switch the unit
-system, re-enter the configured temperatures in the new unit.
-
-Everything can be changed later: the shared entities via the entry's
-**Configure** menu, each room (including its name) via the room's
-**Reconfigure** menu.
-
-For quick adjustments (and for use in automations), each room's device
-also exposes its main settings as configuration entities — a **target
-temperature** number, switches for **set preset** and **set temperature**
-at the heating start, and a select for the **target preset** (their entity
-ids follow `<room>_warm_welcome_use_preset`, `..._target_preset`,
-`..._use_temperature`, and `..._target_temperature`). Changing them writes
-straight back into the room's configuration, and the prediction updates
-immediately. While a switch is off, its dependent entity (the preset
-select or the temperature number) shows as unavailable. The shared
-**floor warm-up time** is likewise exposed as a number on the
-integration's own device (`number.warm_welcome_floor_warm_up_time`).
 
 ## Dashboard card
 
@@ -154,7 +173,8 @@ a dot) to the target temperature at arrival, a dashed vertical marker at
 the vacation end, and the outdoor forecast as a dashed blue line on the
 same temperature axis. The legend lists each room's start time; a ⚠ marks
 predictions that had to extrapolate beyond the forecast. While no future
-vacation end is set, the card shows an idle message.
+vacation end is set, the card shows an idle hint and only the outdoor
+forecast.
 
 All options are optional and editable in the card's visual editor:
 
@@ -234,15 +254,6 @@ series:
 Adjust `graph_span` to cover your longest expected pre-heat plus the time
 until arrival. While no vacation end is set, the sensors are `unknown` and
 the series are empty.
-
-### Determining your heat rates
-
-Turn the heating on from a cooled-down state on days with different outdoor
-temperatures and note how many degrees the room gained over how many hours —
-that measurement is entered directly, no conversion to an hourly rate
-needed. One or two points are enough to start; add more points for better
-predictions. If the room *loses* temperature despite full heating on very
-cold days, enter that as a negative gain.
 
 ## Development
 

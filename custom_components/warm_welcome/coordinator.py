@@ -175,8 +175,10 @@ class WarmWelcomeCoordinator(DataUpdateCoordinator[PredictionResult | None]):
         options = self.settings
         self.arrival = arrival = self._compute_arrival()
         if arrival is None or arrival <= dt_util.utcnow():
-            # No (future) vacation end configured: idle.
-            self.current_temperature = None
+            # No (future) vacation end configured: idle. The current room
+            # temperature stays exposed (None when the climate entity
+            # cannot provide one).
+            self.current_temperature = self._current_temperature()
             self.target_temperature = None
             self.target_reached = None
             self.target_at_risk = False

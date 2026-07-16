@@ -161,6 +161,7 @@ class HeatingStartSensor(WarmWelcomeSensor):
         attrs: dict[str, Any] = {
             ATTR_TRIGGERED_FOR: coordinator.triggered_for,
             ATTR_PREHEAT_ACTIVE: coordinator.preheat_active,
+            ATTR_CURRENT_TEMPERATURE: coordinator.current_temperature,
         }
         if (data := coordinator.data) is not None:
             unit = self.hass.config.units.temperature_unit
@@ -168,7 +169,6 @@ class HeatingStartSensor(WarmWelcomeSensor):
                 {
                     ATTR_PREHEAT_HOURS: round(data.preheat_hours, 2),
                     ATTR_DEFICIT: f"{round(data.deficit, 2)} {unit}",
-                    ATTR_CURRENT_TEMPERATURE: coordinator.current_temperature,
                     ATTR_TARGET_TEMPERATURE: coordinator.target_temperature,
                     ATTR_BEYOND_FORECAST: data.beyond_forecast,
                     ATTR_TARGET_AT_RISK: coordinator.target_at_risk,

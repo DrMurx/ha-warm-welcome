@@ -362,6 +362,8 @@ async def test_idle_when_end_date_in_past(hass, freezer, forecast_calls) -> None
 
     state = hass.states.get("sensor.living_room_heating_start")
     assert state.state == "unknown"
+    # The room temperature stays available while idle.
+    assert state.attributes["current_temperature"] == 15.0
 
     # No upcoming arrival means nothing is at risk.
     alert = hass.states.get("binary_sensor.living_room_target_temperature_at_risk")

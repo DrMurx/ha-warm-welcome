@@ -13,7 +13,8 @@ automation); this integration handles the predictive re-heat.
 
 ## How it works
 
-Every 30 minutes (and whenever a source entity changes) the integration
+Every 30 minutes (and whenever a source entity or option changes) the
+integration
 walks backward per room from your arrival time through the outdoor
 temperature forecast, accumulating the degrees the room gains per hour at
 the forecasted outdoor temperature, until the gap between the current and
@@ -76,34 +77,26 @@ the climate entity you picked in the first.
 - **Heat rate map** — measurements of how fast the room heats up at
   specific outdoor temperatures, e.g. "at -10° outside the room gained 1°
   in 5 hours". Rates between the mapped points are interpolated linearly
-  and clamped outside the range. The gain may be negative if your heating
-  cannot keep up at very low outdoor temperatures; the prediction then
-  starts correspondingly earlier so warmer hours compensate.
-- **Actions** — whether to set a preset and/or a temperature at the
-  heating start, one checkbox each (at least one must be enabled). The
-  preset dropdown offers the presets advertised by the climate entity
-  (e.g. `comfort`, `eco`, `boost`).
-- **Preset temperatures** (optional) — the temperature each preset heats
-  to, e.g. `comfort: 21`, `eco: 17`. Informational only — nothing from it
-  is ever sent to the climate entity (see below).
-- **Target temperature** — what the room should be when you arrive.
+  and clamped outside the range. The gain may be negative — the
+  prediction then starts correspondingly earlier so warmer hours
+  compensate.
+- **Actions** — what to do at the heating start; enable one or both:
+  - **Set preset** switches the thermostat to the chosen **target
+    preset**; the dropdown offers the presets advertised by the climate
+    entity (e.g. `comfort`, `eco`, `boost`). A preset heats to a setpoint
+    stored inside the thermostat, which this integration cannot read —
+    map it in **preset temperatures** (e.g. `comfort: 21`, `eco: 17`) so
+    the prediction knows which temperature this action heats to. The map
+    is only read by the prediction, never sent to the climate entity; an
+    unmapped preset falls back to the target temperature.
+  - **Set temperature** sends the **target temperature** — what the room
+    should be when you arrive. With this action enabled the prediction
+    always aims for the target temperature, since it overrides the
+    preset's setpoint (see [How it works](#how-it-works)).
 
 The action toggles, target preset, and target temperature can also be
 adjusted on the fly without reopening this dialog — see
 [Configuration entities](#configuration-entities).
-
-<details>
-<summary><b>Which temperature does the prediction aim for?</b></summary>
-
-Presets switch the thermostat to a setpoint configured inside the climate
-device, which this integration cannot read — the preset temperature map
-fills that gap. When only the preset action is enabled, the prediction
-targets the mapped temperature of the selected preset (falling back to the
-target temperature if the preset is not mapped). When setting the
-temperature is enabled, the prediction always targets the target
-temperature, since it is sent after the preset and overrides its setpoint.
-
-</details>
 
 ### Determining your heat rates
 
@@ -215,13 +208,11 @@ point lists:
 - `forecast` on the shared `outdoor_forecast` sensor — the outdoor
   temperature forecast used for the predictions.
 
-These attributes are excluded from the recorder (no database growth); they
-always reflect the latest prediction, which is recomputed every 30 minutes
-and immediately after any source entity or option changes.
+These attributes are excluded from the recorder (no database growth) and
+always reflect the latest prediction.
 
-With the ApexCharts card (available via HACS) you can plot the timeline
-of several rooms in one chart — the point where a room's line starts
-rising is its heating start:
+You can plot the timeline of several rooms in one chart — the point
+where a room's line starts rising is its heating start:
 
 ```yaml
 type: custom:apexcharts-card
@@ -256,8 +247,7 @@ series:
 ```
 
 Adjust `graph_span` to cover your longest expected pre-heat plus the time
-until arrival. While no vacation end is set, the sensors are `unknown` and
-the series are empty.
+until arrival. While no future vacation end is set, the series are empty.
 
 ## Development
 

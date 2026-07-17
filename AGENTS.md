@@ -13,7 +13,7 @@ the configured climate action (preset and/or temperature) at that moment.
 Turning the heating *down* at departure is deliberately out of scope; only the
 predictive re-heat is handled.
 
-The prediction walks backward per room from the arrival time through the
+The predictor walks backward per room from the arrival time through the
 forecast, accumulating degrees gained per hour (interpolated linearly between
 the mapped heat-rate points), until the gap between current and target room
 temperature is covered. It recomputes every 30 minutes and on any source

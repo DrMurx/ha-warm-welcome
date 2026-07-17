@@ -21,7 +21,7 @@
  *                               # or to the forecast when none is set)
  */
 
-const CARD_VERSION = "0.1.25";
+const CARD_VERSION = "0.1.27";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const WIDTH = 640;
@@ -68,7 +68,7 @@ const STRINGS = {
     loading: "Loading…",
     error:
       "Could not connect to the Warm Welcome integration. Is it installed and set up?",
-    idle: "No upcoming re-heat. Set a future vacation end date to see the prediction.",
+    idle: "No upcoming re-heat",
     arrival: "Arrival",
     heating: "heating",
     starts: "starts {when}",
@@ -79,7 +79,7 @@ const STRINGS = {
     loading: "Wird geladen…",
     error:
       "Keine Verbindung zur Integration „Warmer Empfang“. Ist sie installiert und eingerichtet?",
-    idle: "Kein anstehendes Aufheizen. Setze ein zukünftiges Urlaubsende, um die Vorhersage zu sehen.",
+    idle: "Kein anstehendes Aufheizen",
     arrival: "Ankunft",
     heating: "heizt",
     starts: "startet {when}",
@@ -90,7 +90,7 @@ const STRINGS = {
     loading: "Laden…",
     error:
       "Kan geen verbinding maken met de integratie Warm welkom. Is deze geïnstalleerd en ingesteld?",
-    idle: "Geen aankomende opwarming. Stel een toekomstig einde van de vakantie in om de voorspelling te zien.",
+    idle: "Geen aankomende opwarming",
     arrival: "Aankomst",
     heating: "verwarmt",
     starts: "start {when}",
@@ -101,7 +101,7 @@ const STRINGS = {
     loading: "Chargement…",
     error:
       "Impossible de se connecter à l'intégration Accueil chaleureux. Est-elle installée et configurée ?",
-    idle: "Aucun réchauffage à venir. Définissez une date de fin de vacances future pour voir la prédiction.",
+    idle: "Aucun réchauffage à venir",
     arrival: "Arrivée",
     heating: "chauffe",
     starts: "démarre {when}",
@@ -112,7 +112,7 @@ const STRINGS = {
     loading: "Cargando…",
     error:
       "No se pudo conectar con la integración Bienvenida cálida. ¿Está instalada y configurada?",
-    idle: "No hay recalentamiento próximo. Establece una fecha futura de fin de vacaciones para ver la predicción.",
+    idle: "No hay recalentamiento próximo",
     arrival: "Llegada",
     heating: "calentando",
     starts: "empieza {when}",
@@ -123,7 +123,7 @@ const STRINGS = {
     loading: "A carregar…",
     error:
       "Não foi possível ligar à integração Boas-vindas calorosas. Está instalada e configurada?",
-    idle: "Sem reaquecimento previsto. Define uma data futura de fim das férias para ver a previsão.",
+    idle: "Sem reaquecimento previsto",
     arrival: "Chegada",
     heating: "a aquecer",
     starts: "começa {when}",
@@ -418,19 +418,20 @@ class WarmWelcomeCard extends HTMLElement {
     const rooms = this._selectRooms(this._data.rooms || []);
 
     // Without an upcoming re-heat the chart still shows the outdoor
-    // forecast, with the idle hint above it; the chart is only null
-    // when there is no data to plot at all.
+    // forecast and the legend notes the idle state; the chart is only
+    // null when there is no data to plot at all.
     const chart = this._chart(rooms, arrival);
-    if (!arrival || !rooms.length) {
+    const idle = !arrival || !rooms.length;
+    if (!chart) {
       content.append(this._message(this._tr("idle")));
+      return;
     }
-    if (!chart) return;
 
     const showLegend = this._config.show_legend !== false;
     const legendTop = this._config.legend_position === "top";
-    if (showLegend && legendTop) content.append(this._legend(rooms, true));
+    if (showLegend && legendTop) content.append(this._legend(rooms, true, idle));
     content.append(chart);
-    if (showLegend && !legendTop) content.append(this._legend(rooms, false));
+    if (showLegend && !legendTop) content.append(this._legend(rooms, false, idle));
   }
 
   // Apply the optional `rooms` config: subset, order and colors. Entries
@@ -718,9 +719,18 @@ class WarmWelcomeCard extends HTMLElement {
 
   /* ---------- legend ---------- */
 
-  _legend(rooms, top) {
+  _legend(rooms, top, idle) {
     const legend = document.createElement("div");
     legend.className = top ? "legend top" : "legend";
+    if (idle) {
+      const item = document.createElement("div");
+      item.className = "item";
+      const label = document.createElement("span");
+      label.className = "when";
+      label.textContent = this._tr("idle");
+      item.append(label);
+      legend.append(item);
+    }
     for (const room of rooms) {
       const item = document.createElement("div");
       item.className = "item";

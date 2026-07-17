@@ -78,19 +78,19 @@ the climate entity you picked in the first.
   specific outdoor temperatures, e.g. "at -10° outside the room gained 1°
   in 5 hours". Rates between the mapped points are interpolated linearly
   and clamped outside the range. The gain may be negative — the
-  prediction then starts correspondingly earlier so warmer hours
-  compensate.
+  predictor then schedules the heating start correspondingly earlier so
+  warmer hours compensate.
 - **Actions** — what to do at the heating start; enable one or both:
   - **Set preset** switches the thermostat to the chosen **target
     preset**; the dropdown offers the presets advertised by the climate
     entity (e.g. `comfort`, `eco`, `boost`). A preset heats to a setpoint
     stored inside the thermostat, which this integration cannot read —
     map it in **preset temperatures** (e.g. `comfort: 21`, `eco: 17`) so
-    the prediction knows which temperature this action heats to. The map
-    is only read by the prediction, never sent to the climate entity; an
+    the predictor knows which temperature this action heats to. The map
+    is only read by the predictor, never sent to the climate entity; an
     unmapped preset falls back to the target temperature.
   - **Set temperature** sends the **target temperature** — what the room
-    should be when you arrive. With this action enabled the prediction
+    should be when you arrive. With this action enabled the predictor
     always aims for the target temperature, since it overrides the
     preset's setpoint (see [How it works](#how-it-works)).
 
@@ -133,7 +133,7 @@ Each room provides:
 - `sensor.<room>_heating_start` — timestamp of the computed start, with
   diagnostic attributes: required pre-heat hours, temperature deficit,
   the room's current temperature (also kept while idle), forecast type
-  used, whether the prediction had to extrapolate beyond the forecast,
+  used, whether the predictor had to extrapolate beyond the forecast,
   the `predicted_temperatures` chart series (see below), and
   `preheat_active` — true from the moment the integration started the
   heating until the arrival has passed or the room has reached the target
@@ -169,9 +169,9 @@ It shows one curve per room from its computed heating start (marked with
 a dot) to the target temperature at arrival, a dashed vertical marker at
 the vacation end, and the outdoor forecast as a dashed blue line on the
 same temperature axis. The legend lists each room's start time; a ⚠ marks
-predictions that had to extrapolate beyond the forecast. While no future
-vacation end is set, the card shows an idle hint and only the outdoor
-forecast.
+rooms where the predictor had to extrapolate beyond the forecast. While no
+future vacation end is set, the card shows only the outdoor forecast and
+the legend notes "No upcoming re-heat".
 
 All options are optional and editable in the card's visual editor:
 

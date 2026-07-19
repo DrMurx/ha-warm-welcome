@@ -10,16 +10,14 @@ warm the moment you return from vacation — and turns it on at that moment.
 
 ## How it works
 
+<img src="https://raw.githubusercontent.com/DrMurx/ha-warm-welcome/main/assets/card.jpg" alt="The bundled dashboard card showing the prediction: one temperature curve per room from its computed heating start up to the arrival, above the outdoor forecast" width="400" align="right"/>
+
 Every 30 minutes (and whenever a source entity or option changes) the
 integration walks backward per room from your arrival time through the
 outdoor temperature forecast, accumulating the degrees the room gains per
 hour at the forecasted outdoor temperature, until the gap between the current
 and the target room temperature is covered. That point in time — moved
 earlier by the configured floor warm-up time — is the heating start.
-
-![The bundled dashboard card showing the prediction: one temperature curve
-per room from its computed heating start up to the arrival, above the
-outdoor forecast](https://raw.githubusercontent.com/DrMurx/ha-warm-welcome/main/assets/card.jpg)
 
 When the start moment arrives (and the vacation end is still in the
 future), the enabled actions are executed once per vacation: first the

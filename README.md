@@ -1,6 +1,6 @@
 # Warm Welcome
 
-<img src="assets/logo.svg" alt="Warm Welcome logo" width="160" align="right"/>
+<img src="https://raw.githubusercontent.com/DrMurx/ha-warm-welcome/main/assets/logo.svg" alt="Warm Welcome logo" width="160" align="right"/>
 
 A Home Assistant custom integration for slow heating systems (e.g. floor
 heating). While you are away, your heating is turned down. Based on the
@@ -19,7 +19,7 @@ earlier by the configured floor warm-up time — is the heating start.
 
 ![The bundled dashboard card showing the prediction: one temperature curve
 per room from its computed heating start up to the arrival, above the
-outdoor forecast](assets/card.jpg)
+outdoor forecast](https://raw.githubusercontent.com/DrMurx/ha-warm-welcome/main/assets/card.jpg)
 
 When the start moment arrives (and the vacation end is still in the
 future), the enabled actions are executed once per vacation: first the

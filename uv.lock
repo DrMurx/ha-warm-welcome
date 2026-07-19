@@ -8,18 +8,6 @@ resolution-markers = [
     "python_full_version < '3.13.2'",
 ]
 
-[options]
-exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
-exclude-newer-span = "P7D"
-
-[options.exclude-newer-package]
-comfyui-workflow-templates = false
-comfyui-workflow-templates-media-image = false
-comfyui-workflow-templates-core = false
-comfyui-workflow-templates-media-api = false
-comfyui-workflow-templates-media-other = false
-comfyui-workflow-templates-media-video = false
-
 [[package]]
 name = "acme"
 version = "3.2.0"
@@ -2030,7 +2018,7 @@ wheels = [
 
 [[package]]
 name = "ha-warm-welcome"
-version = "0.1.27"
+version = "0.1.28"
 source = { virtual = "." }
 
 [package.dev-dependencies]
